@@ -2,7 +2,7 @@
 The No Hang Daemon
 ==================
 
-Nohang - аналог earlyoom с поддержкой zram и SIGTERM.
+Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom)) с поддержкой zram и SIGTERM.
 
 Особенности:
 ============
@@ -29,41 +29,26 @@ Success
 - наличие системд юнита
 - ман страница сделана
 - инсталлятор и деинсталлятор есть
-
-
-Протестировано на Debian 9 x86_64, Debian 9 x86, Debian 8 x86, Fedora 28 x86_64.
+- протестировано на Debian 9 x86_64, Debian 9 x86, Debian 8 x86, Fedora 28 x86_64.
 
 Установка
 =========
-git clone https://github.com/hakavlad/nohang.git
-cd nohang
-sudo ./install.sh
+`git clone https://github.com/hakavlad/nohang.git`
+`cd nohang`
+`sudo ./install.sh`
 
 Удаление вместе с конфигом
 ==========================
-sudo ./purge.sh
+`sudo ./purge.sh`
 
 Удалить всё, кроме конфига
 ==========================
-sudo ./uninstall.sh
+`sudo ./uninstall.sh`
 
 Настройка
 =========
 Nohang настраивается с помощью конфига, расположенного после установки 
-по адресу /etc/nohang/nohang.cong
+по адресу `/etc/nohang/nohang.cong`
 К опциям прилагается описание.
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
