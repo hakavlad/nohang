@@ -2,10 +2,7 @@
 The No Hang Daemon
 ==================
 
-Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom) с поддержкой zram и SIGTERM.
-
-
-
+Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom) с поддержкой zram и SIGTERM. При дефиците доступной памяти hohang корректно завершает наиболее прожорливые процессы сигналом SIGTERM, тем самым препятствуя зависанию, а также избыточному убийству процессов ядерным OOM killer'ом.
 
 ### Зачем это нужно?
 
