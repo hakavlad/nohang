@@ -107,8 +107,8 @@ venv.bak/
 # Kate
 .kate-swp
 
-
-.1.gz
+# man
+*.gz
 
 
 
