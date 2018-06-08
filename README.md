@@ -32,7 +32,7 @@ Try to send signal 15 to process python3, Pid 7281, oom_score 893
 Success
 ```
 
-### Установка и удаление
+### Установка и удаление для пользователей systemd
 ```bash
 git clone https://github.com/hakavlad/nohang.git
 cd nohang
@@ -57,5 +57,19 @@ Nohang настраивается с помощью конфига, распол
 /etc/nohang/nohang.conf
 ```
 К опциям прилагается описание.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
