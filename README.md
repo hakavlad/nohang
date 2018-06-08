@@ -25,25 +25,29 @@ Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom) с под�
 - ман страница сделана
 - инсталлятор и деинсталлятор есть
 - протестировано на Debian 9 x86_64, Debian 9 x86, Debian 8 x86, Fedora 28 x86_64
-- вывод отчета об убийствах такого вида ```2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
+- вывод отчета об убийствах такого вида
+```2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
 mem_available < mem_term_level and swap_free < swap_term_level
 Try to send signal 15 to process python3, Pid 7281, oom_score 893
-Success```
-
+Success
+```
 
 Установка
 =========
 ```git clone https://github.com/hakavlad/nohang.git
 cd nohang
-sudo ./install.sh```
+sudo ./install.sh
+```
 
 Удаление вместе с конфигом
 ==========================
-```sudo ./purge.sh```
+```sudo ./purge.sh
+```
 
 Удалить всё, кроме конфига
 ==========================
-```sudo ./uninstall.sh```
+```sudo ./uninstall.sh
+```
 
 Настройка
 =========
