@@ -1,0 +1,14 @@
+
+[Unit]
+Description=No hang daemon
+After=sysinit.target
+Documentation=man:nohang(1) https://github.com/hakvlad/nohang
+
+[Service]
+Type=simple
+PIDFile=/run/nohang.pid
+Restart=always
+ExecStart=/usr/local/bin/nohang
+
+[Install]
+WantedBy=multi-user.target
