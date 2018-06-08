@@ -2,7 +2,7 @@
 [Unit]
 Description=No hang daemon
 After=sysinit.target
-Documentation=man:nohang(1) https://github.com/hakvlad/nohang
+Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
 Type=simple
