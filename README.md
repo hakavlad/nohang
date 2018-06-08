@@ -21,15 +21,15 @@ Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom) с под�
 - предотвращение самоубийства с помощью self_oom_score_adj = -1000
 - возможность задания oom_score_min для предотвращения убийства невиновных
 - min_delay_after_sigkill для предотвращения массовых убийств
-- вывод отчета об убийствах такого вида:
-```2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
-mem_available < mem_term_level and swap_free < swap_term_level
-Try to send signal 15 to process python3, Pid 7281, oom_score 893
-Success```
 - наличие системд юнита
 - ман страница сделана
 - инсталлятор и деинсталлятор есть
-- протестировано на Debian 9 x86_64, Debian 9 x86, Debian 8 x86, Fedora 28 x86_64.
+- протестировано на Debian 9 x86_64, Debian 9 x86, Debian 8 x86, Fedora 28 x86_64
+- вывод отчета об убийствах такого вида ```2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
+mem_available < mem_term_level and swap_free < swap_term_level
+Try to send signal 15 to process python3, Pid 7281, oom_score 893
+Success```
+
 
 Установка
 =========
