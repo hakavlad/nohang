@@ -2,7 +2,7 @@
 The No Hang Daemon
 ==================
 
-Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom)) с поддержкой zram и SIGTERM.
+Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom) с поддержкой zram и SIGTERM.
 
 Особенности:
 ============
@@ -22,10 +22,10 @@ Nohang - аналог [earlyoom](https://github.com/rfjakob/earlyoom)) с под
 - возможность задания oom_score_min для предотвращения убийства невиновных
 - min_delay_after_sigkill для предотвращения массовых убийств
 - вывод отчета об убийствах такого вида:
-2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
+```2018-Jun-07 04:55:16  Mem: 0 M, Swap: 454 M, Zram: 488 M
 mem_available < mem_term_level and swap_free < swap_term_level
 Try to send signal 15 to process python3, Pid 7281, oom_score 893
-Success
+Success```
 - наличие системд юнита
 - ман страница сделана
 - инсталлятор и деинсталлятор есть
@@ -33,22 +33,22 @@ Success
 
 Установка
 =========
-`git clone https://github.com/hakavlad/nohang.git`
-`cd nohang`
-`sudo ./install.sh`
+```git clone https://github.com/hakavlad/nohang.git
+cd nohang
+sudo ./install.sh```
 
 Удаление вместе с конфигом
 ==========================
-`sudo ./purge.sh`
+```sudo ./purge.sh```
 
 Удалить всё, кроме конфига
 ==========================
-`sudo ./uninstall.sh`
+```sudo ./uninstall.sh```
 
 Настройка
 =========
 Nohang настраивается с помощью конфига, расположенного после установки 
-по адресу `/etc/nohang/nohang.cong`
+по адресу `/etc/nohang/nohang.conf`
 К опциям прилагается описание.
 
 
