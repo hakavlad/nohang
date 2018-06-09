@@ -106,36 +106,22 @@ def human(num):
 
 # возвращает disksize и mem_used_total по zram id
 def zram_stat(zram_id):
-
     try:
-        with open('/sys/block/' + zram_id + '/disksize') as file:
-            disksize = file.readlines()
+        disksize = rline1('/sys/block/' + zram_id + '/disksize')
     except FileNotFoundError:
         return '0', '0'
-
     if disksize == ['0\n']:
         return '0', '0'
-
     try:
-
-        with open('/sys/block/' + zram_id + '/mm_stat') as file:
-            mm_stat = file.readlines()[0][:-1].split(' ')
-
+        mm_stat = rline1('/sys/block/' + zram_id + '/mm_stat').split(' ')
         mm_stat_list = []
-
-        # улучшить, сократить цикл
         for i in mm_stat:
             if i != '':
                 mm_stat_list.append(i)
-
         mem_used_total = mm_stat_list[2]
-
     except FileNotFoundError:
-
-        with open('/sys/block/' + zram_id + '/mem_used_total') as file:
-            mem_used_total = file.readlines()[0][:-1]
-
-    return disksize[0][:-1], mem_used_total # BYTES, str
+        mem_used_total = rline1('/sys/block/' + zram_id + '/mem_used_total')
+    return disksize, mem_used_total # BYTES, str
 
 
 # имя через пид
@@ -156,20 +142,15 @@ def find_victim_and_send_signal(signal):
         decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
 
     #print('Find victim...')
-
     oom_list = []
 
     for i in os.listdir('/proc'):
-
         if i.isdigit() is not True:
             continue
-
         try:
-            with open('/proc/' + i + '/oom_score') as file:
-                oom_score = int(file.readlines()[0][:-1])
+            oom_score = int(rline1('/proc/' + i + '/oom_score'))
         except FileNotFoundError:
             oom_score = 0
-
         oom_list.append((i, oom_score))
 
     # получаем список пар (pid, oom_score)
@@ -178,9 +159,7 @@ def find_victim_and_send_signal(signal):
 
     # посылаем сигнал
     if oom_score >= oom_score_min:
-
         pid = pid_tuple_list[0]
-
         name = pid_to_name(pid)
 
         print(
@@ -224,7 +203,6 @@ swap_total_index = mem_list_names.index('SwapTotal')
 swap_free_index = swap_total_index + 1
 
 mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
-
 
 
 
@@ -318,8 +296,6 @@ else:
 
 
 
-
-
 def sig_level_to_kb(string):
     if string.endswith('%'):
         return float(string[:-1].strip()) / 100 * mem_total
@@ -334,8 +310,6 @@ mem_min_sigterm_kb = sig_level_to_kb(mem_min_sigterm)
 mem_min_sigkill_kb = sig_level_to_kb(mem_min_sigkill)
 zram_max_sigterm_kb = sig_level_to_kb(zram_max_sigterm)
 zram_max_sigkill_kb = sig_level_to_kb(zram_max_sigkill)
-
-
 
 
 
@@ -456,16 +430,11 @@ while True:
     # находим MemUsedZram
     disksize_sum = 0
     mem_used_total_sum = 0
-
     for dev in os.listdir('/sys/block'):
-
         if dev.startswith('zram'):
-
             stat = zram_stat(dev)
-
             disksize_sum += int(stat[0])
             mem_used_total_sum += int(stat[1])
-
     mem_used_zram = (
         mem_used_total_sum + disksize_sum * zram_disksize_factor
         ) / 1024.0
