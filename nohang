@@ -5,12 +5,11 @@
 import os
 from ctypes import CDLL
 from operator import itemgetter
-from signal import SIGKILL, SIGTERM
-from time import gmtime, strftime, sleep, time
-import argparse
+from time import sleep
+from argparse import ArgumentParser
 
 
-parser = argparse.ArgumentParser()
+parser = ArgumentParser()
 parser.add_argument(
     '-c', 
     '--config', 
@@ -151,8 +150,7 @@ def pid_to_name(pid):
         return '<unknown>'
 
 
-# поиск пид жертвы И ПОСЫЛ СИГНАЛА
-def find_victim(signal):
+def find_victim_and_send_signal(signal):
 
     if decrease_oom_score_adj_enable and root:
         decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
@@ -513,7 +511,7 @@ while True:
                 kib_to_mib(swap_min_sigkill_kb)
                 )
             )
-        find_victim(SIGKILL)
+        find_victim_and_send_signal(9)
         sleep(min_delay_after_sigkill)
         continue
 
@@ -525,7 +523,7 @@ while True:
                 kib_to_mib(zram_max_sigkill_kb)
                 )
             )
-        find_victim(SIGKILL)
+        find_victim_and_send_signal(9)
         sleep(min_delay_after_sigkill)
         continue
 
@@ -539,7 +537,7 @@ while True:
                 kib_to_mib(swap_min_sigterm_kb)
                 )
             )
-        find_victim(SIGTERM)
+        find_victim_and_send_signal(15)
         sleep(min_delay_after_sigterm)
 
     # MEM ZRAM TERM
@@ -550,7 +548,7 @@ while True:
                 kib_to_mib(zram_max_sigterm_kb)
                 )
             )
-        find_victim(SIGTERM)
+        find_victim_and_send_signal(15)
         sleep(min_delay_after_sigterm)
 
     sleep(t)
