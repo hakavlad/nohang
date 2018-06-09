@@ -1,29 +1,50 @@
 #!/usr/bin/env python3
 
-# nohang - no hang daemon
+# Nohang - No Hang Daemon
 
 import os
 from ctypes import CDLL
 from operator import itemgetter
 from signal import SIGKILL, SIGTERM
 from time import gmtime, strftime, sleep, time
+import argparse
 
-if os.path.exists('./nohang.conf'):
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '-c', 
+    '--config', 
+    help='path to config file, default values: ./nohang.conf, /etc/nohang/nohang.conf', 
+    default=None, 
+    type=str
+    )
+arg_config = parser.parse_args().config
+
+
+# ветвление требует переработки и лучшей обработки исключений
+if arg_config != None:
+    if os.path.exists:
+        config = arg_config
+    else:
+        print('Указанный конфиг файл {} не существует!'.format(arg_config))
+        exit()
+elif os.path.exists('./nohang.conf'):
     config = './nohang.conf'
-    print('config: {}'.format(config))
 elif os.path.exists('/etc/nohang/nohang.conf'):
     config = '/etc/nohang/nohang.conf'
-    print('config: {}'.format(config))
 else:
-    print('укажите путь к конфигу опцией --config')
+    print('Пожалуйста, укажите путь к конфигу опцией -c или --config')
     exit()
 
+# найден экспериментально, требует уточнения с разными ядрами и архитектурами
 zram_disksize_factor = 0.0042
+
 
 ###########################################################################################
 
+
 def decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after):
-    print('decrease oom_score_adj...')
+    #print('Decrease oom_score_adj...')
     # цикл для наполнения oom_list
     for i in os.listdir('/proc'):
 
@@ -40,6 +61,7 @@ def decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after):
         except ProcessLookupError:
             pass
 
+
 # чтение первой строки файла
 def rline1(path):
     with open(path) as f:
@@ -53,6 +75,7 @@ def write(path, string):
         f.write(string)
 
 
+# возвращает словарь с параметрами из конфига
 def config_parser(config):
     if os.path.exists(config):
         try:
@@ -73,23 +96,9 @@ def config_parser(config):
         return 1
 
 
-def sig_level_to_kb(string):
-    if string.endswith('%'):
-        return mem_total * float(string[:-1].strip()) / 100
-    if string.endswith('KiB'):
-        return float(string[:-3].strip())
-    if string.endswith('MiB'):
-        return float(string[:-3].strip()) * 1024
-    if string.endswith('GiB'):
-        return float(string[:-3].strip()) * 1048576
+def to_percent(num):
+    return str(round(num * 100, 1)).rjust(5, ' ')
 
-
-# перевод дроби в проценты
-def percent(num):
-    a = str(round(num * 100, 1)).split('.')
-    a0 = a[0].rjust(3, ' ')
-    a1 = a[1]
-    return '{}.{}'.format(a0, a1)
 
 # K -> M, выравнивание по правому краю
 def human(num):
@@ -148,7 +157,7 @@ def find_victim(signal):
     if decrease_oom_score_adj_enable and root:
         decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
 
-    print('find victim...')
+    #print('Find victim...')
 
     oom_list = []
 
@@ -184,15 +193,15 @@ def find_victim(signal):
 
         try:
             os.kill(int(pid), signal)
-            print('Success\n')
+            print('Success')
         except ProcessLookupError:
-            print('No such process\n')
+            print('No such process')
         except PermissionError:
-            print('Operation not permitted\n')
+            print('Operation not permitted')
 
     else:
 
-        print('\noom_score {} < oom_score_min {}\n'.format(oom_score, oom_score_min))
+        print('oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
 
 
 ###########################################################################################
@@ -202,7 +211,6 @@ def find_victim(signal):
 
 
 # ищем позиции
-
 with open('/proc/meminfo') as file:
     mem_list = file.readlines()
 
@@ -219,12 +227,10 @@ swap_free_index = swap_total_index + 1
 
 mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
 
-###############################################################################################
+
+
 
 config_dict = config_parser(config)
-
-print(config_dict, '\n')
-
 
 if config_dict is 1:
     print('config {} does not exists'.format(config))
@@ -277,12 +283,6 @@ else:
         swap_min_sigkill = config_dict['swap_min_sigkill']
         print('swap_min_sigkill: {}'.format(swap_min_sigkill))
 
-    if 'check_zram' in config_dict:
-        check_zram = config_dict['check_zram']
-        if check_zram == 'yes':
-            check_zram = True
-        print('check_zram: {}'.format(check_zram))
-
     if 'zram_max_sigterm' in config_dict:
         zram_max_sigterm = config_dict['zram_max_sigterm']
         print('zram_max_sigterm: {}'.format(zram_max_sigterm))
@@ -294,7 +294,6 @@ else:
     if 'min_delay_after_sigterm' in config_dict:
         min_delay_after_sigterm = float(config_dict['min_delay_after_sigterm'])
         print('min_delay_after_sigterm: {}'.format(min_delay_after_sigterm))
-
 
     if 'min_delay_after_sigkill' in config_dict:
         min_delay_after_sigkill = float(config_dict['min_delay_after_sigkill'])
@@ -318,51 +317,67 @@ else:
         oom_score_adj_after = config_dict['oom_score_adj_after']
         print('oom_score_adj_after: {}'.format(oom_score_adj_after))
 
-    if 'use_lists' in config_dict:
-        use_lists = config_dict['use_lists']
-        if use_lists == 'yes':
-            use_lists = True
-        print('use_lists: {}'.format(use_lists))
 
-    if 'white_list' in config_dict:
-        white_list = config_dict['white_list'].split(',')
-        for i in range(len(white_list)):
-            white_list[i] = white_list[i].strip()
-        print('white_list: {}'.format(white_list))
 
-    if 'avoid_list' in config_dict:
-        avoid_list = config_dict['avoid_list'].split(',')
-        for i in range(len(avoid_list)):
-            avoid_list[i] = avoid_list[i].strip()
-        print('avoid_list: {}'.format(avoid_list))
 
-    if 'avoid_ratio' in config_dict:
-        avoid_ratio = float(config_dict['avoid_ratio'])
-        print('avoid_ratio: {}'.format(avoid_ratio))
 
-    if 'black_list' in config_dict:
-        black_list = config_dict['black_list'].split(',')
-        for i in range(len(black_list)):
-            black_list[i] = black_list[i].strip()
-        print('black_list: {}'.format(black_list))
 
-    if 'prefer_list' in config_dict:
-        prefer_list = config_dict['prefer_list'].split(',')
-        for i in range(len(prefer_list)):
-            prefer_list[i] = prefer_list[i].strip()
-        print('prefer_list: {}'.format(prefer_list))
-
-    if 'prefer_ratio' in config_dict:
-        prefer_ratio = float(config_dict['prefer_ratio'])
-        print('prefer_ratio: {}\n'.format(prefer_ratio))
-
+def sig_level_to_kb(string):
+    if string.endswith('%'):
+        return float(string[:-1].strip()) / 100 * mem_total
+    if string.endswith('K'):
+        return float(string[:-1].strip())
+    if string.endswith('M'):
+        return float(string[:-1].strip()) * 1024
+    if string.endswith('G'):
+        return float(string[:-1].strip()) * 1048576
 
 mem_min_sigterm_kb = sig_level_to_kb(mem_min_sigterm)
 mem_min_sigkill_kb = sig_level_to_kb(mem_min_sigkill)
-swap_min_sigterm_kb = sig_level_to_kb(swap_min_sigterm)
-swap_min_sigkill_kb = sig_level_to_kb(swap_min_sigkill)
 zram_max_sigterm_kb = sig_level_to_kb(zram_max_sigterm)
 zram_max_sigkill_kb = sig_level_to_kb(zram_max_sigkill)
+
+
+
+
+
+
+# возвращает число килобайт при задании в конфиге абсолютного значения,
+# или кортеж с числом процентов
+def sig_level_to_kb_swap(string):
+
+    if string.endswith('%'):
+        return float(string[:-1].strip()), True
+
+    if string.endswith('K'):
+        return float(string[:-1].strip())
+    if string.endswith('M'):
+        return float(string[:-1].strip()) * 1024
+    if string.endswith('G'):
+        return float(string[:-1].strip()) * 1048576
+
+# получаем число килобайт или кортеж с процентами
+swap_min_sigterm_swap = sig_level_to_kb_swap(swap_min_sigterm)
+swap_min_sigkill_swap = sig_level_to_kb_swap(swap_min_sigkill)
+
+if type(swap_min_sigterm_swap) is tuple:
+    swap_term_is_percent = True
+    swap_min_sigterm_percent = swap_min_sigterm_swap[0]
+else:
+    swap_term_is_percent = False
+    swap_min_sigterm_kb = swap_min_sigterm_swap
+
+if type(swap_min_sigkill_swap) is tuple:
+    swap_kill_is_percent = True
+    swap_min_sigkill_percent = swap_min_sigkill_swap[0]
+else:
+    swap_kill_is_percent = False
+    swap_min_sigkill_kb = swap_min_sigkill_swap
+
+
+# print('\nswap term is percent:', swap_term_is_percent)
+# print('swap kill is percent:', swap_kill_is_percent)
+
 
 
 
@@ -408,6 +423,8 @@ except OSError:
 
 
 
+def kib_to_mib(num):
+    return round(num / 1024.0)
 
 ###########################################################################################
 
@@ -430,8 +447,15 @@ while True:
                 swap_free = int(line.split(':')[1].split(' ')[-2])
                 break
 
+    if swap_kill_is_percent:
+        swap_min_sigkill_kb = swap_total * swap_min_sigkill_percent / 100.0
 
-    # тут находим фулл зрам
+    if swap_term_is_percent:
+        swap_min_sigterm_kb = swap_total * swap_min_sigterm_percent / 100.0
+
+
+
+    # находим MemUsedZram
     disksize_sum = 0
     mem_used_total_sum = 0
 
@@ -444,67 +468,90 @@ while True:
             disksize_sum += int(stat[0])
             mem_used_total_sum += int(stat[1])
 
-    full_zram = (
+    mem_used_zram = (
         mem_used_total_sum + disksize_sum * zram_disksize_factor
         ) / 1024.0
 
 
-    # если не печатать периоды, то можно это вынести в конец
-    t_mem = mem_available / 1024.0 / 1024.0 / rate_mem
 
-    t_swap = swap_free / 1024.0 / 1024.0 / rate_swap
 
-    # fullzram может превысить 09, будет отриц значение
-    # memtotal * 0.9 - это фактически макс память для зрам
-    t_zram = (mem_total * 0.8 - full_zram)  / 1024.0 / 1024.0 / rate_zram
-    if t_zram <= 0:
+    t_mem = mem_available / 1000000.0 / rate_mem
+    t_swap = swap_free / 10000000.0 / rate_swap
+    t_zram = (mem_total * 0.8 - mem_used_zram)  / 1000000.0 / rate_zram
+    if t_zram < 0.01:
         t_zram = 0.01
 
-    t1 = t_mem + t_swap
-    t2 = t_mem + t_zram
+    t_mem_swap = t_mem + t_swap
+    t_mem_zram = t_mem + t_zram
 
-    # используем наименьший
-    if t1 <= t2:
-        t = t1
+    if t_mem_swap <= t_mem_zram:
+        t = t_mem_swap
     else:
-        t = t2
+        t = t_mem_zram
 
 
+    # печать состояния памяти
     print(
-        '{}  Mem: {} M, Swap: {} M, Zram: {} M'.format(
-            strftime("%Y-%b-%d %H:%M:%S", gmtime()), 
+        'MemAvail: {}M {}%, SwapFree: {}M {}%, MemUsedZram: {}M {}%'.format(
             human(mem_available), 
+            to_percent(mem_available / mem_total), 
             human(swap_free), 
-            human(full_zram)
+            to_percent(swap_free / (swap_total + 0.0001)), 
+            human(mem_used_zram),
+            to_percent(mem_used_zram / mem_total)
             )
         )
 
 
+    # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
-        print('mem_available < mem_min_sigkill and swap_free < swap_min_sigkill')
+        print(
+            'MemAvailable {}M < {}M and SwapFree {}M < {}M'.format(
+                kib_to_mib(mem_available), 
+                kib_to_mib(mem_min_sigkill_kb), 
+                kib_to_mib(swap_free), 
+                kib_to_mib(swap_min_sigkill_kb)
+                )
+            )
         find_victim(SIGKILL)
         sleep(min_delay_after_sigkill)
         continue
 
-    if full_zram >= zram_max_sigkill_kb:
-        print('full_zram > zram_max_sigkill')
+    # MEM ZRAM KILL
+    if mem_used_zram >= zram_max_sigkill_kb:
+        print(
+            'MemUsedZram {}M > {}M'.format(
+                kib_to_mib(mem_used_zram),  
+                kib_to_mib(zram_max_sigkill_kb)
+                )
+            )
         find_victim(SIGKILL)
         sleep(min_delay_after_sigkill)
         continue
 
+    # MEM SWAP TERM
     if mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
-        print('mem_available < mem_min_sigterm and swap_free < swap_min_sigterm')
+        print(
+            'MemAvailable {}M < {}M and SwapFree {}M < {}M'.format(
+                kib_to_mib(mem_available), 
+                kib_to_mib(mem_min_sigterm_kb), 
+                kib_to_mib(swap_free), 
+                kib_to_mib(swap_min_sigterm_kb)
+                )
+            )
         find_victim(SIGTERM)
         sleep(min_delay_after_sigterm)
 
-    if full_zram >= zram_max_sigterm_kb:
-        print('zram_part > zram_max_sigterm')
+    # MEM ZRAM TERM
+    if mem_used_zram >= zram_max_sigterm_kb:
+        print(
+            'MemUsedZram {}M > {}M'.format(
+                kib_to_mib(mem_used_zram),  
+                kib_to_mib(zram_max_sigterm_kb)
+                )
+            )
         find_victim(SIGTERM)
         sleep(min_delay_after_sigterm)
-        # вариант - перенести задержку в фц поиска жертв
 
     sleep(t)
-
-
-
 
