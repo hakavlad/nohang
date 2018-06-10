@@ -219,7 +219,7 @@ else:
 
     if 'mlockall' in config_dict:
         mlockall = config_dict['mlockall']
-        if mlockall == 'yes':
+        if mlockall == 'True':
             mlockall = True
         print('mlockall: {}'.format(mlockall))
 
@@ -281,7 +281,7 @@ else:
 
     if 'decrease_oom_score_adj_enable' in config_dict:
         decrease_oom_score_adj_enable = config_dict['decrease_oom_score_adj_enable']
-        if decrease_oom_score_adj_enable == 'yes':
+        if decrease_oom_score_adj_enable == 'True':
             decrease_oom_score_adj_enable = True
         print('decrease_oom_score_adj_enable: {}'.format(decrease_oom_score_adj_enable))
 
@@ -364,7 +364,7 @@ print()
 
 # lock all memory for prevent swapping
 if mlockall:
-    print('mlockall = yes')
+    print('mlockall = True')
     print('try to lock memory...')
     result = CDLL('libc.so.6', use_errno=True).mlockall(3)
     if result is 0:
@@ -372,7 +372,7 @@ if mlockall:
     else:
         print('cannot lock memory!', 'result', result)
 else:
-    print('mlockall != yes')
+    print('mlockall != True')
 
 
 # повышаем приоритет
@@ -520,5 +520,8 @@ while True:
         find_victim_and_send_signal(15)
         sleep(min_delay_after_sigterm)
 
-    sleep(t)
+    try:
+        sleep(t)
+    except KeyboardInterrupt:
+        exit()
 
