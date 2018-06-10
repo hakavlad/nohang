@@ -47,24 +47,21 @@ https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 - по умолчанию высокий приоритет процесса `nice -20`, может регулироваться через конфиг
 - предотвращение самоубийства с помощью `self_oom_score_adj = -1000`
 - возможность задания `oom_score_min` для предотвращения убийства невиновных
+- опциональность печати результатов проверки памяти
 - `min_delay_after_sigkill` для предотвращения массовых убийств
 - наличие `man` страницы
 - наличие установщика для пользователей `systemd`
 - протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
 - пример вывода с отчетом об успешной отпраке сигнала:
 ```
-MemAvail:     0M   0.0%, SwapFree:   985M   8.4%, MemUsedZram:   625M  10.6%
-MemAvail:     0M   0.0%, SwapFree:   962M   8.2%, MemUsedZram:   626M  10.6%
-MemAvail:     9M   0.1%, SwapFree:   939M   8.0%, MemUsedZram:   626M  10.7%
-MemAvailable 9M < 353M and SwapFree 939M < 940M
-Try to send signal 15 to process python3, Pid 3392, oom_score 818
-Success
-MemAvail:    29M   0.5%, SwapFree:  2866M  24.4%, MemUsedZram:   582M   9.9%
-MemAvail:    77M   1.3%, SwapFree:  5037M  42.9%, MemUsedZram:   532M   9.1%
-MemAvail:   168M   2.9%, SwapFree:  8956M  76.2%, MemUsedZram:   441M   7.5%
-MemAvail:  5006M  85.2%, SwapFree: 10632M  90.5%, MemUsedZram:   356M   6.1%
-MemAvail:  5000M  85.1%, SwapFree: 10633M  90.5%, MemUsedZram:   356M   6.1%
-
+MemAvail:     0M   0.0%, SwapFree:   706M   6.0%, MemUsedZram:   357M   6.1%
+MemAvail:     0M   0.0%, SwapFree:   411M   3.5%, MemUsedZram:   362M   6.2%
++ MemAvail (0M, 0.0%) < mem_min_sigterm (235M, 4.0%)
+  SwapFree (411M, 3.5%) < swap_min_sigterm (470M, 4.0%)
+  Try to send signal 15 to python3, Pid 3930, oom_score 903
+  Success
+MemAvail:   107M   1.8%, SwapFree:  3461M  29.5%, MemUsedZram:   311M   5.3%
+MemAvail:  5159M  87.8%, SwapFree: 11311M  96.3%, MemUsedZram:   186M   3.2%
 ```
 
 ### Установка и удаление для пользователей systemd
@@ -91,8 +88,7 @@ sudo ./uninstall.sh
 ```
 /etc/nohang/nohang.conf
 ```
-К опциям прилагается описание. Отредактируйте значения параметров в соответствии с вашими предпочтениями.
+К опциям прилагается описание. Отредактируйте значения параметров в соответствии с вашими предпочтениями и перезапустите сервис командой `sudo systemctl restart nohang`.
 
 ### Известные баги
-Известных нет, если найдете - пишите в [Issues](https://github.com/hakavlad/nohang/issues).
-
+В рабочем алгоритме известных нет, если найдете - пишите в [Issues](https://github.com/hakavlad/nohang/issues).

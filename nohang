@@ -8,38 +8,295 @@ from operator import itemgetter
 from time import sleep
 from argparse import ArgumentParser
 
+# найден экспериментально, требует уточнения с разными ядрами и архитектурами
+zram_disksize_factor = 0.0042
 
+# где искать конфиг, если не указан через --config
+default_configs = ('./nohang.conf', '/etc/nohang/nohang.conf')
+
+err_mess = '\nSet up path to the valid config file with -c/--config CONFIG option!\nexit'
+
+
+# парсинг аргументов командной строки
 parser = ArgumentParser()
 parser.add_argument(
     '-c', 
     '--config', 
-    help='path to config file, default values: ./nohang.conf, /etc/nohang/nohang.conf', 
+    help='path to the config file, default values: ./nohang.conf, /etc/nohang/nohang.conf', 
     default=None, 
     type=str
     )
+
 arg_config = parser.parse_args().config
 
 
-# ветвление требует переработки и лучшей обработки исключений
-if arg_config != None:
-    if os.path.exists:
+
+if arg_config is None:
+
+    # print('конфиг не задан через опцию -с/--config, берем его из дефолтных путей')
+    del arg_config
+
+    config = None
+    for i in default_configs:
+        if os.path.exists(i):
+            config = i
+            break
+    if config is None:
+        print('По дефолтным путям конфиг не найден', err_mess)
+        exit()
+
+else:
+
+    # print('через опцию задан путь к конфигу {}'.format(arg_config))
+
+    if os.path.exists(arg_config):
         config = arg_config
     else:
-        print('Указанный конфиг файл {} не существует!'.format(arg_config))
+        print('нет файла по указанному пути: {}'.format(arg_config), err_mess)
         exit()
-elif os.path.exists('./nohang.conf'):
-    config = './nohang.conf'
-elif os.path.exists('/etc/nohang/nohang.conf'):
-    config = '/etc/nohang/nohang.conf'
-else:
-    print('Пожалуйста, укажите путь к конфигу опцией -c или --config')
+
+
+
+
+print('path to config:', config)
+
+
+
+
+
+try:
+    with open(config) as f:
+        config_dict = dict()
+        for  line in f:
+            a = line.startswith('#')
+            b = line.startswith('\n')
+            c = line.startswith('\t')
+            d = line.startswith(' ')
+            if not a and not b and not c and not d: 
+                a = line.split('=')
+                config_dict[a[0].strip()] = a[1].strip()
+except PermissionError:
+    print('PermissionError', err_mess)
+    exit()
+except UnicodeDecodeError:
+    print('UnicodeDecodeError', err_mess)
+    exit()
+except IsADirectoryError:
+    print('IsADirectoryError', err_mess)
+    exit()
+except IndexError:
+    print('IndexError', err_mess)
     exit()
 
-# найден экспериментально, требует уточнения с разными ядрами и архитектурами
-zram_disksize_factor = 0.0042
+
+
+
+if 'print_mem_check_results' in config_dict:
+    print_mem_check_results = config_dict['print_mem_check_results']
+    if print_mem_check_results == 'True':
+        print_mem_check_results = True
+    elif print_mem_check_results == 'False':
+        print_mem_check_results = False
+    else:
+        print(
+            'invalid mlockall value {} (should be True or False), exit!'.format(
+                print_mem_check_results
+                )
+            )
+        exit()
+    print('print_mem_check_results: {}'.format(print_mem_check_results))
+else:
+    print('print_mem_check_results not in config, exit!')
+    exit()
+
+
+if 'mlockall' in config_dict:
+    mlockall = config_dict['mlockall']
+    if mlockall == 'True':
+        mlockall = True
+    elif mlockall == 'False':
+        mlockall = False
+    else:
+        print(
+            'invalid mlockall value {} (should be True or False), exit!'.format(
+                mlockall
+                )
+            )
+        exit()
+    print('mlockall: {}'.format(mlockall))
+else:
+    print('mlockall not in config, exit!')
+    exit()
+
+
+if 'self_nice' in config_dict:
+    self_nice = int(config_dict['self_nice'])
+    print('self_nice: {}'.format(self_nice))
+else:
+    print('self_nice not in config, exit!')
+    exit()
+
+
+if 'self_oom_score_adj' in config_dict:
+    self_oom_score_adj = int(config_dict['self_oom_score_adj'])
+    print('self_oom_score_adj: {}'.format(self_oom_score_adj))
+else:
+    print('self_oom_score_adj not in config, exit!')
+    exit()
+
+
+if 'rate_mem' in config_dict:
+    rate_mem = float(config_dict['rate_mem'])
+    if rate_mem <= 0:
+        print('rate_mem должен быть положительным')
+        exit()
+    print('rate_mem: {}'.format(rate_mem))
+else:
+    print('rate_mem not in config, exit!')
+    exit()
+
+
+if 'rate_swap' in config_dict:
+    rate_swap = float(config_dict['rate_swap'])
+    if rate_swap <= 0:
+        print('rate_swap должен быть положительным')
+        exit()
+    print('rate_swap: {}'.format(rate_swap))
+else:
+    print('rate_swap not in config, exit!')
+    exit()
+
+
+if 'rate_zram' in config_dict:
+    rate_zram = float(config_dict['rate_zram'])
+    if rate_zram <= 0:
+        print('rate_zram должен быть положительным')
+        exit()
+    print('rate_zram: {}'.format(rate_zram))
+else:
+    print('rate_zram not in config, exit!')
+    exit()
+
+
+if 'mem_min_sigterm' in config_dict:
+    mem_min_sigterm = config_dict['mem_min_sigterm']
+    print('mem_min_sigterm: {}'.format(mem_min_sigterm))
+else:
+    print('mem_min_sigterm not in config, exit!')
+    exit()
+
+
+if 'mem_min_sigkill' in config_dict:
+    mem_min_sigkill = config_dict['mem_min_sigkill']
+    print('mem_min_sigkill: {}'.format(mem_min_sigkill))
+else:
+    print('mem_min_sigkill not in config, exit!')
+    exit()
+
+
+if 'swap_min_sigterm' in config_dict:
+    swap_min_sigterm = config_dict['swap_min_sigterm']
+    print('swap_min_sigterm: {}'.format(swap_min_sigterm))
+else:
+    print('swap_min_sigterm not in config, exit!')
+    exit()
+
+
+if 'swap_min_sigkill' in config_dict:
+    swap_min_sigkill = config_dict['swap_min_sigkill']
+    print('swap_min_sigkill: {}'.format(swap_min_sigkill))
+else:
+    print('swap_min_sigkill not in config, exit!')
+    exit()
+
+
+if 'zram_max_sigterm' in config_dict:
+    zram_max_sigterm = config_dict['zram_max_sigterm']
+    print('zram_max_sigterm: {}'.format(zram_max_sigterm))
+else:
+    print('zram_max_sigterm not in config, exit!')
+    exit()
+
+
+if 'zram_max_sigkill' in config_dict:
+    zram_max_sigkill = config_dict['zram_max_sigkill']
+    print('zram_max_sigkill: {}'.format(zram_max_sigkill))
+else:
+    print('zram_max_sigkill not in config, exit!')
+    exit()
+
+
+if 'min_delay_after_sigterm' in config_dict:
+    min_delay_after_sigterm = float(config_dict['min_delay_after_sigterm'])
+    print('min_delay_after_sigterm: {}'.format(min_delay_after_sigterm))
+else:
+    print('min_delay_after_sigterm not in config, exit!')
+    exit()
+
+
+if 'min_delay_after_sigkill' in config_dict:
+    min_delay_after_sigkill = float(config_dict['min_delay_after_sigkill'])
+    print('min_delay_after_sigkill: {}'.format(min_delay_after_sigkill))
+else:
+    print('min_delay_after_sigkill not in config, exit!')
+    exit()
+
+
+if 'oom_score_min' in config_dict:
+    oom_score_min = int(config_dict['oom_score_min'])
+    print('oom_score_min: {}'.format(oom_score_min))
+else:
+    print('oom_score_min not in config, exit!')
+    exit()
+
+
+if 'decrease_oom_score_adj_enable' in config_dict:
+    decrease_oom_score_adj_enable = config_dict['decrease_oom_score_adj_enable']
+    if decrease_oom_score_adj_enable == 'True':
+        decrease_oom_score_adj_enable = True
+    elif decrease_oom_score_adj_enable == 'False':
+        decrease_oom_score_adj_enable = False
+    else:
+        print(
+            'invalid mlockall value {} (should be True or False), exit!'.format(
+                decrease_oom_score_adj_enable
+                )
+            )
+        exit()
+    print('decrease_oom_score_adj_enable: {}'.format(decrease_oom_score_adj_enable))
+else:
+    print('decrease_oom_score_adj_enable not in config, exit!')
+    exit()
+
+
+if 'oom_score_adj_before' in config_dict:
+    oom_score_adj_before = int(config_dict['oom_score_adj_before'])
+    print('oom_score_adj_before: {}'.format(oom_score_adj_before))
+else:
+    print('oom_score_adj_before not in config, exit!')
+    exit()
+
+
+if 'oom_score_adj_after' in config_dict:
+    oom_score_adj_after = config_dict['oom_score_adj_after']
+    print('oom_score_adj_after: {}'.format(oom_score_adj_after))
+else:
+    print('oom_score_adj_after not in config, exit!')
+    exit()
+
+
+
 
 
 ###########################################################################################
+
+
+
+
+
+
+
+
 
 
 def decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after):
@@ -72,30 +329,14 @@ def rline1(path):
 def write(path, string):
     with open(path, 'w') as f:
         f.write(string)
+# дикриз не от рута
 
 
-# возвращает словарь с параметрами из конфига
-def config_parser(config):
-    if os.path.exists(config):
-        try:
-            with open(config) as f:
-                name_value_dict = dict()
-                for  line in f:
-                    a = line.startswith('#')
-                    b = line.startswith('\n')
-                    c = line.startswith('\t')
-                    d = line.startswith(' ')
-                    if not a and not b and not c and not d: 
-                        a = line.split('=')
-                        name_value_dict[a[0].strip()] = a[1].strip()
-            return name_value_dict
-        except PermissionError:
-            return 2
-    else:
-        return 1
+def percent(n):
+    return round(n * 100, 1)
 
 
-def to_percent(num):
+def just_percent(num):
     return str(round(num * 100, 1)).rjust(5, ' ')
 
 
@@ -163,22 +404,22 @@ def find_victim_and_send_signal(signal):
         name = pid_to_name(pid)
 
         print(
-            'Try to send signal {} to process {}, Pid {}, oom_score {}'.format(
+            '  Try to send signal {} to {}, Pid {}, oom_score {}'.format(
                 signal, name, pid, oom_score
                 )
             )
 
         try:
             os.kill(int(pid), signal)
-            print('Success')
+            print('  Success')
         except ProcessLookupError:
-            print('No such process')
+            print('  No such process')
         except PermissionError:
-            print('Operation not permitted')
+            print('  Operation not permitted')
 
     else:
 
-        print('oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
+        print('  oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
 
 
 ###########################################################################################
@@ -206,111 +447,26 @@ mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
 
 
 
-config_dict = config_parser(config)
-
-if config_dict is 1:
-    print('config {} does not exists'.format(config))
-
-elif config_dict is 2:
-    print('cannot read config {}, permission error'.format(config))
-
-else:
-    print('config: {}\n'.format(config))
-
-    if 'mlockall' in config_dict:
-        mlockall = config_dict['mlockall']
-        if mlockall == 'True':
-            mlockall = True
-        print('mlockall: {}'.format(mlockall))
-
-    if 'self_nice' in config_dict:
-        self_nice = int(config_dict['self_nice'])
-        print('self_nice: {}'.format(self_nice))
-
-    if 'self_oom_score_adj' in config_dict:
-        self_oom_score_adj = int(config_dict['self_oom_score_adj'])
-        print('self_oom_score_adj: {}'.format(self_oom_score_adj))
-
-    if 'rate_mem' in config_dict:
-        rate_mem = float(config_dict['rate_mem'])
-        print('rate_mem: {}'.format(rate_mem))
-
-    if 'rate_swap' in config_dict:
-        rate_swap = float(config_dict['rate_swap'])
-        print('rate_swap: {}'.format(rate_swap))
-
-    if 'rate_zram' in config_dict:
-        rate_zram = float(config_dict['rate_zram'])
-        print('rate_zram: {}'.format(rate_zram))
-
-    if 'mem_min_sigterm' in config_dict:
-        mem_min_sigterm = config_dict['mem_min_sigterm']
-        print('mem_min_sigterm: {}'.format(mem_min_sigterm))
-
-    if 'mem_min_sigkill' in config_dict:
-        mem_min_sigkill = config_dict['mem_min_sigkill']
-        print('mem_min_sigkill: {}'.format(mem_min_sigkill))
-
-    if 'swap_min_sigterm' in config_dict:
-        swap_min_sigterm = config_dict['swap_min_sigterm']
-        print('swap_min_sigterm: {}'.format(swap_min_sigterm))
-
-    if 'swap_min_sigkill' in config_dict:
-        swap_min_sigkill = config_dict['swap_min_sigkill']
-        print('swap_min_sigkill: {}'.format(swap_min_sigkill))
-
-    if 'zram_max_sigterm' in config_dict:
-        zram_max_sigterm = config_dict['zram_max_sigterm']
-        print('zram_max_sigterm: {}'.format(zram_max_sigterm))
-
-    if 'zram_max_sigkill' in config_dict:
-        zram_max_sigkill = config_dict['zram_max_sigkill']
-        print('zram_max_sigkill: {}'.format(zram_max_sigkill))
-
-    if 'min_delay_after_sigterm' in config_dict:
-        min_delay_after_sigterm = float(config_dict['min_delay_after_sigterm'])
-        print('min_delay_after_sigterm: {}'.format(min_delay_after_sigterm))
-
-    if 'min_delay_after_sigkill' in config_dict:
-        min_delay_after_sigkill = float(config_dict['min_delay_after_sigkill'])
-        print('min_delay_after_sigkill: {}'.format(min_delay_after_sigkill))
-
-    if 'oom_score_min' in config_dict:
-        oom_score_min = int(config_dict['oom_score_min'])
-        print('oom_score_min: {}'.format(oom_score_min))
-
-    if 'decrease_oom_score_adj_enable' in config_dict:
-        decrease_oom_score_adj_enable = config_dict['decrease_oom_score_adj_enable']
-        if decrease_oom_score_adj_enable == 'True':
-            decrease_oom_score_adj_enable = True
-        print('decrease_oom_score_adj_enable: {}'.format(decrease_oom_score_adj_enable))
-
-    if 'oom_score_adj_before' in config_dict:
-        oom_score_adj_before = int(config_dict['oom_score_adj_before'])
-        print('oom_score_adj_before: {}'.format(oom_score_adj_before))
-
-    if 'oom_score_adj_after' in config_dict:
-        oom_score_adj_after = config_dict['oom_score_adj_after']
-        print('oom_score_adj_after: {}'.format(oom_score_adj_after))
-
-
-
-
 def sig_level_to_kb(string):
     if string.endswith('%'):
         return float(string[:-1].strip()) / 100 * mem_total
-    if string.endswith('K'):
+    elif string.endswith('K'):
         return float(string[:-1].strip())
-    if string.endswith('M'):
+    elif string.endswith('M'):
         return float(string[:-1].strip()) * 1024
-    if string.endswith('G'):
+    elif string.endswith('G'):
         return float(string[:-1].strip()) * 1048576
+    else:
+        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
+        exit()
+
+
+
 
 mem_min_sigterm_kb = sig_level_to_kb(mem_min_sigterm)
 mem_min_sigkill_kb = sig_level_to_kb(mem_min_sigkill)
 zram_max_sigterm_kb = sig_level_to_kb(zram_max_sigterm)
 zram_max_sigkill_kb = sig_level_to_kb(zram_max_sigkill)
-
 
 
 
@@ -321,12 +477,16 @@ def sig_level_to_kb_swap(string):
     if string.endswith('%'):
         return float(string[:-1].strip()), True
 
-    if string.endswith('K'):
+    elif string.endswith('K'):
         return float(string[:-1].strip())
-    if string.endswith('M'):
+    elif string.endswith('M'):
         return float(string[:-1].strip()) * 1024
-    if string.endswith('G'):
+    elif string.endswith('G'):
         return float(string[:-1].strip()) * 1048576
+    else:
+        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
+        exit()
+
 
 # получаем число килобайт или кортеж с процентами
 swap_min_sigterm_swap = sig_level_to_kb_swap(swap_min_sigterm)
@@ -400,7 +560,10 @@ def kib_to_mib(num):
 
 ###########################################################################################
 
-print()
+
+
+
+print('Start monitoring...')
 
 # рабочий цикл
 while True:
@@ -457,27 +620,44 @@ while True:
         t = t_mem_zram
 
 
-    # печать состояния памяти
-    print(
-        'MemAvail: {}M {}%, SwapFree: {}M {}%, MemUsedZram: {}M {}%'.format(
-            human(mem_available), 
-            to_percent(mem_available / mem_total), 
-            human(swap_free), 
-            to_percent(swap_free / (swap_total + 0.0001)), 
-            human(mem_used_zram),
-            to_percent(mem_used_zram / mem_total)
+    if print_mem_check_results:
+        print(
+            'MemAvail: {}M {}%, SwapFree: {}M {}%, MemUsedZram: {}M {}%'.format(
+                human(mem_available), 
+                just_percent(mem_available / mem_total), 
+                human(swap_free), 
+                just_percent(swap_free / (swap_total + 0.0001)), 
+                human(mem_used_zram),
+                just_percent(mem_used_zram / mem_total)
+                )
             )
-        )
+
+
+
+    if swap_total > swap_min_sigkill_kb:
+        swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 1))
+    else:
+        swap_sigkill_pc = '-'
+
+    if swap_total > swap_min_sigterm_kb:
+        swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 1))
+    else:
+        swap_sigterm_pc = '-'
 
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         print(
-            'MemAvailable {}M < {}M and SwapFree {}M < {}M'.format(
-                kib_to_mib(mem_available), 
-                kib_to_mib(mem_min_sigkill_kb), 
-                kib_to_mib(swap_free), 
-                kib_to_mib(swap_min_sigkill_kb)
+            '+ MemAvail ({}M, {}%) < mem_min_sigkill ({}M, {}%)\n  SwapFree' \
+                ' ({}M, {}%) < swap_min_sigkill ({}M, {}%)'.format(
+                kib_to_mib(mem_available),
+                percent(mem_available / mem_total),
+                kib_to_mib(mem_min_sigkill_kb),
+                percent(mem_min_sigkill_kb / mem_total),
+                kib_to_mib(swap_free),
+                percent(swap_free / (swap_total + 0.0001)),
+                kib_to_mib(swap_min_sigkill_kb),
+                swap_sigkill_pc
                 )
             )
         find_victim_and_send_signal(9)
@@ -487,9 +667,11 @@ while True:
     # MEM ZRAM KILL
     if mem_used_zram >= zram_max_sigkill_kb:
         print(
-            'MemUsedZram {}M > {}M'.format(
-                kib_to_mib(mem_used_zram),  
-                kib_to_mib(zram_max_sigkill_kb)
+            '+ MemUsedZram ({}M, {}%) > zram_max_sigkill ({}M, {}%)'.format(
+                kib_to_mib(mem_used_zram),
+                percent(mem_used_zram / mem_total),
+                kib_to_mib(zram_max_sigkill_kb),
+                percent(zram_max_sigkill_kb / mem_total)
                 )
             )
         find_victim_and_send_signal(9)
@@ -499,11 +681,16 @@ while True:
     # MEM SWAP TERM
     if mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
         print(
-            'MemAvailable {}M < {}M and SwapFree {}M < {}M'.format(
-                kib_to_mib(mem_available), 
-                kib_to_mib(mem_min_sigterm_kb), 
-                kib_to_mib(swap_free), 
-                kib_to_mib(swap_min_sigterm_kb)
+            '+ MemAvail ({}M, {}%) < mem_min_sigterm ({}M, {}%)\n  SwapFree' \
+                ' ({}M, {}%) < swap_min_sigterm ({}M, {}%)'.format(
+                kib_to_mib(mem_available),
+                percent(mem_available / mem_total),
+                kib_to_mib(mem_min_sigterm_kb),
+                percent(mem_min_sigterm_kb / mem_total),
+                kib_to_mib(swap_free),
+                percent(swap_free / (swap_total + 0.0001)),
+                kib_to_mib(swap_min_sigterm_kb),
+                swap_sigterm_pc
                 )
             )
         find_victim_and_send_signal(15)
@@ -512,9 +699,11 @@ while True:
     # MEM ZRAM TERM
     if mem_used_zram >= zram_max_sigterm_kb:
         print(
-            'MemUsedZram {}M > {}M'.format(
-                kib_to_mib(mem_used_zram),  
-                kib_to_mib(zram_max_sigterm_kb)
+            '+ MemUsedZram ({}M, {}%) > zram_max_sigterm ({}M, {}%)'.format(
+                kib_to_mib(mem_used_zram),
+                percent(mem_used_zram / mem_total),
+                kib_to_mib(zram_max_sigterm_kb),
+                percent(zram_max_sigterm_kb / mem_total)
                 )
             )
         find_victim_and_send_signal(15)
