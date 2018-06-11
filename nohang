@@ -2,11 +2,20 @@
 
 # Nohang - No Hang Daemon
 
+
+###########################################################################################
+
+# - импорты
+
 import os
 from ctypes import CDLL
 from operator import itemgetter
 from time import sleep
 from argparse import ArgumentParser
+
+###########################################################################################
+
+# - задание констант
 
 # найден экспериментально, требует уточнения с разными ядрами и архитектурами
 zram_disksize_factor = 0.0042
@@ -16,6 +25,167 @@ default_configs = ('./nohang.conf', '/etc/nohang/nohang.conf')
 
 err_mess = '\nSet up path to the valid config file with -c/--config CONFIG option!\nexit'
 
+###########################################################################################
+
+# - задание функций
+
+
+
+def decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after):
+    # цикл для наполнения oom_list
+    for i in os.listdir('/proc'):
+
+        # пропускаем элементы, не состоящие только из цифр
+        if i.isdigit() is not True:
+            continue
+
+        try:
+            oom_score_adj = int(rline1('/proc/' + i + '/oom_score_adj'))
+            if oom_score_adj > oom_score_adj_before:
+                write('/proc/' + i + '/oom_score_adj', oom_score_adj_after + '\n')
+        except FileNotFoundError:
+            pass
+        except ProcessLookupError:
+            pass
+
+
+# чтение первой строки файла
+def rline1(path):
+    with open(path) as f:
+        for line in f:
+            return line[:-1]
+
+
+# запись в файл
+def write(path, string):
+    with open(path, 'w') as f:
+        f.write(string)
+
+
+def kib_to_mib(num):
+    return round(num / 1024.0)
+
+
+def percent(n):
+    return round(n * 100, 1)
+
+
+def just_percent(num):
+    return str(round(num * 100, 1)).rjust(5, ' ')
+
+
+# K -> M, выравнивание по правому краю
+def human(num):
+    return str(round(num / 1024)).rjust(5, ' ')
+
+
+# возвращает disksize и mem_used_total по zram id
+def zram_stat(zram_id):
+    try:
+        disksize = rline1('/sys/block/' + zram_id + '/disksize')
+    except FileNotFoundError:
+        return '0', '0'
+    if disksize == ['0\n']:
+        return '0', '0'
+    try:
+        mm_stat = rline1('/sys/block/' + zram_id + '/mm_stat').split(' ')
+        mm_stat_list = []
+        for i in mm_stat:
+            if i != '':
+                mm_stat_list.append(i)
+        mem_used_total = mm_stat_list[2]
+    except FileNotFoundError:
+        mem_used_total = rline1('/sys/block/' + zram_id + '/mem_used_total')
+    return disksize, mem_used_total # BYTES, str
+
+
+# имя через пид
+def pid_to_name(pid):
+    try:
+        with open('/proc/' + pid + '/status') as f:
+            for line in f:
+                return line[:-1].split('\t')[1]
+    except FileNotFoundError:
+        return '<unknown>'
+    except ProcessLookupError:
+        return '<unknown>'
+
+
+def find_victim_and_send_signal(signal):
+
+    if decrease_oom_score_adj and root:
+        decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
+
+    #print('Find victim...')
+    oom_list = []
+
+    for i in os.listdir('/proc'):
+        if i.isdigit() is not True:
+            continue
+        try:
+            oom_score = int(rline1('/proc/' + i + '/oom_score'))
+        except FileNotFoundError:
+            oom_score = 0
+        oom_list.append((i, oom_score))
+
+    # получаем список пар (pid, oom_score)
+    pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
+    oom_score = pid_tuple_list[1]
+
+    # посылаем сигнал
+    if oom_score >= oom_score_min:
+        pid = pid_tuple_list[0]
+        name = pid_to_name(pid)
+
+        print(
+            '  Try to send signal {} to {}, Pid {}, oom_score {}'.format(
+                signal, name, pid, oom_score
+                )
+            )
+
+        try:
+            os.kill(int(pid), signal)
+            print('  Success')
+        except ProcessLookupError:
+            print('  No such process')
+        except PermissionError:
+            print('  Operation not permitted')
+
+    else:
+
+        print('  oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
+
+
+###########################################################################################
+
+# - поиск позиций
+
+
+# ищем позиции
+with open('/proc/meminfo') as file:
+    mem_list = file.readlines()
+
+mem_list_names = []
+for s in mem_list:
+    mem_list_names.append(s.split(':')[0])
+
+if mem_list_names[2] != 'MemAvailable':
+    print('Your Linux kernel is too old (3.14+ requie), bye!')
+    exit()
+
+swap_total_index = mem_list_names.index('SwapTotal')
+swap_free_index = swap_total_index + 1
+
+mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
+
+
+# еще найти позиции VmRSS & VmSwap
+
+
+
+###########################################################################################
+
+# - получение пути к конфигу
 
 # парсинг аргументов командной строки
 parser = ArgumentParser()
@@ -28,7 +198,6 @@ parser.add_argument(
     )
 
 arg_config = parser.parse_args().config
-
 
 
 if arg_config is None:
@@ -59,6 +228,11 @@ else:
 print('Path to nohang config file:', config)
 
 
+###########################################################################################
+
+# - парсинг конфига с получением словаря параметров
+
+
 try:
     with open(config) as f:
         config_dict = dict()
@@ -84,11 +258,10 @@ except IndexError:
     exit()
 
 
-
 ###########################################################################################
 
+# - извлечение параметров из словаря, проверка наличия всех необходимых параметров
 
-# проверка наличия параметров в словаре, их извречение из словаря
 
 
 if 'print_config' in config_dict:
@@ -236,21 +409,21 @@ else:
     print('oom_score_min not in config, exit!')
     exit()
 
-if 'decrease_oom_score_adj_enable' in config_dict:
-    decrease_oom_score_adj_enable = config_dict['decrease_oom_score_adj_enable']
-    if decrease_oom_score_adj_enable == 'True':
-        decrease_oom_score_adj_enable = True
-    elif decrease_oom_score_adj_enable == 'False':
-        decrease_oom_score_adj_enable = False
+if 'decrease_oom_score_adj' in config_dict:
+    decrease_oom_score_adj = config_dict['decrease_oom_score_adj']
+    if decrease_oom_score_adj == 'True':
+        decrease_oom_score_adj = True
+    elif decrease_oom_score_adj == 'False':
+        decrease_oom_score_adj = False
     else:
         print(
-            'invalid decrease_oom_score_adj_enable value {} (should be True or False), exit!'.format(
-                decrease_oom_score_adj_enable
+            'invalid decrease_oom_score_adj value {} (should be True or False), exit!'.format(
+                decrease_oom_score_adj
                 )
             )
         exit()
 else:
-    print('decrease_oom_score_adj_enable not in config, exit!')
+    print('decrease_oom_score_adj not in config, exit!')
     exit()
 
 if 'oom_score_adj_before' in config_dict:
@@ -266,7 +439,73 @@ else:
     exit()
 
 
+
 ###########################################################################################
+
+# - получение уровней в килобайтах
+
+
+def sig_level_to_kb(string):
+    if string.endswith('%'):
+        return float(string[:-1].strip()) / 100 * mem_total
+    elif string.endswith('K'):
+        return float(string[:-1].strip())
+    elif string.endswith('M'):
+        return float(string[:-1].strip()) * 1024
+    elif string.endswith('G'):
+        return float(string[:-1].strip()) * 1048576
+    else:
+        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
+        exit()
+
+
+mem_min_sigterm_kb = sig_level_to_kb(mem_min_sigterm)
+mem_min_sigkill_kb = sig_level_to_kb(mem_min_sigkill)
+zram_max_sigterm_kb = sig_level_to_kb(zram_max_sigterm)
+zram_max_sigkill_kb = sig_level_to_kb(zram_max_sigkill)
+
+
+# возвращает число килобайт при задании в конфиге абсолютного значения,
+# или кортеж с числом процентов
+def sig_level_to_kb_swap(string):
+
+    if string.endswith('%'):
+        return float(string[:-1].strip()), True
+
+    elif string.endswith('K'):
+        return float(string[:-1].strip())
+    elif string.endswith('M'):
+        return float(string[:-1].strip()) * 1024
+    elif string.endswith('G'):
+        return float(string[:-1].strip()) * 1048576
+    else:
+        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
+        exit()
+
+
+# получаем число килобайт или кортеж с процентами
+swap_min_sigterm_swap = sig_level_to_kb_swap(swap_min_sigterm)
+swap_min_sigkill_swap = sig_level_to_kb_swap(swap_min_sigkill)
+
+if type(swap_min_sigterm_swap) is tuple:
+    swap_term_is_percent = True
+    swap_min_sigterm_percent = swap_min_sigterm_swap[0]
+else:
+    swap_term_is_percent = False
+    swap_min_sigterm_kb = swap_min_sigterm_swap
+
+if type(swap_min_sigkill_swap) is tuple:
+    swap_kill_is_percent = True
+    swap_min_sigkill_percent = swap_min_sigkill_swap[0]
+else:
+    swap_kill_is_percent = False
+    swap_min_sigkill_kb = swap_min_sigkill_swap
+
+
+
+###########################################################################################
+
+# - самозащита и печать конфига
 
 
 # повышаем приоритет
@@ -310,249 +549,34 @@ else:
 
 
 if print_config:
-    print('print_config:                  {}'.format(print_config))
-    print('print_mem_check_results:       {}'.format(print_mem_check_results))
-    print('mlockall:                      {} ({})'.format(mlockall, mla_res))
-    print('self_nice:                     {} ({})'.format(self_nice, self_nice_result))
-    print('self_oom_score_adj:            {} ({})'.format(self_oom_score_adj, self_oom_score_adj_result))
-    print('rate_mem:                      {}'.format(rate_mem))
-    print('rate_swap:                     {}'.format(rate_swap))
-    print('rate_zram:                     {}'.format(rate_zram))
-    print('mem_min_sigterm:               {}'.format(mem_min_sigterm))
-    print('mem_min_sigkill:               {}'.format(mem_min_sigkill))
-    print('swap_min_sigterm:              {}'.format(swap_min_sigterm))
-    print('swap_min_sigkill:              {}'.format(swap_min_sigkill))
-    print('zram_max_sigterm:              {}'.format(zram_max_sigterm))
-    print('zram_max_sigkill:              {}'.format(zram_max_sigkill))
-    print('min_delay_after_sigterm:       {}'.format(min_delay_after_sigterm))
-    print('min_delay_after_sigkill:       {}'.format(min_delay_after_sigkill))
-    print('oom_score_min:                 {}'.format(oom_score_min))
-    print('decrease_oom_score_adj_enable: {} ({})'.format(decrease_oom_score_adj_enable, decrease_res))
-    print('oom_score_adj_before:          {}'.format(oom_score_adj_before))
-    print('oom_score_adj_after:           {}'.format(oom_score_adj_after))
-
+    print('print_config:               {}'.format(print_config))
+    print('print_mem_check_results:    {}'.format(print_mem_check_results))
+    print('mlockall:                   {} ({})'.format(mlockall, mla_res))
+    print('self_nice:                  {} ({})'.format(self_nice, self_nice_result))
+    print('self_oom_score_adj:         {} ({})'.format(self_oom_score_adj, self_oom_score_adj_result))
+    print('rate_mem:                   {}'.format(rate_mem))
+    print('rate_swap:                  {}'.format(rate_swap))
+    print('rate_zram:                  {}'.format(rate_zram))
+    print('mem_min_sigterm:            {}'.format(mem_min_sigterm))
+    print('mem_min_sigkill:            {}'.format(mem_min_sigkill))
+    print('swap_min_sigterm:           {}'.format(swap_min_sigterm))
+    print('swap_min_sigkill:           {}'.format(swap_min_sigkill))
+    print('zram_max_sigterm:           {}'.format(zram_max_sigterm))
+    print('zram_max_sigkill:           {}'.format(zram_max_sigkill))
+    print('min_delay_after_sigterm:    {}'.format(min_delay_after_sigterm))
+    print('min_delay_after_sigkill:    {}'.format(min_delay_after_sigkill))
+    print('oom_score_min:              {}'.format(oom_score_min))
+    
+    # False (OK) - OK не нужен когда фолс
+    print('decrease_oom_score_adj:     {} ({})'.format(decrease_oom_score_adj, decrease_res))
+    print('oom_score_adj_before:       {}'.format(oom_score_adj_before))
+    print('oom_score_adj_after:        {}'.format(oom_score_adj_after))
 
 
 
 ###########################################################################################
 
-
-
-
-
-def decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after):
-    #print('Decrease oom_score_adj...')
-    # цикл для наполнения oom_list
-    for i in os.listdir('/proc'):
-
-        # пропускаем элементы, не состоящие только из цифр
-        if i.isdigit() is not True:
-            continue
-
-        try:
-            oom_score_adj = int(rline1('/proc/' + i + '/oom_score_adj'))
-            if oom_score_adj > oom_score_adj_before:
-                write('/proc/' + i + '/oom_score_adj', oom_score_adj_after + '\n')
-        except FileNotFoundError:
-            pass
-        except ProcessLookupError:
-            pass
-
-
-# чтение первой строки файла
-def rline1(path):
-    with open(path) as f:
-        for line in f:
-            return line[:-1]
-
-
-# обработать исключения!
-def write(path, string):
-    with open(path, 'w') as f:
-        f.write(string)
-# дикриз не от рута
-
-
-def percent(n):
-    return round(n * 100, 1)
-
-
-def just_percent(num):
-    return str(round(num * 100, 1)).rjust(5, ' ')
-
-
-# K -> M, выравнивание по правому краю
-def human(num):
-    return str(round(num / 1024)).rjust(5, ' ')
-
-
-# возвращает disksize и mem_used_total по zram id
-def zram_stat(zram_id):
-    try:
-        disksize = rline1('/sys/block/' + zram_id + '/disksize')
-    except FileNotFoundError:
-        return '0', '0'
-    if disksize == ['0\n']:
-        return '0', '0'
-    try:
-        mm_stat = rline1('/sys/block/' + zram_id + '/mm_stat').split(' ')
-        mm_stat_list = []
-        for i in mm_stat:
-            if i != '':
-                mm_stat_list.append(i)
-        mem_used_total = mm_stat_list[2]
-    except FileNotFoundError:
-        mem_used_total = rline1('/sys/block/' + zram_id + '/mem_used_total')
-    return disksize, mem_used_total # BYTES, str
-
-
-# имя через пид
-def pid_to_name(pid):
-    try:
-        with open('/proc/' + pid + '/status') as f:
-            for line in f:
-                return line[:-1].split('\t')[1]
-    except FileNotFoundError:
-        return '<unknown>'
-    except ProcessLookupError:
-        return '<unknown>'
-
-
-def find_victim_and_send_signal(signal):
-
-    if decrease_oom_score_adj_enable and root:
-        decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
-
-    #print('Find victim...')
-    oom_list = []
-
-    for i in os.listdir('/proc'):
-        if i.isdigit() is not True:
-            continue
-        try:
-            oom_score = int(rline1('/proc/' + i + '/oom_score'))
-        except FileNotFoundError:
-            oom_score = 0
-        oom_list.append((i, oom_score))
-
-    # получаем список пар (pid, oom_score)
-    pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
-    oom_score = pid_tuple_list[1]
-
-    # посылаем сигнал
-    if oom_score >= oom_score_min:
-        pid = pid_tuple_list[0]
-        name = pid_to_name(pid)
-
-        print(
-            '  Try to send signal {} to {}, Pid {}, oom_score {}'.format(
-                signal, name, pid, oom_score
-                )
-            )
-
-        try:
-            os.kill(int(pid), signal)
-            print('  Success')
-        except ProcessLookupError:
-            print('  No such process')
-        except PermissionError:
-            print('  Operation not permitted')
-
-    else:
-
-        print('  oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
-
-
-###########################################################################################
-
-
-# START
-
-
-# ищем позиции
-with open('/proc/meminfo') as file:
-    mem_list = file.readlines()
-
-mem_list_names = []
-for s in mem_list:
-    mem_list_names.append(s.split(':')[0])
-
-if mem_list_names[2] != 'MemAvailable':
-    print('Your Linux kernel is too old (3.14+ requie), bye!')
-    exit()
-
-swap_total_index = mem_list_names.index('SwapTotal')
-swap_free_index = swap_total_index + 1
-
-mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
-
-
-
-def sig_level_to_kb(string):
-    if string.endswith('%'):
-        return float(string[:-1].strip()) / 100 * mem_total
-    elif string.endswith('K'):
-        return float(string[:-1].strip())
-    elif string.endswith('M'):
-        return float(string[:-1].strip()) * 1024
-    elif string.endswith('G'):
-        return float(string[:-1].strip()) * 1048576
-    else:
-        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
-        exit()
-
-
-mem_min_sigterm_kb = sig_level_to_kb(mem_min_sigterm)
-mem_min_sigkill_kb = sig_level_to_kb(mem_min_sigkill)
-zram_max_sigterm_kb = sig_level_to_kb(zram_max_sigterm)
-zram_max_sigkill_kb = sig_level_to_kb(zram_max_sigkill)
-
-
-
-# возвращает число килобайт при задании в конфиге абсолютного значения,
-# или кортеж с числом процентов
-def sig_level_to_kb_swap(string):
-
-    if string.endswith('%'):
-        return float(string[:-1].strip()), True
-
-    elif string.endswith('K'):
-        return float(string[:-1].strip())
-    elif string.endswith('M'):
-        return float(string[:-1].strip()) * 1024
-    elif string.endswith('G'):
-        return float(string[:-1].strip()) * 1048576
-    else:
-        print('Конфиг инвалид, где-то неверно указаны единицы измерения')
-        exit()
-
-
-# получаем число килобайт или кортеж с процентами
-swap_min_sigterm_swap = sig_level_to_kb_swap(swap_min_sigterm)
-swap_min_sigkill_swap = sig_level_to_kb_swap(swap_min_sigkill)
-
-if type(swap_min_sigterm_swap) is tuple:
-    swap_term_is_percent = True
-    swap_min_sigterm_percent = swap_min_sigterm_swap[0]
-else:
-    swap_term_is_percent = False
-    swap_min_sigterm_kb = swap_min_sigterm_swap
-
-if type(swap_min_sigkill_swap) is tuple:
-    swap_kill_is_percent = True
-    swap_min_sigkill_percent = swap_min_sigkill_swap[0]
-else:
-    swap_kill_is_percent = False
-    swap_min_sigkill_kb = swap_min_sigkill_swap
-
-
-
-def kib_to_mib(num):
-    return round(num / 1024.0)
-
-###########################################################################################
-
-
+# - цикл проверки уровней доступной памяти
 
 print('Start monitoring...')
 
@@ -574,13 +598,12 @@ while True:
                 break
 
 
-
+    # если swap_min_sigkill задан в процентах
     if swap_kill_is_percent:
         swap_min_sigkill_kb = swap_total * swap_min_sigkill_percent / 100.0
 
     if swap_term_is_percent:
         swap_min_sigterm_kb = swap_total * swap_min_sigterm_percent / 100.0
-
 
 
     # находим MemUsedZram
@@ -596,23 +619,7 @@ while True:
         ) / 1024.0
 
 
-
-
-    t_mem = mem_available / 1000000.0 / rate_mem
-    t_swap = swap_free / 10000000.0 / rate_swap
-    t_zram = (mem_total * 0.8 - mem_used_zram)  / 1000000.0 / rate_zram
-    if t_zram < 0.01:
-        t_zram = 0.01
-
-    t_mem_swap = t_mem + t_swap
-    t_mem_zram = t_mem + t_zram
-
-    if t_mem_swap <= t_mem_zram:
-        t = t_mem_swap
-    else:
-        t = t_mem_zram
-
-
+    # печать результатов проверк доступной памяти
     if print_mem_check_results:
         print(
             'MemAvail: {}M {}%, SwapFree: {}M {}%, MemUsedZram: {}M {}%'.format(
@@ -626,7 +633,7 @@ while True:
             )
 
 
-
+    # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:
         swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 1))
     else:
@@ -657,6 +664,7 @@ while True:
         sleep(min_delay_after_sigkill)
         continue
 
+
     # MEM ZRAM KILL
     if mem_used_zram >= zram_max_sigkill_kb:
         print(
@@ -670,6 +678,7 @@ while True:
         find_victim_and_send_signal(9)
         sleep(min_delay_after_sigkill)
         continue
+
 
     # MEM SWAP TERM
     if mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
@@ -689,6 +698,7 @@ while True:
         find_victim_and_send_signal(15)
         sleep(min_delay_after_sigterm)
 
+
     # MEM ZRAM TERM
     if mem_used_zram >= zram_max_sigterm_kb:
         print(
@@ -701,6 +711,23 @@ while True:
             )
         find_victim_and_send_signal(15)
         sleep(min_delay_after_sigterm)
+
+
+    # задание периода в зависимости от рейтов и уровней доступной памяти
+    t_mem = mem_available / 1000000.0 / rate_mem
+    t_swap = swap_free / 10000000.0 / rate_swap
+    t_zram = (mem_total * 0.8 - mem_used_zram)  / 1000000.0 / rate_zram
+    if t_zram < 0.01:
+        t_zram = 0.01
+
+    t_mem_swap = t_mem + t_swap
+    t_mem_zram = t_mem + t_zram
+
+    if t_mem_swap <= t_mem_zram:
+        t = t_mem_swap
+    else:
+        t = t_mem_zram
+
 
     try:
         sleep(t)
