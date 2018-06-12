@@ -55,14 +55,14 @@ https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 - протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
 - пример вывода с отчетом об успешной отпраке сигнала:
 ```
-MemAvail:     0M   0.0%, SwapFree:   706M   6.0%, MemUsedZram:   357M   6.1%
-MemAvail:     0M   0.0%, SwapFree:   411M   3.5%, MemUsedZram:   362M   6.2%
-+ MemAvail (0M, 0.0%) < mem_min_sigterm (235M, 4.0%)
-  SwapFree (411M, 3.5%) < swap_min_sigterm (470M, 4.0%)
-  Try to send signal 15 to python3, Pid 3930, oom_score 903
+MemAvail:    0M   0.0% | SwapFree:  1400M  11.9% | MemUsedZram:  397M   6.8%
+MemAvail:    0M   0.0% | SwapFree:   861M   7.3% | MemUsedZram:  413M   7.0%
++ MemAvail (0M, 0.0%) < mem_min_sigterm (470M, 8.0%)
+  SwapFree (861M, 7.3%) < swap_min_sigterm (940M, 8.0%)
+  Try to send signal 15 to tail, Pid 10435, oom_score 826
   Success
-MemAvail:   107M   1.8%, SwapFree:  3461M  29.5%, MemUsedZram:   311M   5.3%
-MemAvail:  5159M  87.8%, SwapFree: 11311M  96.3%, MemUsedZram:   186M   3.2%
+MemAvail:  102M   1.7% | SwapFree:  8106M  69.0% | MemUsedZram:  338M   5.7%
+MemAvail: 4507M  76.7% | SwapFree: 10908M  92.8% | MemUsedZram:  296M   5.0%
 ```
 
 ### Установка и удаление для пользователей systemd
