@@ -125,7 +125,6 @@ def find_victim_and_send_signal(signal):
         func_decrease_oom_score_adj(oom_score_adj_before, oom_score_adj_after)
 
     oom_list = []
-
     for i in os.listdir('/proc'):
         if i.isdigit() is not True:
             continue
@@ -161,8 +160,17 @@ def find_victim_and_send_signal(signal):
             print('  Operation not permitted')
 
     else:
-
         print('  oom_score {} < oom_score_min {}'.format(oom_score, oom_score_min))
+
+    # спать всегда или только при успешной отправке сигнала?
+    if signal is 9:
+        if print_sleep_pediods:
+            print('  sleep', min_delay_after_sigkill)
+        sleep(min_delay_after_sigterm)
+    else:
+        if print_sleep_pediods:
+            print('  sleep', min_delay_after_sigterm)
+        sleep(min_delay_after_sigterm)
 
 
 ###########################################################################################
@@ -189,7 +197,6 @@ mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
 
 
 # еще найти позиции VmRSS & VmSwap
-
 
 
 ###########################################################################################
@@ -236,7 +243,6 @@ print('Path to nohang config file:', config)
 
 # - парсинг конфига с получением словаря параметров
 
-
 try:
     with open(config) as f:
         config_dict = dict()
@@ -267,7 +273,6 @@ except IndexError:
 # - извлечение параметров из словаря, проверка наличия всех необходимых параметров
 
 
-
 if 'print_config' in config_dict:
     print_config = config_dict['print_config']
     if print_config == 'True':
@@ -285,7 +290,6 @@ else:
     print('print_config not in config, exit!')
     exit()
 
-
 if 'print_mem_check_results' in config_dict:
     print_mem_check_results = config_dict['print_mem_check_results']
     if print_mem_check_results == 'True':
@@ -301,6 +305,23 @@ if 'print_mem_check_results' in config_dict:
         exit()
 else:
     print('print_mem_check_results not in config, exit!')
+    exit()
+
+if 'print_sleep_pediods' in config_dict:
+    print_sleep_pediods = config_dict['print_sleep_pediods']
+    if print_sleep_pediods == 'True':
+        print_sleep_pediods = True
+    elif print_sleep_pediods == 'False':
+        print_sleep_pediods = False
+    else:
+        print(
+            'invalid print_sleep_pediods value {} (should be True or False), exit!'.format(
+                print_sleep_pediods
+                )
+            )
+        exit()
+else:
+    print('print_sleep_pediods not in config, exit!')
     exit()
 
 if 'mlockall' in config_dict:
@@ -555,6 +576,7 @@ else:
 if print_config:
     print('print_config:               {}'.format(print_config))
     print('print_mem_check_results:    {}'.format(print_mem_check_results))
+    print('print_sleep_pediods:        {}'.format(print_sleep_pediods))
     print('mlockall:                   {} ({})'.format(mlockall, mla_res))
     print('self_nice:                  {} ({})'.format(self_nice, self_nice_result))
     print('self_oom_score_adj:         {} ({})'.format(self_oom_score_adj, self_oom_score_adj_result))
@@ -580,7 +602,7 @@ if print_config:
 
 
 
-# для рассчета ширины столбцов mem и zram
+# для рассчета ширины столбцов при печати mem и zram
 mem_len = len(str(round(mem_total / 1024.0)))
 
 
@@ -676,7 +698,6 @@ while True:
                 )
             )
         find_victim_and_send_signal(9)
-        sleep(min_delay_after_sigkill)
         continue
 
 
@@ -691,7 +712,6 @@ while True:
                 )
             )
         find_victim_and_send_signal(9)
-        sleep(min_delay_after_sigkill)
         continue
 
 
@@ -711,7 +731,6 @@ while True:
                 )
             )
         find_victim_and_send_signal(15)
-        sleep(min_delay_after_sigterm)
 
 
     # MEM ZRAM TERM
@@ -725,12 +744,14 @@ while True:
                 )
             )
         find_victim_and_send_signal(15)
-        sleep(min_delay_after_sigterm)
+
 
 
     # задание периода в зависимости от рейтов и уровней доступной памяти
     t_mem = mem_available / 1000000.0 / rate_mem
+
     t_swap = swap_free / 10000000.0 / rate_swap
+
     t_zram = (mem_total * 0.8 - mem_used_zram)  / 1000000.0 / rate_zram
     if t_zram < 0.01:
         t_zram = 0.01
@@ -743,8 +764,9 @@ while True:
     else:
         t = t_mem_zram
 
-
     try:
+        if print_sleep_pediods:
+            print('sleep', round(t, 2))
         sleep(t)
     except KeyboardInterrupt:
         exit()
