@@ -202,9 +202,6 @@ arg_config = parser.parse_args().config
 
 if arg_config is None:
 
-    # print('конфиг не задан через опцию -с/--config, берем его из дефолтных путей')
-    del arg_config
-
     config = None
     for i in default_configs:
         if os.path.exists(i):
@@ -215,8 +212,6 @@ if arg_config is None:
         exit()
 
 else:
-
-    # print('через опцию задан путь к конфигу {}'.format(arg_config))
 
     if os.path.exists(arg_config):
         config = arg_config
@@ -571,6 +566,13 @@ if print_config:
     print('decrease_oom_score_adj:     {} ({})'.format(decrease_oom_score_adj, decrease_res))
     print('oom_score_adj_before:       {}'.format(oom_score_adj_before))
     print('oom_score_adj_after:        {}'.format(oom_score_adj_after))
+
+
+
+
+
+
+
 
 
 
