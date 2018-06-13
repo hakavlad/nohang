@@ -6,7 +6,6 @@ Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
 Type=simple
-PIDFile=/run/nohang.pid
 Restart=always
 ExecStart=/usr/local/bin/nohang
 

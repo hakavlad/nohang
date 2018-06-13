@@ -32,7 +32,7 @@ https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 - `earlyoom` завершает (точнее убивает) процессы исключительно с помощью сигнала `SIGKILL`, в то время как `nohang` дает возможность сначала отправлять `SIGTERM`, и только если процесс не реагирует на `SIGTERM` - отправляется сигнал `SIGKILL`.
 - `earlyoom` не поддерживает работу со `zram` и не реагирует на общую долю `zram` в памяти (`mem_used_total`). Это может привести к тому, что система все также встанет колом, как если бы `earlyoom` и не было (если `disksize` большой, а энтропия сжимаемых данных велика). `Nohang` позволяет избавиться от этой проблемы. По умолчанию если доля `zram` достигнет 60% памяти - будет отправлен сигнал `SIGTERM` процессу с наибольшим `oom_score`.
 
-### Особенности
+### Некоторые особенности
 - задача - препятствовать зависанию системы при нехватке доступной памяти, а также корректное завершение процессов с целью увеличения объема доступной памяти
 - демон на Python 3, VmRSS не более 13 MiB
 - требуется ядро `Linux 3.14` или новее
@@ -55,14 +55,14 @@ https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 - протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
 - пример вывода с отчетом об успешной отпраке сигнала:
 ```
-MemAvail:    0M   0.0% | SwapFree:  1400M  11.9% | MemUsedZram:  397M   6.8%
-MemAvail:    0M   0.0% | SwapFree:   861M   7.3% | MemUsedZram:  413M   7.0%
-+ MemAvail (0M, 0.0%) < mem_min_sigterm (470M, 8.0%)
-  SwapFree (861M, 7.3%) < swap_min_sigterm (940M, 8.0%)
-  Try to send signal 15 to tail, Pid 10435, oom_score 826
+MemAvail:    0 M,  0.0 % | SwapFree:   97 M,   8.3 % | MemUsedZram:  147 M,  2.5 %
+MemAvail:    0 M,  0.0 % | SwapFree:   80 M,   6.8 % | MemUsedZram:  147 M,  2.5 %
++ MemAvail (0 M, 0.0 %) < mem_min_sigterm (470 M, 8.0 %)
+  SwapFree (80 M, 6.8 %) < swap_min_sigterm (94 M, 8.0 %)
+  Try to send signal 15 to tail, Pid 17907, oom_score 837
   Success
-MemAvail:  102M   1.7% | SwapFree:  8106M  69.0% | MemUsedZram:  338M   5.7%
-MemAvail: 4507M  76.7% | SwapFree: 10908M  92.8% | MemUsedZram:  296M   5.0%
+MemAvail:  640 M, 10.9 % | SwapFree:  730 M,  62.1 % | MemUsedZram:  141 M,  2.4 %
+MemAvail: 5197 M, 88.5 % | SwapFree:  734 M,  62.5 % | MemUsedZram:  141 M,  2.4 %
 ```
 
 ### Установка и удаление для пользователей systemd
