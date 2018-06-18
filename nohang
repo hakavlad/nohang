@@ -16,6 +16,10 @@ from argparse import ArgumentParser
 
 # задание констант
 
+#notify_options = '-t "60000"'
+#notify_options = '-u "critical"'
+notify_options = ''
+
 version = 'unknown'
 
 sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
@@ -194,8 +198,7 @@ def find_victim_and_send_signal(signal):
 
             if desktop_notifications:
 
-                info = '"The {} signal has been sent to <b>{}</b>, <i>Pid:</i> <b>{}</b>, <i>oom_score:</i> <b>{}</b>, <i>VmRSS</i> <b>{} MiB</b>, <i>VmSwap</i> <b>{} MiB</b>" &'.format(
-                    sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+                info = '"<u>Nohang</u> sent <u>{}</u> to the process \n<i>Name:</i> <b>{}</b> \n<i>Pid:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
                 if root:
                     # получаем множество залогиненных юзеров из вывода команды
@@ -206,12 +209,11 @@ def find_victim_and_send_signal(signal):
                     )[2:-1].split(' '))
                     # отправляем уведомление всем залогиненным юзерам
                     for i in users_set:
-                        root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send "Nohang tried to prevent OOM" '.format(
-                            i)
+                        root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send {} "Preventing OOM" '.format(
+                            i, notify_options)
                         os.system(root_notify_command + info)
                 else:
-                    user_notify_command = (
-                        'notify-send "Nohang tried to prevent OOM" ')
+                    user_notify_command = 'notify-send {} "Preventing OOM" '.format(notify_options)
                     os.system(user_notify_command + info)
 
         except ProcessLookupError:
