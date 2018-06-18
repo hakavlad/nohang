@@ -18,7 +18,7 @@ from argparse import ArgumentParser
 
 #notify_options = '-t "60000"'
 #notify_options = '-u "critical"'
-notify_options = ''
+notify_options = '-i "dialog-warning"'
 
 version = 'unknown'
 
@@ -198,7 +198,7 @@ def find_victim_and_send_signal(signal):
 
             if desktop_notifications:
 
-                info = '"<u>Nohang</u> sent <u>{}</u> to the process \n<i>Name:</i> <b>{}</b> \n<i>Pid:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+                info = '"<u>Nohang</u> sent <u>{}</u> \nto the process \n<i>Name:</i> <b>{}</b> \n<i>Pid:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
                 if root:
                     # получаем множество залогиненных юзеров из вывода команды
