@@ -7,7 +7,6 @@
 # импорты
 
 import os
-from ctypes import CDLL
 from operator import itemgetter
 from time import sleep
 from argparse import ArgumentParser
@@ -15,10 +14,6 @@ from argparse import ArgumentParser
 ##########################################################################
 
 # задание констант
-
-#notify_options = '-t "60000"'
-#notify_options = '-u "critical"'
-notify_options = '-i "dialog-warning"'
 
 version = 'unknown'
 
@@ -34,7 +29,8 @@ default_configs = (
 )
 
 # универсальное сообщение при инвалидном конфиге
-conf_err_mess = '\nSet up the path to the valid config file with -c/--config CONFIG option!\nExit'
+conf_err_mess = '\nSet up the path to the valid config file with -c/--confi' \
+                'g option!\nExit'
 
 # означает, что при задани zram disksize = 10000M доступная память
 # уменьшится на 42M
@@ -77,7 +73,7 @@ def func_decrease_oom_score_adj(oom_score_adj_max):
             oom_score_adj = int(rline1('/proc/' + i + '/oom_score_adj'))
             if oom_score_adj > oom_score_adj_max:
                 write('/proc/' + i + '/oom_score_adj',
-                    str(oom_score_adj_max) + '\n')
+                      str(oom_score_adj_max) + '\n')
         except FileNotFoundError:
             pass
         except ProcessLookupError:
@@ -150,11 +146,36 @@ def pid_to_name(pid):
         return '<unknown>'
 
 
+def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
+
+    # текст отправляемого уведомления
+    info = '"<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
+        'id:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
+        '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(
+            sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+
+    if root:
+        for uid in os.listdir('/run/user'):
+            root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send {} "Pr' \
+                'eventing OOM" '.format(users_dict[uid], notify_options)
+            os.system(root_notify_command + info)
+
+    else:
+
+        # отправляем уведомление пользователю, который запустил nohang
+        user_notify_command = 'notify-send {} "Preventing OOM" '.format(
+            notify_options)
+        os.system(user_notify_command + info)
+
+
+# принимает int (9 или 15)
 def find_victim_and_send_signal(signal):
 
+    # выставляем потолок для oom_score_adj всех процессов
     if decrease_oom_score_adj and root:
         func_decrease_oom_score_adj(oom_score_adj_max)
 
+    # получаем список процессов
     oom_list = []
     for i in os.listdir('/proc'):
         if i.isdigit() is not True:
@@ -167,8 +188,10 @@ def find_victim_and_send_signal(signal):
             oom_score = 0
         oom_list.append((i, oom_score))
 
-    # получаем список пар (pid, oom_score)
+    # получаем отсортированный по oom_score список пар (pid, oom_score)
     pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
+
+    # получаем максимальный oom_score
     oom_score = pid_tuple_list[1]
 
     # посылаем сигнал
@@ -178,43 +201,38 @@ def find_victim_and_send_signal(signal):
 
         name = pid_to_name(pid)
 
-        with open('/proc/' + pid + '/status') as f:
-            for n, line in enumerate(f):
+        # находим VmRSS и VmSwap процесса, которому попытаемся послать сигнал
+        try:
+            with open('/proc/' + pid + '/status') as f:
+                for n, line in enumerate(f):
+                    if n is vm_rss_index:
+                        vm_rss = kib_to_mib(int(
+                            line.split('\t')[1][:-4]))
+                        continue
+                    if n is vm_swap_index:
+                        vm_swap = kib_to_mib(int(
+                            line.split('\t')[1][:-4]))
+                        break
+        except FileNotFoundError:
+            vm_rss = 0
+            vm_swap = 0
+        except ProcessLookupError:
+            vm_rss = 0
+            vm_swap = 0
+        except IndexError:
+            vm_rss = 0
+            vm_swap = 0
 
-                if n is vm_rss_index:
-                    vm_rss = kib_to_mib(int(line.split(':')[1].split(' ')[-2]))
-                    continue
-
-                if n is vm_swap_index:
-                    vm_swap = kib_to_mib(int(line.split(':')[1].split(' ')[-2]))
-                    break
-
-        print('  Try to send the {} signal to {},\n  Pid {}, oom_score {}, VmRSS {} MiB, VmSwap {} MiB'.format(
-                sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap))
+        print('  Try to send the {} signal to {},\n  Pid {}, oom_score {}, V'
+              'mRSS {} MiB, VmSwap {} MiB'.format(
+                  sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap))
 
         try:
             os.kill(int(pid), signal)
             print('  Success')
 
             if desktop_notifications:
-
-                info = '"<u>Nohang</u> sent <u>{}</u> \nto the process \n<i>Name:</i> <b>{}</b> \n<i>Pid:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
-
-                if root:
-                    # получаем множество залогиненных юзеров из вывода команды
-                    # users
-                    users_set = set(str(
-                        Popen('users', shell=True,
-                              stdout=PIPE).communicate()[0][0:-1]
-                    )[2:-1].split(' '))
-                    # отправляем уведомление всем залогиненным юзерам
-                    for i in users_set:
-                        root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send {} "Preventing OOM" '.format(
-                            i, notify_options)
-                        os.system(root_notify_command + info)
-                else:
-                    user_notify_command = 'notify-send {} "Preventing OOM" '.format(notify_options)
-                    os.system(user_notify_command + info)
+                send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
 
         except ProcessLookupError:
             print('  No such process')
@@ -236,10 +254,10 @@ def find_victim_and_send_signal(signal):
             print('  sleep', min_delay_after_sigterm)
         sleep(min_delay_after_sigterm)
 
-
 ##########################################################################
 
 # поиск позиций и mem_total
+
 
 with open('/proc/meminfo') as file:
     mem_list = file.readlines()
@@ -283,7 +301,9 @@ parser.add_argument(
     type=str
 )
 
-arg_config = parser.parse_args().config
+args = parser.parse_args()
+
+arg_config = args.config
 
 
 if arg_config is None:
@@ -337,7 +357,6 @@ except IndexError:
     print('IndexError', conf_err_mess)
     exit()
 
-
 ##########################################################################
 
 # извлечение параметров из словаря
@@ -352,11 +371,9 @@ if 'print_config' in config_dict:
     elif print_config == 'False':
         print_config = False
     else:
-        print(
-            'Invalid print_config value {} (should be True or False)\nExit'.format(
-                print_config
-            )
-        )
+        print('Invalid print_config value {} (should be True or False)\nE'
+              'xit'.format(
+                  print_config))
         exit()
 else:
     print('Print_config not in config\nExit')
@@ -370,8 +387,9 @@ if 'print_mem_check_results' in config_dict:
     elif print_mem_check_results == 'False':
         print_mem_check_results = False
     else:
-        print('Invalid print_mem_check_results value {} (should be True or False)\nExit'.format(
-                print_mem_check_results))
+        print('Invalid print_mem_check_results value {} (should be Tr'
+              'ue or False)\nExit'.format(
+                  print_mem_check_results))
         exit()
 else:
     print('print_mem_check_results not in config\nExit')
@@ -385,8 +403,9 @@ if 'print_sleep_periods' in config_dict:
     elif print_sleep_periods == 'False':
         print_sleep_periods = False
     else:
-        print('Invalid print_sleep_periods value {} (should be True or False)\nExit'.format(
-                print_sleep_periods))
+        print('Invalid print_sleep_periods value {} (should be True or F'
+              'alse)\nExit'.format(
+                  print_sleep_periods))
         exit()
 else:
     print('print_sleep_periods not in config\nExit')
@@ -577,8 +596,9 @@ if 'decrease_oom_score_adj' in config_dict:
     elif decrease_oom_score_adj == 'False':
         decrease_oom_score_adj = False
     else:
-        print('invalid decrease_oom_score_adj value {} (should be True or False)\nExit'.format(
-                decrease_oom_score_adj))
+        print('invalid decrease_oom_score_adj value {} (should be Tru'
+              'e or False)\nExit'.format(
+                  decrease_oom_score_adj))
         exit()
 else:
     print('decrease_oom_score_adj not in config\nExit')
@@ -604,17 +624,30 @@ if 'desktop_notifications' in config_dict:
     desktop_notifications = config_dict['desktop_notifications']
     if desktop_notifications == 'True':
         desktop_notifications = True
-        from subprocess import Popen, PIPE
+        users_dict = dict()
+        with open('/etc/passwd') as f:
+            for line in f:
+                line_list = line.split(':')
+                username = line_list[0]
+                uid = line_list[2]
+                users_dict[uid] = username
     elif desktop_notifications == 'False':
         desktop_notifications = False
     else:
-        print('Invalid desktop_notifications value {} (should be True or False)\nExit'.format(
-                desktop_notifications))
+        print('Invalid desktop_notifications value {} (should be Tru'
+              'e or False)\nExit'.format(
+                  desktop_notifications))
         exit()
 else:
     print('desktop_notifications not in config\nExit')
     exit()
 
+
+if 'notify_options' in config_dict:
+    notify_options = config_dict['notify_options'].strip()
+else:
+    print('notify_options not in config\nExit')
+    exit()
 
 ##########################################################################
 
@@ -677,7 +710,6 @@ else:
     swap_kill_is_percent = False
     swap_min_sigkill_kb = swap_min_sigkill_swap
 
-
 ##########################################################################
 
 # самозащита и печать конфига
@@ -705,6 +737,7 @@ except OSError:
 
 # запрет своппинга процесса
 if mlockall:
+    from ctypes import CDLL
     result = CDLL('libc.so.6', use_errno=True).mlockall(3)
     if result is 0:
         mla_res = 'OK'
@@ -765,6 +798,8 @@ if print_config:
 
     print('\nVI. DESKTOP NOTIFICATIONS')
     print('desktop_notifications:    {}'.format(desktop_notifications))
+    if desktop_notifications:
+        print('notify_options:           {}'.format(notify_options))
 
 
 # для рассчета ширины столбцов при печати mem и zram
@@ -784,13 +819,13 @@ while True:
     with open('/proc/meminfo') as f:
         for n, line in enumerate(f):
             if n is 2:
-                mem_available = int(line.split(':')[1].split(' ')[-2])
+                mem_available = int(line.split(':')[1].strip(' kB\n'))
                 continue
             if n is swap_total_index:
-                swap_total = int(line.split(':')[1].split(' ')[-2])
+                swap_total = int(line.split(':')[1].strip(' kB\n'))
                 continue
             if n is swap_free_index:
-                swap_free = int(line.split(':')[1].split(' ')[-2])
+                swap_free = int(line.split(':')[1].strip(' kB\n'))
                 break
 
     # если swap_min_sigkill задан в процентах
@@ -818,35 +853,28 @@ while True:
     # печать размеров доступной памяти
     if swap_total == 0 and mem_used_zram == 0:
         if print_mem_check_results:
-            print(
-                'MemAvail: {} M, {} %'.format(
-                    human(mem_available, mem_len),
-                    just_percent_mem(mem_available / mem_total)
-                )
-            )
+            print('MemAvail: {} M, {} %'.format(
+                human(mem_available, mem_len),
+                just_percent_mem(mem_available / mem_total)))
+
     elif swap_total > 0 and mem_used_zram == 0:
         if print_mem_check_results:
-            print(
-                'MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
-                    human(mem_available, mem_len),
-                    just_percent_mem(mem_available / mem_total),
-                    human(swap_free, swap_len),
-                    just_percent_swap(swap_free / (swap_total + 0.0001))
-                )
-            )
+            print('MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
+                human(mem_available, mem_len),
+                just_percent_mem(mem_available / mem_total),
+                human(swap_free, swap_len),
+                just_percent_swap(swap_free / (swap_total + 0.0001))))
+
     else:
         if print_mem_check_results:
-            print(
-                'MemAvail: {} M, {} % | SwapFree: {} M, {} % | MemUsed'
-                'Zram: {} M, {} %'.format(
-                    human(mem_available, mem_len),
-                    just_percent_mem(mem_available / mem_total),
-                    human(swap_free, swap_len),
-                    just_percent_swap(swap_free / (swap_total + 0.0001)),
-                    human(mem_used_zram, mem_len),
-                    just_percent_mem(mem_used_zram / mem_total)
-                )
-            )
+            print('MemAvail: {} M, {} % | SwapFree: {} M, {} % | MemUsed'
+                  'Zram: {} M, {} %'.format(
+                      human(mem_available, mem_len),
+                      just_percent_mem(mem_available / mem_total),
+                      human(swap_free, swap_len),
+                      just_percent_swap(swap_free / (swap_total + 0.0001)),
+                      human(mem_used_zram, mem_len),
+                      just_percent_mem(mem_used_zram / mem_total)))
 
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:
@@ -861,61 +889,51 @@ while True:
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
-        print(
-            '+ MemAvail ({} M, {} %) < mem_min_sigkill ({} M, {} %)\n  S'
-            'wapFree ({} M, {} %) < swap_min_sigkill ({} M, {} %)'.format(
-                kib_to_mib(mem_available),
-                percent(mem_available / mem_total),
-                kib_to_mib(mem_min_sigkill_kb),
-                percent(mem_min_sigkill_kb / mem_total),
-                kib_to_mib(swap_free),
-                percent(swap_free / (swap_total + 0.0001)),
-                kib_to_mib(swap_min_sigkill_kb),
-                swap_sigkill_pc
-            )
-        )
+        print('+ MemAvail ({} M, {} %) < mem_min_sigkill ({} M, {} %)\n  S'
+              'wapFree ({} M, {} %) < swap_min_sigkill ({} M, {} %)'.format(
+                  kib_to_mib(mem_available),
+                  percent(mem_available / mem_total),
+                  kib_to_mib(mem_min_sigkill_kb),
+                  percent(mem_min_sigkill_kb / mem_total),
+                  kib_to_mib(swap_free),
+                  percent(swap_free / (swap_total + 0.0001)),
+                  kib_to_mib(swap_min_sigkill_kb),
+                  swap_sigkill_pc))
         find_victim_and_send_signal(9)
         continue
 
     # ZRAM KILL
     if mem_used_zram >= zram_max_sigkill_kb:
-        print(
-            '+ MemUsedZram ({} M, {} %) > zram_max_sigkill ({} M, {} %)'.format(
-                kib_to_mib(mem_used_zram),
-                percent(
-                    mem_used_zram /
-                    mem_total),
-                kib_to_mib(zram_max_sigkill_kb),
-                percent(
-                    zram_max_sigkill_kb /
-                    mem_total)))
+        print('+ MemUsedZram ({} M, {} %) > zram_max_sigkill ({} M, {} %)'.format(
+            kib_to_mib(mem_used_zram),
+            percent(mem_used_zram / mem_total),
+            kib_to_mib(zram_max_sigkill_kb),
+            percent(zram_max_sigkill_kb / mem_total)))
         find_victim_and_send_signal(9)
         continue
 
     # MEM SWAP TERM
     if mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
-        print('+ MemAvail ({} M, {} %) < mem_min_sigterm ({} M, {} %)\n  SwapFree ({} M, {} %) < swap_min_sigterm ({} M, {} %)'.format(
-                kib_to_mib(mem_available),
-                percent(mem_available / mem_total),
-                kib_to_mib(mem_min_sigterm_kb),
-                percent(mem_min_sigterm_kb / mem_total),
-                kib_to_mib(swap_free),
-                percent(swap_free / (swap_total + 0.0001)),
-                kib_to_mib(swap_min_sigterm_kb),
-                swap_sigterm_pc))
+        print('+ MemAvail ({} M, {} %) < mem_min_sigterm ({} M, {} %)\n  S'
+              'wapFree ({} M, {} %) < swap_min_sigterm ({} M, {} %)'.format(
+                  kib_to_mib(mem_available),
+                  percent(mem_available / mem_total),
+                  kib_to_mib(mem_min_sigterm_kb),
+                  percent(mem_min_sigterm_kb / mem_total),
+                  kib_to_mib(swap_free),
+                  percent(swap_free / (swap_total + 0.0001)),
+                  kib_to_mib(swap_min_sigterm_kb),
+                  swap_sigterm_pc))
         find_victim_and_send_signal(15)
 
     # ZRAM TERM
     if mem_used_zram >= zram_max_sigterm_kb:
-        print('+ MemUsedZram ({} M, {} %) > zram_max_sigterm ({} M, {} %)'.format(
-                kib_to_mib(mem_used_zram),
-                percent(
-                    mem_used_zram /
-                    mem_total),
-                kib_to_mib(zram_max_sigterm_kb),
-                percent(
-                    zram_max_sigterm_kb /
-                    mem_total)))
+        print('+ MemUsedZram ({} M, {} %) > zram_max_sigt'
+              'erm ({} M, {} %)'.format(
+                  kib_to_mib(mem_used_zram),
+                  percent(mem_used_zram / mem_total),
+                  kib_to_mib(zram_max_sigterm_kb),
+                  percent(zram_max_sigterm_kb / mem_total)))
         find_victim_and_send_signal(15)
 
     # задание периода в зависимости от рейтов и уровней доступной памяти
