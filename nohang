@@ -206,7 +206,7 @@ def find_victim_and_send_signal(signal):
                     )[2:-1].split(' '))
                     # отправляем уведомление всем залогиненным юзерам
                     for i in users_set:
-                        root_notify_command = 'DISPLAY=:0.0 sudo -u {} notify-send "Nohang tried to prevent OOM" '.format(
+                        root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send "Nohang tried to prevent OOM" '.format(
                             i)
                         os.system(root_notify_command + info)
                 else:
@@ -368,11 +368,8 @@ if 'print_mem_check_results' in config_dict:
     elif print_mem_check_results == 'False':
         print_mem_check_results = False
     else:
-        print(
-            'Invalid print_mem_check_results value {} (should be True or False)\nExit'.format(
-                print_mem_check_results
-            )
-        )
+        print('Invalid print_mem_check_results value {} (should be True or False)\nExit'.format(
+                print_mem_check_results))
         exit()
 else:
     print('print_mem_check_results not in config\nExit')
@@ -386,11 +383,8 @@ if 'print_sleep_periods' in config_dict:
     elif print_sleep_periods == 'False':
         print_sleep_periods = False
     else:
-        print(
-            'Invalid print_sleep_periods value {} (should be True or False)\nExit'.format(
-                print_sleep_periods
-            )
-        )
+        print('Invalid print_sleep_periods value {} (should be True or False)\nExit'.format(
+                print_sleep_periods))
         exit()
 else:
     print('print_sleep_periods not in config\nExit')
@@ -765,7 +759,7 @@ if print_config:
         decrease_oom_score_adj, decrease_res
     ))
     if decrease_oom_score_adj:
-        print('oom_score_adj_max:     {}'.format(oom_score_adj_max))
+        print('oom_score_adj_max:        {}'.format(oom_score_adj_max))
 
     print('\nVI. DESKTOP NOTIFICATIONS')
     print('desktop_notifications:    {}'.format(desktop_notifications))
