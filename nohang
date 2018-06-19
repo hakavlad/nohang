@@ -155,9 +155,12 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
             sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
     if root:
+
+        # отправляем уведомление всем залогиненным пользователям
         for uid in os.listdir('/run/user'):
-            root_notify_command = 'DISPLAY=:0 sudo -u {} notify-send {} "Pr' \
-                'eventing OOM" '.format(users_dict[uid], notify_options)
+
+            root_notify_command = 'DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{}/bus XAUTHORITY=/home/{}/.Xauthority sudo -u {} notify-send {} "Preventing OOM" '.format(uid, users_dict[uid], users_dict[uid], notify_options)
+
             os.system(root_notify_command + info)
 
     else:
@@ -165,6 +168,7 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
         # отправляем уведомление пользователю, который запустил nohang
         user_notify_command = 'notify-send {} "Preventing OOM" '.format(
             notify_options)
+
         os.system(user_notify_command + info)
 
 
