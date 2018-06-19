@@ -15,6 +15,8 @@ from argparse import ArgumentParser
 
 # задание констант
 
+display = ':0'
+
 version = 'unknown'
 
 sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
@@ -159,7 +161,10 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
         # отправляем уведомление всем залогиненным пользователям
         for uid in os.listdir('/run/user'):
 
-            root_notify_command = 'DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/{}/bus XAUTHORITY=/home/{}/.Xauthority sudo -u {} notify-send {} "Preventing OOM" '.format(uid, users_dict[uid], users_dict[uid], notify_options)
+            root_notify_command = 'sudo -u {} DISPLAY={} DBUS_SESSION_BUS_AD' \
+                'DRESS=unix:path=/run/user/{}/bus notify-send {} "Preventin' \
+                    'g OOM" '.format(
+                users_dict[uid], display, uid, notify_options)
 
             os.system(root_notify_command + info)
 
