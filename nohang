@@ -10,6 +10,7 @@ import os
 from operator import itemgetter
 from time import sleep
 from argparse import ArgumentParser
+from re import fullmatch
 
 ##########################################################################
 
@@ -147,35 +148,58 @@ def pid_to_name(pid):
 
 
 def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
-
     # текст отправляемого уведомления
     info = '"<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
-        'id:</i> <b>{}</b> \n<i>oom_score:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
+        'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
         '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(
             sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
-
     if root:
-
         # отправляем уведомление всем залогиненным пользователям
         for uid in os.listdir('/run/user'):
-
             root_notify_command = 'sudo -u {} DISPLAY={} notify-send {} "Pr' \
                 'eventing OOM" '.format(
                     users_dict[uid], display, notify_options)
-
             os.system(root_notify_command + info)
-
     else:
-
         # отправляем уведомление пользователю, который запустил nohang
         user_notify_command = 'notify-send {} "Preventing OOM" '.format(
             notify_options)
-
         os.system(user_notify_command + info)
 
 
+
+def send_notify_black(signal, name, pid):
+    # текст отправляемого уведомления
+    info = '"<u>Nohang</u> sent <u>{}</u>\nto blacklisted proce' \
+        'ss <b>{}</b>, <i>Pid</i> <b>{}</b>" &'.format(
+            sig_dict[signal], name, pid)
+    if root:
+        # отправляем уведомление всем залогиненным пользователям
+        for uid in os.listdir('/run/user'):
+            root_notify_command = 'sudo -u {} DISPLAY={} notify-send {} "Pr' \
+                'eventing OOM" '.format(
+                    users_dict[uid], display, notify_options)
+            os.system(root_notify_command + info)
+    else:
+        # отправляем уведомление пользователю, который запустил nohang
+        user_notify_command = 'notify-send {} "Preventing OOM" '.format(
+            notify_options)
+        os.system(user_notify_command + info)
+
+
+def sleep_after_send_signal(signal):
+    if signal is 9:
+        if print_sleep_periods:
+            print('  sleep', min_delay_after_sigkill)
+        sleep(min_delay_after_sigterm)
+    else:
+        if print_sleep_periods:
+            print('  sleep', min_delay_after_sigterm)
+        sleep(min_delay_after_sigterm)
+
+
 # принимает int (9 или 15)
-def find_victim_and_send_signal(signal):
+def find_victim_and_send_signal_without_regexp_lists(signal):
 
     # выставляем потолок для oom_score_adj всех процессов
     if decrease_oom_score_adj and root:
@@ -247,18 +271,160 @@ def find_victim_and_send_signal(signal):
 
     else:
         print('  oom_score {} < oom_score_min {}'.format(
-            oom_score, oom_score_min)
-        )
+            oom_score, oom_score_min))
 
-    # спать всегда или только при успешной отправке сигнала?
-    if signal is 9:
-        if print_sleep_periods:
-            print('  sleep', min_delay_after_sigkill)
-        sleep(min_delay_after_sigterm)
+    sleep_after_send_signal(signal)
+
+
+# принимает int (9 или 15)
+def find_victim_and_send_signal_with_regexp_lists(signal):
+
+    # выставляем потолок для oom_score_adj всех процессов
+    if decrease_oom_score_adj and root:
+        func_decrease_oom_score_adj(oom_score_adj_max)
+
+    # получаем список процессов ((pid, badness))
+    oom_list = []
+
+    # pid list
+    oom_black_list = []
+
+    for pid in os.listdir('/proc'):
+        if pid.isdigit() is not True:
+            continue
+        try:
+
+            # пошла итерация для каждого существующего процесса
+
+            oom_score = int(rline1('/proc/' + pid + '/oom_score'))
+
+            name = pid_to_name(pid)
+
+            # если имя в списке,то пропускаем!
+            res = fullmatch(white_list, name)
+            if res is not None:
+                #print('  {} (Pid: {}) is in white list'.format(name, pid)),
+                continue
+
+            # если имя в черном списке - добавляем Pid в список для убийства
+            res = fullmatch(black_list, name)
+            if res is not None:
+                oom_black_list.append(pid)
+                #print('  {} (Pid: {}) is in black list'.format(name, pid)),
+
+            res = fullmatch(avoid_list, name)
+            if res is not None:
+                # тут уже получаем badness
+                oom_score = int(oom_score / avoid_factor)
+                #print('  {} (Pid: {}) is in avoid list'.format(name, pid)),
+
+            res = fullmatch(prefer_list, name)
+            if res is not None:
+                oom_score = int((oom_score + 1) * prefer_factor)
+                #print('  {} (Pid: {}) is in prefer list'.format(name, pid)),
+
+
+        except FileNotFoundError:
+            oom_score = 0
+        except ProcessLookupError:
+            oom_score = 0
+        oom_list.append((pid, oom_score))
+
+
+    if oom_black_list != []:
+
+        print('  Black list is not empty')
+
+        for pid in oom_black_list:
+
+            name = pid_to_name(pid)
+            print('  Try to send the {} signal to blacklisted process {},  Pid {}'.format(
+                sig_dict[signal], name, pid))
+
+            try:
+                os.kill(int(pid), signal)
+                print('  Success')
+
+                if desktop_notifications:
+                    send_notify_black(signal, name, pid)
+
+            except FileNotFoundError:
+                print('  No such process')
+            except ProcessLookupError:
+                print('  No such process')
+            except PermissionError:
+                print('  Operation not permitted')
+
+        # после отправки сигнала процессам из черного списка поспать и выйти из функции
+        #sleep_after_send_signal(signal)
+        #sleep(0.1)
+        return 0
+
+
+    # получаем отсортированный по oom_score (по badness!) список пар (pid, oom_score)
+    pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
+
+    # получаем максимальный oom_score
+    oom_score = pid_tuple_list[1]
+
+    # посылаем сигнал
+    if oom_score >= oom_score_min:
+
+        pid = pid_tuple_list[0]
+
+        name = pid_to_name(pid)
+
+        # находим VmRSS и VmSwap процесса, которому попытаемся послать сигнал
+        try:
+            with open('/proc/' + pid + '/status') as f:
+                for n, line in enumerate(f):
+                    if n is vm_rss_index:
+                        vm_rss = kib_to_mib(int(
+                            line.split('\t')[1][:-4]))
+                        continue
+                    if n is vm_swap_index:
+                        vm_swap = kib_to_mib(int(
+                            line.split('\t')[1][:-4]))
+                        break
+        except FileNotFoundError:
+            vm_rss = 0
+            vm_swap = 0
+        except ProcessLookupError:
+            vm_rss = 0
+            vm_swap = 0
+        except IndexError:
+            vm_rss = 0
+            vm_swap = 0
+
+        print('  Try to send the {} signal to {},\n  Pid {}, Badness {}, V'
+              'mRSS {} MiB, VmSwap {} MiB'.format(
+                  sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap))
+
+        try:
+            os.kill(int(pid), signal)
+            print('  Success')
+
+            if desktop_notifications:
+                send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
+
+        except FileNotFoundError:
+            print('  No such process')
+        except ProcessLookupError:
+            print('  No such process')
+
     else:
-        if print_sleep_periods:
-            print('  sleep', min_delay_after_sigterm)
-        sleep(min_delay_after_sigterm)
+        print('  oom_score {} < oom_score_min {}'.format(
+            oom_score, oom_score_min))
+
+    sleep_after_send_signal(signal)
+
+
+def find_victim_and_send_signal(signal):
+    if use_regexp_lists:
+        find_victim_and_send_signal_with_regexp_lists(signal)
+    else:
+        find_victim_and_send_signal_without_regexp_lists(signal)
+
 
 ##########################################################################
 
@@ -370,6 +536,8 @@ except IndexError:
 # валидация всех параметров
 
 
+
+# OK
 if 'print_config' in config_dict:
     print_config = config_dict['print_config']
     if print_config == 'True':
@@ -377,15 +545,15 @@ if 'print_config' in config_dict:
     elif print_config == 'False':
         print_config = False
     else:
-        print('Invalid print_config value {} (should be True or False)\nE'
-              'xit'.format(
-                  print_config))
+        print('Invalid print_config value {} (shou' \
+            'ld be True or False)\nExit'.format(print_config))
         exit()
 else:
     print('Print_config not in config\nExit')
     exit()
 
 
+# OK
 if 'print_mem_check_results' in config_dict:
     print_mem_check_results = config_dict['print_mem_check_results']
     if print_mem_check_results == 'True':
@@ -393,15 +561,16 @@ if 'print_mem_check_results' in config_dict:
     elif print_mem_check_results == 'False':
         print_mem_check_results = False
     else:
-        print('Invalid print_mem_check_results value {} (should be Tr'
-              'ue or False)\nExit'.format(
-                  print_mem_check_results))
+        print('Invalid print_mem_check_result' \
+            's value {} (should be True or False)\nExit'.format(
+                print_mem_check_results))
         exit()
 else:
     print('print_mem_check_results not in config\nExit')
     exit()
 
 
+# OK
 if 'print_sleep_periods' in config_dict:
     print_sleep_periods = config_dict['print_sleep_periods']
     if print_sleep_periods == 'True':
@@ -409,15 +578,15 @@ if 'print_sleep_periods' in config_dict:
     elif print_sleep_periods == 'False':
         print_sleep_periods = False
     else:
-        print('Invalid print_sleep_periods value {} (should be True or F'
-              'alse)\nExit'.format(
-                  print_sleep_periods))
+        print('Invalid print_sleep_periods value {} (shou' \
+            'ld be True or False)\nExit'.format(print_sleep_periods))
         exit()
 else:
     print('print_sleep_periods not in config\nExit')
     exit()
 
 
+# OK
 if 'mlockall' in config_dict:
     mlockall = config_dict['mlockall']
     if mlockall == 'True':
@@ -427,51 +596,48 @@ if 'mlockall' in config_dict:
     else:
         print(
             'Invalid mlockall value {} (should be True or False)\nExit'.format(
-                mlockall
-            )
-        )
+                mlockall))
         exit()
 else:
     print('mlockall not in config\nExit')
     exit()
 
 
+# OK
 if 'self_nice' in config_dict:
-    self_nice = config_dict['self_nice']
-    if string_to_int_convert_test(self_nice) is None:
+    self_nice = string_to_int_convert_test(config_dict['self_nice'])
+    if self_nice is None:
         print('Invalid self_nice value, not integer\nExit')
         exit()
-    else:
-        self_nice = int(self_nice)
-        if self_nice < -20 or self_nice > 19:
-            print('Недопустимое значение self_nice\nExit')
-            exit()
+    if self_nice < -20 or self_nice > 19:
+        print('Недопустимое значение self_nice\nExit')
+        exit()
 else:
     print('self_nice not in config\nExit')
     exit()
 
 
+# OK
 if 'self_oom_score_adj' in config_dict:
-    self_oom_score_adj = config_dict['self_oom_score_adj']
-    self_oom_score_adj = string_to_int_convert_test(self_oom_score_adj)
+    self_oom_score_adj = string_to_int_convert_test(
+        config_dict['self_oom_score_adj'])
     if self_oom_score_adj is None:
         print('Invalid self_oom_score_adj value, not integer\nExit')
         exit()
-    else:
-        if self_oom_score_adj < -1000 or self_oom_score_adj > 1000:
-            print('Недопустимое значение self_oom_score_adj\nExit')
-            exit()
+    if self_oom_score_adj < -1000 or self_oom_score_adj > 1000:
+        print('Недопустимое значение self_oom_score_adj\nExit')
+        exit()
 else:
     print('self_oom_score_adj not in config\nExit')
     exit()
 
 
+# OK
 if 'rate_mem' in config_dict:
     rate_mem = string_to_float_convert_test(config_dict['rate_mem'])
     if rate_mem is None:
         print('Invalid rate_mem value, not float\nExit')
         exit()
-    rate_mem = float(rate_mem)
     if rate_mem <= 0:
         print('rate_mem должен быть положительным\nExit')
         exit()
@@ -480,12 +646,12 @@ else:
     exit()
 
 
+# OK
 if 'rate_swap' in config_dict:
     rate_swap = string_to_float_convert_test(config_dict['rate_swap'])
     if rate_swap is None:
         print('Invalid rate_swap value, not float\nExit')
         exit()
-    rate_swap = float(rate_swap)
     if rate_swap <= 0:
         print('rate_swap должен быть положительным\nExit')
         exit()
@@ -494,12 +660,12 @@ else:
     exit()
 
 
+# OK
 if 'rate_zram' in config_dict:
     rate_zram = string_to_float_convert_test(config_dict['rate_zram'])
     if rate_zram is None:
         print('Invalid rate_zram value, not float\nExit')
         exit()
-    rate_zram = float(rate_zram)
     if rate_zram <= 0:
         print('rate_zram должен быть положительным\nExit')
         exit()
@@ -508,6 +674,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'mem_min_sigterm' in config_dict:
     mem_min_sigterm = config_dict['mem_min_sigterm']
 else:
@@ -515,6 +682,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'mem_min_sigkill' in config_dict:
     mem_min_sigkill = config_dict['mem_min_sigkill']
 else:
@@ -522,6 +690,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'swap_min_sigterm' in config_dict:
     swap_min_sigterm = config_dict['swap_min_sigterm']
 else:
@@ -529,6 +698,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'swap_min_sigkill' in config_dict:
     swap_min_sigkill = config_dict['swap_min_sigkill']
 else:
@@ -536,6 +706,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'zram_max_sigterm' in config_dict:
     zram_max_sigterm = config_dict['zram_max_sigterm']
 else:
@@ -543,6 +714,7 @@ else:
     exit()
 
 
+# НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'zram_max_sigkill' in config_dict:
     zram_max_sigkill = config_dict['zram_max_sigkill']
 else:
@@ -550,13 +722,13 @@ else:
     exit()
 
 
+# OK
 if 'min_delay_after_sigterm' in config_dict:
     min_delay_after_sigterm = string_to_float_convert_test(
-        config_dict['m' 'in_delay_after_sigterm'])
+        config_dict['min_delay_after_sigterm'])
     if min_delay_after_sigterm is None:
         print('Invalid min_delay_after_sigterm value, not float\nExit')
         exit()
-    min_delay_after_sigterm = float(min_delay_after_sigterm)
     if min_delay_after_sigterm < 0:
         print('min_delay_after_sigterm должен быть неотрицательным\nExit')
         exit()
@@ -565,13 +737,13 @@ else:
     exit()
 
 
+# OK
 if 'min_delay_after_sigkill' in config_dict:
     min_delay_after_sigkill = string_to_float_convert_test(
-        config_dict['mi' 'n_delay_after_sigkill'])
+        config_dict['min_delay_after_sigkill'])
     if min_delay_after_sigkill is None:
         print('Invalid min_delay_after_sigkill value, not float\nExit')
         exit()
-    min_delay_after_sigkill = float(min_delay_after_sigkill)
     if min_delay_after_sigkill < 0:
         print('min_delay_after_sigkill должен быть неотрицательным\nExit')
         exit()
@@ -580,21 +752,22 @@ else:
     exit()
 
 
+# OK
 if 'oom_score_min' in config_dict:
-    oom_score_min = config_dict['oom_score_min']
-    if string_to_int_convert_test(oom_score_min) is None:
+    oom_score_min = string_to_int_convert_test(
+        config_dict['oom_score_min'])
+    if oom_score_min is None:
         print('Invalid oom_score_min value, not integer\nExit')
         exit()
-    else:
-        oom_score_min = int(oom_score_min)
-        if oom_score_min < 0 or oom_score_min > 1000:
-            print('Недопустимое значение oom_score_min\nExit')
-            exit()
+    if oom_score_min < 0 or oom_score_min > 1000:
+        print('Недопустимое значение oom_score_min\nExit')
+        exit()
 else:
     print('oom_score_min not in config\nExit')
     exit()
 
 
+# OK
 if 'decrease_oom_score_adj' in config_dict:
     decrease_oom_score_adj = config_dict['decrease_oom_score_adj']
     if decrease_oom_score_adj == 'True':
@@ -602,19 +775,18 @@ if 'decrease_oom_score_adj' in config_dict:
     elif decrease_oom_score_adj == 'False':
         decrease_oom_score_adj = False
     else:
-        print('invalid decrease_oom_score_adj value {} (should be Tru'
-              'e or False)\nExit'.format(
-                  decrease_oom_score_adj))
+        print('invalid decrease_oom_score_adj value {} (should b' \
+            'e True or False\nExit'.format(decrease_oom_score_adj))
         exit()
 else:
     print('decrease_oom_score_adj not in config\nExit')
     exit()
 
 
+# OK
 if 'oom_score_adj_max' in config_dict:
-    oom_score_adj_max = config_dict['oom_score_adj_max']
-
-    oom_score_adj_max = string_to_int_convert_test(oom_score_adj_max)
+    oom_score_adj_max = string_to_int_convert_test(
+        config_dict['oom_score_adj_max'])
     if oom_score_adj_max is None:
         print('Invalid oom_score_adj_max value, not integer\nExit')
         exit()
@@ -626,6 +798,7 @@ else:
     exit()
 
 
+# OK
 if 'desktop_notifications' in config_dict:
     desktop_notifications = config_dict['desktop_notifications']
     if desktop_notifications == 'True':
@@ -640,15 +813,16 @@ if 'desktop_notifications' in config_dict:
     elif desktop_notifications == 'False':
         desktop_notifications = False
     else:
-        print('Invalid desktop_notifications value {} (should be Tru'
-              'e or False)\nExit'.format(
-                  desktop_notifications))
+        print('Invalid desktop_notifications value {} (shoul' \
+            'd be True or False)\nExit'.format(
+                desktop_notifications))
         exit()
 else:
     print('desktop_notifications not in config\nExit')
     exit()
 
 
+# OK
 if 'notify_options' in config_dict:
     notify_options = config_dict['notify_options'].strip()
 else:
@@ -656,11 +830,89 @@ else:
     exit()
 
 
+# OK
 if 'display' in config_dict:
     display = config_dict['display'].strip()
 else:
     print('display not in config\nExit')
     exit()
+
+
+# OK
+if 'use_regexp_lists' in config_dict:
+    use_regexp_lists = config_dict['use_regexp_lists']
+    if use_regexp_lists == 'True':
+        use_regexp_lists = True
+    elif use_regexp_lists == 'False':
+        use_regexp_lists = False
+    else:
+        print('invalid use_regexp_lists value {} (shoul' \
+            'd be True or False)\nExit'.format(use_regexp_lists))
+        exit()
+else:
+    print('use_regexp_lists not in config\nExit')
+    exit()
+
+
+# OK
+if 'white_list' in config_dict:
+    white_list = config_dict['white_list'].strip()
+else:
+    print('white_list not in config\nExit')
+    exit()
+
+
+# OK
+if 'black_list' in config_dict:
+    black_list = config_dict['black_list'].strip()
+else:
+    print('black_list not in config\nExit')
+    exit()
+
+
+# OK
+if 'prefer_list' in config_dict:
+    prefer_list = config_dict['prefer_list'].strip()
+else:
+    print('prefer_list not in config\nExit')
+    exit()
+
+
+# OK
+if 'prefer_factor' in config_dict:
+    prefer_factor = string_to_float_convert_test(config_dict['prefer_factor'])
+    if prefer_factor is None:
+        print('Invalid prefer_factor value, not float\nExit')
+        exit()
+    if prefer_factor <= 0:
+        print('prefer_factor должен быть положительным\nExit')
+        exit()
+else:
+    print('prefer_factor not in config\nExit')
+    exit()
+
+
+# OK
+if 'avoid_list' in config_dict:
+    avoid_list = config_dict['avoid_list'].strip()
+else:
+    print('avoid_list not in config\nExit')
+    exit()
+
+
+# OK
+if 'avoid_factor' in config_dict:
+    avoid_factor = string_to_float_convert_test(config_dict['avoid_factor'])
+    if avoid_factor is None:
+        print('Invalid avoid_factor value, not float\nExit')
+        exit()
+    if avoid_factor <= 0:
+        print('avoid_factor должен быть положительным\nExit')
+        exit()
+else:
+    print('avoid_factor not in config\nExit')
+    exit()
+
 
 ##########################################################################
 
@@ -813,6 +1065,17 @@ if print_config:
     print('desktop_notifications:    {}'.format(desktop_notifications))
     if desktop_notifications:
         print('notify_options:           {}'.format(notify_options))
+        print('display:                  {}'.format(display))
+
+    print('\nVII. BLACK, WHITE, AVOID AND PREFER LISTS')
+    print('use_regexp_lists:         {}'.format(use_regexp_lists))
+    if use_regexp_lists:
+        print('white_list:               {}'.format(white_list))
+        print('black_list:               {}'.format(black_list))
+        print('prefer_list:              {}'.format(prefer_list))
+        print('prefer_factor:            {}'.format(prefer_factor))
+        print('avoid_list:               {}'.format(avoid_list))
+        print('avoid_factor:             {}'.format(avoid_factor))
 
 
 # для рассчета ширины столбцов при печати mem и zram
@@ -950,11 +1213,11 @@ while True:
         find_victim_and_send_signal(15)
 
     # задание периода в зависимости от рейтов и уровней доступной памяти
-    t_mem = mem_available / 1000000.0 / rate_mem
+    t_mem = mem_available / rate_mem
 
-    t_swap = swap_free / 10000000.0 / rate_swap
+    t_swap = swap_free / rate_swap
 
-    t_zram = (mem_total * 0.8 - mem_used_zram) / 1000000.0 / rate_zram
+    t_zram = (mem_total * 0.8 - mem_used_zram) / rate_zram
     if t_zram < 0.01:
         t_zram = 0.01
 
@@ -972,3 +1235,4 @@ while True:
         sleep(t)
     except KeyboardInterrupt:
         exit()
+

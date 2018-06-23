@@ -107,11 +107,3 @@ venv.bak/
 # Kate
 .kate-swp
 
-# man
-*.1.gz
-
-
-
-
-
-
