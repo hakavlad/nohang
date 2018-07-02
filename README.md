@@ -31,6 +31,9 @@ https://www.linux.org.ru/forum/talks/12684213?lastmod=1466676523241#comment-1268
 "И IRL ты никогда не знаешь, в какой момент момент твои данные перестанут умещаться в оперативку. Потому zram -- удел embedded систем, где это может быть детерминировано."
 https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 
+"OOM killer, зараза такая, не срабатывает или срабатывает через 3 часа."
+https://www.linux.org.ru/forum/desktop/11255705
+
 `Nohang` позволяет избавиться от перечисленных выше проблем, корректно завершая наиболее прожорливые процессы (с наибольшим oom_score) сигналом `SIGTERM` (или `SIGKILL`) не дожидаясь когда система "встанет колом". `Nohang` позволяет не бояться зависаний при использовании `zram`.
 
 ### Зачем нужен nohang, если уже есть earlyoom?
@@ -59,18 +62,21 @@ https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
 - возможность показа десктопных уведомлений c помощью `notify-send`, с показом сигнала (`SIGTERM` или `SIGKILL`), который отправлен процессу, а также `Pid`, `oom_score`, `VmRSS`, `VmSwap`, которыми обладал процесс перед получением сигнала.
 - поддержка white, black, prefer и avoid списков с использованием Perl-compatible regular expressions
 - наличие `man` страницы
+- поддержка журналирования в отдельный файл
+- поддержка десктопных уведомлений о низком уровне доступной памяти
 - наличие установщика для пользователей `systemd`
 - протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
 - пример вывода с отчетом об успешной отпраке сигнала:
 ```
-MemAvail:    0 M,  0.0 % | SwapFree:   97 M,   8.3 % | MemUsedZram:  147 M,  2.5 %
-MemAvail:    0 M,  0.0 % | SwapFree:   80 M,   6.8 % | MemUsedZram:  147 M,  2.5 %
-+ MemAvail (0 M, 0.0 %) < mem_min_sigterm (470 M, 8.0 %)
-  SwapFree (80 M, 6.8 %) < swap_min_sigterm (94 M, 8.0 %)
-  Try to send signal 15 to tail, Pid 17907, oom_score 837
+2018-07-02 Mon 16:51:20
+  MemAvailable (0 MiB, 0.0 %) < mem_min_sigterm (470 MiB, 8.0 %)
+  SwapFree (646 MiB, 5.5 %) < swap_min_sigterm (940 MiB, 8.0 %)
+  Xorg (Pid: 11722) matches with whitelist_regex
+  python3 (Pid: 26844, Badness 3) matches with preferlist_regex
+  tail (Pid: 26845, Badness 2700) matches with preferlist_regex
+  Preventing OOM: trying to send the SIGTERM signal to tail,
+  Pid: 26845, Badness: 2700, VmRSS: 5033 MiB, VmSwap: 10797 MiB
   Success
-MemAvail:  640 M, 10.9 % | SwapFree:  730 M,  62.1 % | MemUsedZram:  141 M,  2.4 %
-MemAvail: 5197 M, 88.5 % | SwapFree:  734 M,  62.5 % | MemUsedZram:  141 M,  2.4 %
 ```
 
 ### Установка и удаление для пользователей systemd

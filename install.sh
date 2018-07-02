@@ -1,4 +1,4 @@
-#!/bin/bash -v
+#!/bin/sh -v
 
 cp nohang /usr/local/bin/
 chmod 755 /usr/local/bin/nohang
@@ -14,6 +14,12 @@ chmod 755 /usr/local/share/man/man1
 cp nohang.1.gz /usr/local/share/man/man1/
 chmod 644 /usr/local/share/man/man1/nohang.1.gz
 rm nohang.1.gz
+
+mkdir /var/log/nohang
+chmod 750 /var/log/nohang
+
+cp nohang.logrotate /etc/logrotate.d/nohang
+chmod 644 /etc/logrotate.d/nohang
 
 cp nohang.service /etc/systemd/system/
 chmod 644 /etc/systemd/system/nohang.service
