@@ -29,10 +29,22 @@ https://www.linux.org.ru/forum/general/13074074/page1?lastmod=1481740875388#comm
 https://www.linux.org.ru/forum/talks/12684213?lastmod=1466676523241#comment-12684906
 
 "И IRL ты никогда не знаешь, в какой момент момент твои данные перестанут умещаться в оперативку. Потому zram -- удел embedded систем, где это может быть детерминировано."
-https://2ch.hk/s/res/2310304.html#2311483, https://archive.li/idixk
+https://archive.li/idixk
 
 "OOM killer, зараза такая, не срабатывает или срабатывает через 3 часа."
 https://www.linux.org.ru/forum/desktop/11255705
+
+"Я сначала тоже не прикололся работой OOM, но, черт побери попробуйте предложить более хорошую обработку ситуации"
+https://opennet.ru/opennews/art.shtml?num=21580
+
+"Но у меня оом-киллер не запускался сам, раз я фризы ловил. Подумал, вдруг у меня его вообще нет. В гугле описываются разные параметры, которые позволяют на него повлиять. Но это для тех, кто знает, с чем дело имеет - я не понял например сразу, как и куда их применять."
+https://www.linux.org.ru/forum/desktop/11511840?cid=11513170
+
+"я могу указать, чтобы когда например 50Мб оперативной памяти остаётся - оом-киллер запускался?"
+https://www.linux.org.ru/forum/desktop/11511840?cid=11513174
+
+"There is also the problem that the user does never get any kind of low memory warning beforehand."
+https://www.reddit.com/r/linux/comments/5rixe9/this_is_why_i_love_linux_hundreds_tabs_opens_tons/
 
 `Nohang` позволяет избавиться от перечисленных выше проблем, корректно завершая наиболее прожорливые процессы (с наибольшим oom_score) сигналом `SIGTERM` (или `SIGKILL`) не дожидаясь когда система "встанет колом". `Nohang` позволяет не бояться зависаний при использовании `zram`.
 
@@ -68,14 +80,11 @@ https://www.linux.org.ru/forum/desktop/11255705
 - протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
 - пример вывода с отчетом об успешной отпраке сигнала:
 ```
-2018-07-02 Mon 16:51:20
+2018-06-30 Sat 19:42:56
   MemAvailable (0 MiB, 0.0 %) < mem_min_sigterm (470 MiB, 8.0 %)
-  SwapFree (646 MiB, 5.5 %) < swap_min_sigterm (940 MiB, 8.0 %)
-  Xorg (Pid: 11722) matches with whitelist_regex
-  python3 (Pid: 26844, Badness 3) matches with preferlist_regex
-  tail (Pid: 26845, Badness 2700) matches with preferlist_regex
+  SwapFree (457 MiB, 7.8 %) < swap_min_sigterm (470 MiB, 8.0 %)
   Preventing OOM: trying to send the SIGTERM signal to tail,
-  Pid: 26845, Badness: 2700, VmRSS: 5033 MiB, VmSwap: 10797 MiB
+  Pid: 14884, Badness: 866, VmRSS: 5181 MiB, VmSwap: 4983 MiB
   Success
 ```
 
