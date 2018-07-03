@@ -411,26 +411,35 @@ def find_victim_and_send_signal(signal):
             vm_rss = 0
             vm_swap = 0
 
-        try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
-        print(try_to_send)
+        if name in etc_dict and signal is 15:
+            command = etc_dict[name]
+            etc_info = '  Process {} is a victim,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute command: {}'.format(name, pid, oom_score, vm_rss, vm_swap, command)
+            print(etc_info)
+            os.system(etc_dict[name])
+            append_log(etc_info)
 
-        try:
-            os.kill(int(pid), signal)
-            send_result = '  Success'
+        else:
+            try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
-            if desktop_notifications:
-                send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
+            print(try_to_send)
 
-        except FileNotFoundError:
-            send_result = '  No such process'
-        except ProcessLookupError:
-            send_result = '  No such process'
+            try:
+                os.kill(int(pid), signal)
+                send_result = '  Success'
 
-        print(send_result)
+                if desktop_notifications:
+                    send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
 
-        if logging:
-            append_log(try_to_send + '\n' + send_result)
+            except FileNotFoundError:
+                send_result = '  No such process'
+            except ProcessLookupError:
+                send_result = '  No such process'
+
+            print(send_result)
+
+            if logging:
+                append_log(try_to_send + '\n' + send_result)
 
     else:
 
@@ -547,17 +556,40 @@ print(config)
 
 # парсинг конфига с получением словаря параметров
 
+# conf_parameters_dict
+# conf_restart_dict
+
 try:
     with open(config) as f:
+
+        # словарь с параметрами конфига
         config_dict = dict()
+
+        # словарь с именами и командами для параметра execute_the_command
+        etc_dict = dict()
+
         for line in f:
+
             a = line.startswith('#')
             b = line.startswith('\n')
             c = line.startswith('\t')
             d = line.startswith(' ')
-            if not a and not b and not c and not d:
+
+            etc = line.startswith('**')
+
+            if not a and not b and not c and not d and not etc:
                 a = line.split('=')
                 config_dict[a[0].strip()] = a[1].strip()
+
+            if etc:
+                a = line[2:].split('::')
+                etc_name = a[0].strip()
+                etc_command = a[1].strip()
+                if len(etc_name) > 15:
+                    print('инвалид конфиг, длина имени процесса не должна превышать 15 символов\nExit')
+                    exit()
+                etc_dict[etc_name] = etc_command
+
 except PermissionError:
     print('PermissionError', conf_err_mess)
     exit()
@@ -1087,6 +1119,9 @@ else:
     exit()
 
 
+execute_the_command = conf_parse_bool('execute_the_command')
+
+
 ##########################################################################
 
 # получение уровней в кибибайтах
@@ -1264,6 +1299,14 @@ if print_config:
 
         print('zram_max_warnings:         {} MiB, {} %'.format(
             round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
+
+
+    print('\nX. EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL')
+    print('execute_the_command:           {}'.format(execute_the_command))
+    if execute_the_command:
+        print('\nPROCESS NAME     COMMAND TO EXECUTE')
+        for key in etc_dict:
+            print('{}  {}'.format(key.ljust(15), etc_dict[key]))
 
 
 ##########################################################################
