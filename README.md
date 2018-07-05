@@ -18,7 +18,7 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 
 ### Some features
 
-- convenient configuration with a config file with well-commented parameters (38 parameters in config)
+- convenient configuration with a well commented config file (there are 38 parameters in config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
@@ -107,7 +107,7 @@ optional arguments:
 
 ### How to configure nohang
 
-Default path to config after installation is `/etc/nohang/nohang.conf`. The config is well commented. Read config and edit values before the start of the program.  Execute `sudo systemctl restart nohang` for apply changes.
+Default path to config after installation is `/etc/nohang/nohang.conf`. Read config and edit values before the start of the program.  Execute `sudo systemctl restart nohang` for apply changes.
 
 ### Feedback
 
