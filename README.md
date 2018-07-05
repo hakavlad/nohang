@@ -21,13 +21,14 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 - convenient configuration with a config file with well-commented parameters (38 parameters in config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
 - `zram` support (`mem_used_total` as trigger)
+- customizable intensity of monitoring
 - desktop notifications of attempts to prevent OOM
 - low memory notifications
 - black, white, prefer, avoid lists via regex
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
 - possibility of decrease `oom_score_adj`
 - prevention of killing innocent victim via `oom_score_min`, `min_delay_after_sigterm` and `min_delay_after_sigkill` parameters
-- customizable intensity of monitoring
+- look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more features
 
 ### An exaple of output
 
@@ -73,7 +74,7 @@ MemAvail: 4533 M, 77.2 % | SwapFree:  9037 M,  84.0 %
 ### Memory and CPU usage
 
 - VmRSS is about 12 MiB
-- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases)
+- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitorong intensity (can be changed by user via config)
 
 ### Download
 ```bash
