@@ -82,12 +82,7 @@ optional arguments:
 
 ### How to configure nohang
 
-Default path to config after installation is
-```
-/etc/nohang/nohang.conf 
-```
-
-Read config and edit values before the start of the program. Execute `sudo systemctl restart nohang` for apply changes.
+Default path to config after installation is `/etc/nohang/nohang.conf`. The config is well commented. Read config and edit values before the start of the program.  Execute `sudo systemctl restart nohang` for apply changes.
 
 ### Feedback
 
