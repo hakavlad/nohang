@@ -4,29 +4,29 @@ The No Hang Daemon
 
 `Nohang` is a highly flexible full-featured daemon for Linux that correctly prevents out of memory.
 
+### What is the problem?
+
+OOM Killer doesn't prevent OOM.
+
+### Solution
+
+Use of earlyoom or nohang, but nohang is more featured.
+
 ### Features
 
-- Переиодическая проверка доступной памяти
-- задача - препятствовать зависанию системы при нехватке доступной памяти, а также корректное завершение процессов с целью увеличения объема доступной памяти
-- периодически проверяет объем доступной памяти, при дефиците памяти отправляет `SIGKILL` или `SIGTERM` процессу с наибольшим `oom_score`
-- поддержка работы со `zram`, возможность реакции на `mem_used_total`
-- удобный конфиг с возможностью тонкой настройки
-- возможность раздельного задания уровней `MemAvailable`, `SwapFree`, `mem_used_total` для отпраки `SIGTERM` и `SIGKILL`, возможность задания в процентах и мебибайтах.
-- возможность снижения `oom_score_adj` процессов, чьи `oom_score_adj` завышены (актуально для `chromium`)
-- лучший алгоритм выбора периодов между проверками доступной памяти: при больших объемах доступной памяти нет смысла проверять ее состояние часто, поэтому период проверки уменьшается по мере уменьшения размера доступной памяти
-- интенсивность мониторинга можно гибко настраивать (параметры конфига `rate_mem`, `rate_swap`, `rate_zram`)
-- возможность блокировки памяти с помощью `mlockall()` для предотвращения своппинга процесса
-- по умолчанию высокий приоритет процесса `nice -15`, может регулироваться через конфиг
-- предотвращение самоубийства с помощью `self_oom_score_adj = -1000`
-- возможность задания `oom_score_min` для предотвращения убийства невиновных
-- возможность предотвращения избыточного убийства процессов с помощью задания миниального `oom_score` для убиваемых процессов и установка минимальной задержки просле отправки сигналов (параметры конфига `min_delay_after_sigkill` и `min_delay_after_sigterm`)
-- возможность показа десктопных уведомлений c помощью `notify-send`, с показом сигнала (`SIGTERM` или `SIGKILL`), который отправлен процессу, а также `Pid`, `oom_score`, `VmRSS`, `VmSwap`, которыми обладал процесс перед получением сигнала.
-- поддержка white, black, prefer и avoid списков с использованием Perl-compatible regular expressions
-- возможность выполнения определенных команд как альтернатива отправке SIGTERM для избранных процессов (можно использовать для перезапуска демонов вместо завершения)
-- поддержка десктопных уведомлений о низком уровне доступной памяти
-- наличие установщика для пользователей `systemd`
-- протестировано на `Debian 9 x86_64`, `Debian 8 i386`, `Fedora 28 x86_64`
-- пример вывода с отчетом об успешной отпраке сигнала:
+- convenient configuration with a config file with well-commented parameters (38 parameters in config)
+- `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
+- `zram` support (`mem_used_total` as trigger)
+- desktop notifications of attempts to prevent OOM
+- low memory notifications
+- black, white, prefer, avoid lists via regex
+- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
+- possibility of decrease `oom_score_adj`
+- prevention of killing innocent victim via `oom_score_min`, `min_delay_after_sigterm` and `min_delay_after_sigkill` parameters
+- customizable intensity of monitoring
+
+### An exaple of stdout
+
 ```
 2018-06-30 Sat 19:42:56
   MemAvailable (0 MiB, 0.0 %) < mem_min_sigterm (470 MiB, 8.0 %)
@@ -46,42 +46,47 @@ The No Hang Daemon
 - VmRSS 9.5 - 12.9 MiB
 - Нагркзка на CPU зависит от объема доступной памяти и растет по мере уменьшения объема доступной памяти
 
-### Download, install, purge
+### Download
 ```bash
 git clone https://github.com/hakavlad/nohang.git
 cd nohang
 ```
-Установка
+
+### Installation for systemd users
+
 ```bash
 sudo ./install.sh
 ```
-Удаление вместе с конфигом
+### Purge
+
 ```bash
 sudo ./purge.sh
 ```
-Удалить всё, кроме конфига
-```bash
-sudo ./uninstall.sh
+
+### Command line options
+
+```
+./nohang --help
+usage: nohang [-h] [-c CONFIG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        path to the config file, default values:
+                        ./nohang.conf, /etc/nohang/nohang.conf
 ```
 
-### Settings
-`Nohang` настраивается с помощью [конфига](https://github.com/hakavlad/nohang/blob/master/nohang.conf), расположенного после установки 
-по адресу
+### How to configure nohang
+
+Default path to config after installation is
 ```
-/etc/nohang/nohang.conf
+/etc/nohang/nohang.conf 
 ```
-К опциям прилагается описание. Отредактируйте значения параметров в соответствии с вашими предпочтениями и перезапустите сервис командой `sudo systemctl restart nohang`.
 
-### Почему Python, а не C?
+Read config and edit values before the start of the program. Execute `sudo systemctl restart nohang` for apply changes.
 
-- Скорость разработки на Python значительно выше. Больше фич за приемлемое время.
-- Практически единственный минус Python - большее потребление памяти процессом.
-- На самом деле я просто не знаю C и немножко изучал Python, поэтому пишу на последнем.
 
-### Hint
+### Feedback
 
-Можно использовать `nohang` для мониторинга размера используемой `zram` памяти (традиционные утилиты для проверки объема доступной памяти, такие как `free`, `top`, `htop`, `gnome-system-monitor` не предоставляют информации об объеме памяти, занимаемом устройствами `zram`)
-
-### Known bugs
-В рабочем алгоритме известных нет, если найдете - пишите в [Issues](https://github.com/hakavlad/nohang/issues).
+Please, create [issues](https://github.com/hakavlad/nohang/issues).
 
