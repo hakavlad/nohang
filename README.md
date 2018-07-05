@@ -6,7 +6,7 @@ The No Hang Daemon
 
 ### What is the problem?
 
-OOM Killer doesn't prevent OOM.
+OOM killer doesn't prevent OOM conditions.
 
 ### Solution
 
@@ -14,7 +14,7 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 
 ### Demo
 
-https://youtu.be/DefJBaKD7C8
+`while true; do tail /dev/zero; done` with nohang https://youtu.be/DefJBaKD7C8
 
 ### Features
 
