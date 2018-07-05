@@ -16,17 +16,16 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 
 [Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after command `while true; do tail /dev/zero; done` has been executed.
 
-### Features
+### Some features
 
 - convenient configuration with a config file with well-commented parameters (38 parameters in config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
 - `zram` support (`mem_used_total` as trigger)
 - customizable intensity of monitoring
-- desktop notifications of attempts to prevent OOM
-- low memory notifications
+- desktop notifications: results of preventings OOM and low memory warnings
 - black, white, prefer, avoid lists via regex
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
-- possibility of decrease `oom_score_adj`
+- possibility of decrease `oom_score_adj` before find victim (relevant for chromium)
 - prevention of killing innocent victim via `oom_score_min`, `min_delay_after_sigterm` and `min_delay_after_sigkill` parameters
 - look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more features
 
