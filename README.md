@@ -20,7 +20,7 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 
 - convenient configuration with a config file with well-commented parameters (38 parameters in config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
-- `zram` support (`mem_used_total` as trigger)
+- `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
 - desktop notifications: results of preventings OOM and low memory warnings
 - black, white, prefer, avoid lists via regex
