@@ -2,7 +2,7 @@
 The No Hang Daemon
 ==================
 
-`Nohang` is a highly flexible full-featured daemon for Linux that correctly prevents out of memory.
+`Nohang` is a highly flexible full-featured daemon for Linux which is able to correctly prevent out of memory conditions.
 
 ### What is the problem?
 
@@ -14,7 +14,7 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 
 ### Demo
 
-`while true; do tail /dev/zero; done` with nohang https://youtu.be/DefJBaKD7C8
+[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after command `while true; do tail /dev/zero; done` has been executed.
 
 ### Features
 
