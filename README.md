@@ -43,8 +43,8 @@ Use of earlyoom or nohang, but nohang is more featured.
 
 ### Memory and CPU usage
 
-- VmRSS 9.5 - 12.9 MiB
-- Нагркзка на CPU зависит от объема доступной памяти и растет по мере уменьшения объема доступной памяти
+- VmRSS is about 12 MiB
+- CPU usage depends on the level of available memory
 
 ### Download
 ```bash
@@ -85,6 +85,9 @@ Default path to config after installation is
 
 Read config and edit values before the start of the program. Execute `sudo systemctl restart nohang` for apply changes.
 
+### Demo
+
+https://youtu.be/DefJBaKD7C8
 
 ### Feedback
 
