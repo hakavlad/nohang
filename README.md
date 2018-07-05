@@ -10,7 +10,11 @@ OOM Killer doesn't prevent OOM.
 
 ### Solution
 
-Use of earlyoom or nohang, but nohang is more featured.
+Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is more featured.
+
+### Demo
+
+https://youtu.be/DefJBaKD7C8
 
 ### Features
 
@@ -52,7 +56,7 @@ git clone https://github.com/hakavlad/nohang.git
 cd nohang
 ```
 
-### Installation for systemd users
+### Installation and start for systemd users
 
 ```bash
 sudo ./install.sh
@@ -84,10 +88,6 @@ Default path to config after installation is
 ```
 
 Read config and edit values before the start of the program. Execute `sudo systemctl restart nohang` for apply changes.
-
-### Demo
-
-https://youtu.be/DefJBaKD7C8
 
 ### Feedback
 
