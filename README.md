@@ -12,9 +12,6 @@ OOM killer doesn't prevent OOM conditions.
 
 Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is more featured.
 
-### Demo
-
-[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after command `while true; do tail /dev/zero; done` has been executed.
 
 ### Some features
 
@@ -25,14 +22,16 @@ Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is 
 - desktop notifications: results of preventings OOM and low memory warnings
 - black, white, prefer, avoid lists via regex
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
-- possibility of decrease `oom_score_adj` before find victim (relevant for chromium)
-- prevention of killing innocent victim via `oom_score_min`, `min_delay_after_sigterm` and `min_delay_after_sigkill` parameters
 - look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more features
+
+### Demo
+
+[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after command `while true; do tail /dev/zero; done` has been executed.
+
 
 ### An exaple of output
 
 ```
-MemAvail: 2975 M, 50.6 % | SwapFree: 10758 M, 100.0 %
 MemAvail: 2976 M, 50.6 % | SwapFree: 10758 M, 100.0 %
 MemAvail:    0 M,  0.0 % | SwapFree: 10281 M,  95.6 %
 MemAvail:    0 M,  0.0 % | SwapFree:  9918 M,  92.2 %
@@ -61,8 +60,6 @@ MemAvail:  173 M,  2.9 % | SwapFree:  3363 M,  31.3 %
 MemAvail: 4700 M, 80.0 % | SwapFree:  8986 M,  83.5 %
 MemAvail: 4668 M, 79.4 % | SwapFree:  8997 M,  83.6 %
 MemAvail: 4610 M, 78.5 % | SwapFree:  9024 M,  83.9 %
-MemAvail: 4533 M, 77.2 % | SwapFree:  9037 M,  84.0 %
-
 ```
 
 ### Requirements
@@ -74,6 +71,11 @@ MemAvail: 4533 M, 77.2 % | SwapFree:  9037 M,  84.0 %
 
 - VmRSS is about 12 MiB
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitorong intensity (can be changed by user via config)
+
+### Status
+
+Now is unstable, but works great on my PC and tested on Fedora 28 x86_64, Debian 9 x86_64, Debian 8 i386. The first stable version will be released soon.
+
 
 ### Download
 ```bash
@@ -107,7 +109,7 @@ optional arguments:
 
 ### How to configure nohang
 
-Default path to config after installation is `/etc/nohang/nohang.conf`. Read config and edit values before the start of the program.  Execute `sudo systemctl restart nohang` for apply changes.
+Read config and edit values.  Execute `sudo systemctl restart nohang` for apply changes.
 
 ### Feedback
 
