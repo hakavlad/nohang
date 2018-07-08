@@ -2,31 +2,32 @@
 The No Hang Daemon
 ==================
 
-`Nohang` is a highly flexible full-featured daemon for Linux which is able to correctly prevent out of memory conditions.
+`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent out of memory conditions.
 
 ### What is the problem?
 
 OOM killer doesn't prevent OOM conditions.
 
-### Solution
+### Solutions
 
-Use of [earlyoom](https://github.com/rfjakob/earlyoom) or nohang, but nohang is more featured.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is the simple OOM preventer written in C.
 
+- Use of nohang.
 
 ### Some features
 
-- convenient configuration with a well commented config file (there are 38 parameters in config)
+- convenient configuration with a well commented config file (there are 38 parameters in the config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
 - desktop notifications: results of preventings OOM and low memory warnings
 - black, white, prefer, avoid lists via regex
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
-- look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more features
+- look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more
 
 ### Demo
 
-[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after command `while true; do tail /dev/zero; done` has been executed.
+[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after the command `while true; do tail /dev/zero; done` has been executed.
 
 
 ### An exaple of output
@@ -69,13 +70,12 @@ MemAvail: 4610 M, 78.5 % | SwapFree:  9024 M,  83.9 %
 
 ### Memory and CPU usage
 
-- VmRSS is about 12 MiB
-- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitorong intensity (can be changed by user via config)
+- VmRSS is 10 - 14 MiB depending on the settings
+- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
 ### Status
 
-Now is unstable, but works great on my PC and tested on Fedora 28 x86_64, Debian 9 x86_64, Debian 8 i386. The first stable version will be released soon.
-
+The program is unstable and some fixes are requird before the first stable version will be released.
 
 ### Download
 ```bash
@@ -109,7 +109,7 @@ optional arguments:
 
 ### How to configure nohang
 
-Read config and edit values.  Execute `sudo systemctl restart nohang` for apply changes.
+Just read the config and edit the values. Run the command `sudo systemctl restart nohang` to apply the changes.
 
 ### Feedback
 
