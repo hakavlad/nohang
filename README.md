@@ -10,8 +10,8 @@ OOM killer doesn't prevent OOM conditions.
 
 ### Solutions
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is the simple OOM preventer written in C
-- Use of nohang. This is advanced OOM preventer written in Python.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple OOM preventer written in C.
+- Use of nohang. This is an advanced OOM preventer written in Python.
 
 ### Some features
 
