@@ -2,21 +2,11 @@
 
 # Nohang - The No Hang Daemon for Linux
 
-##########################################################################
-
-# импорты
-
 import os
 from operator import itemgetter
-from time import sleep
+from time import sleep, time
 import datetime
 from argparse import ArgumentParser
-import time
-##########################################################################
-
-# задание констант
-
-version = 'upstream'
 
 sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
 
@@ -29,7 +19,7 @@ default_configs = (
     '/etc/nohang/nohang.conf'
 )
 
-# универсальное сообщение при инвалидном конфиге
+# universal message if config is invalid
 conf_err_mess = '\nSet up the path to the valid config file with -c/--confi' \
                 'g option!\nExit'
 
@@ -45,7 +35,7 @@ zram_disksize_factor = 0.0042
 
 ##########################################################################
 
-# задание функций
+# function definition section
 
 
 def string_to_float_convert_test(string):
@@ -270,14 +260,6 @@ def sleep_after_send_signal(signal):
 
 def find_victim_and_send_signal(signal):
 
-    time_now_and_mem_info = datetime.datetime.today().strftime(
-        '\n%Y-%m-%d %a %H:%M:%S\n{}'.format(mem_info))
-
-    print(time_now_and_mem_info)
-
-    if logging:
-        append_log(time_now_and_mem_info)
-
     # выставляем потолок для oom_score_adj всех процессов
     if decrease_oom_score_adj and root:
         func_decrease_oom_score_adj(oom_score_adj_max)
@@ -328,7 +310,6 @@ def find_victim_and_send_signal(signal):
             except ProcessLookupError:
                 oom_score = 0
             oom_list.append((pid, oom_score))
-
 
 
         # если найден хоть один в черном списке - нет смысла сравнивать с остальными
@@ -420,9 +401,6 @@ def find_victim_and_send_signal(signal):
             append_log(etc_info)
 
         else:
-            try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
-
-            print(try_to_send)
 
             try:
                 os.kill(int(pid), signal)
@@ -435,6 +413,20 @@ def find_victim_and_send_signal(signal):
                 send_result = '  No such process'
             except ProcessLookupError:
                 send_result = '  No such process'
+
+
+            time_now_and_mem_info = datetime.datetime.today().strftime(
+                '\n%Y-%m-%d %a %H:%M:%S\n{}'.format(mem_info))
+
+            print(time_now_and_mem_info)
+
+            if logging:
+                append_log(time_now_and_mem_info)
+
+            try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+
+            print(try_to_send)
+
 
             print(send_result)
 
@@ -787,12 +779,6 @@ else:
     exit()
 
 
-
-
-
-
-
-
 if 'zram_max_sigterm' in config_dict:
     zram_max_sigterm = config_dict['zram_max_sigterm']
 
@@ -1077,8 +1063,6 @@ else:
 
 
 
-
-
 if 'zram_max_warnings' in config_dict:
     zram_max_warnings = config_dict['zram_max_warnings']
 
@@ -1172,7 +1156,7 @@ else:
 
 ##########################################################################
 
-#  самозащита 
+#  self-defense 
 
 # повышаем приоритет
 try:
@@ -1216,7 +1200,6 @@ else:
 
 ##########################################################################
 
-# печать конфига
 
 if print_config:
 
@@ -1486,8 +1469,8 @@ while True:
     elif low_memory_warnings and desktop_notifications:
 
         if mem_available < mem_min_warnings_kb and swap_free < swap_min_warnings_kb + 0.1 or mem_used_zram > zram_max_warnings_kb:
-            warn_time_delta = time.time() - warn_time_now
-            warn_time_now = time.time()
+            warn_time_delta = time() - warn_time_now
+            warn_time_now = time()
             warn_timer += warn_time_delta
             if warn_timer > min_time_between_warnings:
                 send_notify_warn()
@@ -1497,4 +1480,5 @@ while True:
     # SLEEP BETWEEN MEM CHECKS
     else:
         sleep_after_check_mem()
+
 

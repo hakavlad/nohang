@@ -10,9 +10,8 @@ OOM killer doesn't prevent OOM conditions.
 
 ### Solutions
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is the simple OOM preventer written in C.
-
-- Use of nohang.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is the simple OOM preventer written in C
+- Use of nohang. This is advanced OOM preventer written in Python.
 
 ### Some features
 
@@ -75,9 +74,10 @@ MemAvail: 4610 M, 78.5 % | SwapFree:  9024 M,  83.9 %
 
 ### Status
 
-The program is unstable and some fixes are requird before the first stable version will be released.
+The program is unstable and some fixes are requird before the first stable version will be released. (Need documentation, translation, review.)
 
 ### Download
+
 ```bash
 git clone https://github.com/hakavlad/nohang.git
 cd nohang
@@ -88,6 +88,7 @@ cd nohang
 ```bash
 sudo ./install.sh
 ```
+
 ### Purge
 
 ```bash
@@ -97,7 +98,7 @@ sudo ./purge.sh
 ### Command line options
 
 ```
-./nohang --help
+./nohang -h
 usage: nohang [-h] [-c CONFIG]
 
 optional arguments:
@@ -113,5 +114,5 @@ Just read the config and edit the values. Run the command `sudo systemctl restar
 
 ### Feedback
 
-Please, create [issues](https://github.com/hakavlad/nohang/issues).
+Please create [issues](https://github.com/hakavlad/nohang/issues).
 
