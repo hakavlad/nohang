@@ -110,7 +110,7 @@ optional arguments:
 
 ### How to configure nohang
 
-Just read the config and edit values. Run the command `sudo systemctl restart nohang` to apply the changes.
+Just read the config and edit values. Run the command `sudo systemctl restart nohang` to apply changes.
 
 ### Feedback
 
