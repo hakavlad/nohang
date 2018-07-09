@@ -30,7 +30,7 @@ OOM killer doesn't prevent OOM conditions.
 [Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after the command `while true; do tail /dev/zero; done` has been executed.
 
 
-### An exaple of output
+### An example of output
 
 ```
 MemAvail: 2976 M, 50.6 % | SwapFree: 10758 M, 100.0 %
