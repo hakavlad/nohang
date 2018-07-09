@@ -74,7 +74,7 @@ MemAvail: 4610 M, 78.5 % | SwapFree:  9024 M,  83.9 %
 
 ### Status
 
-The program is unstable and some fixes are requird before the first stable version will be released. (Need documentation, translation, review.)
+The program is unstable and some fixes are required before the first stable version will be released. (Need documentation, translation, review.)
 
 ### Download
 
