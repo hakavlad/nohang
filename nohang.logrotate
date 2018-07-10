@@ -1,9 +1,0 @@
-/var/log/nohang/*.log {
-  create 640 root adm
-  missingok
-  notifempty
-  weekly
-  rotate 5
-  compress
-  delaycompress
-}

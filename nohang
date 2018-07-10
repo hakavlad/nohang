@@ -5,8 +5,8 @@
 import os
 from operator import itemgetter
 from time import sleep, time
-import datetime
 from argparse import ArgumentParser
+from subprocess import Popen
 
 sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
 
@@ -108,20 +108,6 @@ def rline1(path):
 def write(path, string):
     with open(path, 'w') as f:
         f.write(string)
-
-
-def append_log(string):
-    try:
-        with open(logfile, 'a') as f:
-            f.write(string + '\n')
-    except PermissionError:
-        print(
-            '  Cannot append log {}: PermissionError'.format(
-                logfile))
-    except IsADirectoryError:
-        print(
-            '  Cannot append log {}: IsADirectoryError'.format(
-                logfile))
 
 
 def kib_to_mib(num):
@@ -228,25 +214,6 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
         os.system(user_notify_command + info)
 
 
-def send_notify_black(signal, name, pid):
-    # текст отправляемого уведомления
-    info = '"<u>Nohang</u> sent <u>{}</u>\nto blacklisted proce' \
-        'ss <b>{}</b>, <i>Pid</i> <b>{}</b>" &'.format(
-            sig_dict[signal], name, pid)
-    if root:
-        # отправляем уведомление всем залогиненным пользователям
-        for uid in os.listdir('/run/user'):
-            root_notify_command = 'sudo -u {} DISPLAY={} notify-send {} "Pr' \
-                'eventing OOM" '.format(
-                    users_dict[uid], root_display, notify_options)
-            os.system(root_notify_command + info)
-    else:
-        # отправляем уведомление пользователю, который запустил nohang
-        user_notify_command = 'notify-send {} "Preventing OOM" '.format(
-            notify_options)
-        os.system(user_notify_command + info)
-
-
 def sleep_after_send_signal(signal):
     if signal is 9:
         if print_sleep_periods:
@@ -260,6 +227,9 @@ def sleep_after_send_signal(signal):
 
 def find_victim_and_send_signal(signal):
 
+    print('****')
+    print(mem_info)
+
     # выставляем потолок для oom_score_adj всех процессов
     if decrease_oom_score_adj and root:
         func_decrease_oom_score_adj(oom_score_adj_max)
@@ -269,9 +239,6 @@ def find_victim_and_send_signal(signal):
 
     if use_regex_lists:
 
-        # pid list, rename var! blacklisted_pids
-        oom_blacklist_regex = []
-
         for pid in os.listdir('/proc'):
             if pid.isdigit() is not True:
                 continue
@@ -279,20 +246,6 @@ def find_victim_and_send_signal(signal):
                 # пошла итерация для каждого существующего процесса
                 oom_score = int(rline1('/proc/' + pid + '/oom_score'))
                 name = pid_to_name(pid)
-
-                # если имя в белом списке,то пропускаем
-                res = fullmatch(whitelist_regex, name)
-                if res is not None:
-                    print('  {} (Pid: {}) matches with whitelist_regex'.format(name, pid)),
-                    continue
-
-                # если имя в черном списке - добавляем Pid в список для убийства
-                # ДОБАВЛЯТЬ И ИМЯ СРАЗУ
-                # ВАРИАНТ - СРАЗУ УБИВАТЬ
-                res = fullmatch(blacklist_regex, name)
-                if res is not None:
-                    oom_blacklist_regex.append(pid)
-                    print('  {} (Pid: {}) matches with blacklist_regex'.format(name, pid)),
 
                 res = fullmatch(avoidlist_regex, name)
                 if res is not None:
@@ -311,35 +264,6 @@ def find_victim_and_send_signal(signal):
                 oom_score = 0
             oom_list.append((pid, oom_score))
 
-
-        # если найден хоть один в черном списке - нет смысла сравнивать с остальными
-
-        if oom_blacklist_regex != []:
-
-            for pid in oom_blacklist_regex:
-
-                name = pid_to_name(pid)
-                print('  Preventing OOM: trying to send the {} signal to blacklisted process {},  Pid: {}'.format(
-                    sig_dict[signal], name, pid))
-
-                try:
-                    os.kill(int(pid), signal)
-                    print('  Success')
-
-                    if desktop_notifications:
-                        send_notify_black(signal, name, pid)
-
-                except FileNotFoundError:
-                    print('  No such process')
-                except ProcessLookupError:
-                    print('  No such process')
-                except PermissionError:
-                    print('  Operation not permitted')
-
-            # после отправки сигнала процессам из черного списка поспать и выйти из функции
-            sleep_after_send_signal(signal)
-            return 0
-
     else:
 
         # not use regex
@@ -354,13 +278,11 @@ def find_victim_and_send_signal(signal):
                 oom_score = 0
             oom_list.append((i, oom_score))
 
-
     # получаем отсортированный по oom_score (по badness!) список пар (pid, oom_score)
     pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
 
     # получаем максимальный oom_score
     oom_score = pid_tuple_list[1]
-
 
     if oom_score >= oom_score_min:
 
@@ -392,13 +314,12 @@ def find_victim_and_send_signal(signal):
             vm_rss = 0
             vm_swap = 0
 
-
         if name in etc_dict and signal is 15:
             command = etc_dict[name]
             etc_info = '  Process {} is a victim,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute command: {}'.format(name, pid, oom_score, vm_rss, vm_swap, command)
+            os.system(etc_dict[name]) # все норм, это произвольная команда задана юзером
             print(etc_info)
-            os.system(etc_dict[name])
-            append_log(etc_info)
+            # еще ГУИ уведомление запустить
 
         else:
 
@@ -414,24 +335,10 @@ def find_victim_and_send_signal(signal):
             except ProcessLookupError:
                 send_result = '  No such process'
 
-
-            time_now_and_mem_info = datetime.datetime.today().strftime(
-                '\n%Y-%m-%d %a %H:%M:%S\n{}'.format(mem_info))
-
-            print(time_now_and_mem_info)
-
-            if logging:
-                append_log(time_now_and_mem_info)
-
             try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
             print(try_to_send)
-
-
             print(send_result)
-
-            if logging:
-                append_log(try_to_send + '\n' + send_result)
 
     else:
 
@@ -439,9 +346,6 @@ def find_victim_and_send_signal(signal):
             oom_score, oom_score_min)
 
         print(badness_is_too_small)
-
-        if logging:
-            append_log(badness_is_too_small)
 
     sleep_after_send_signal(signal)
 
@@ -609,6 +513,23 @@ print_mem_check_results = conf_parse_bool('print_mem_check_results')
 
 
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
+
+
+realtime_ionice = conf_parse_bool('realtime_ionice')
+
+
+if 'realtime_ionice_classdata' in config_dict:
+    realtime_ionice_classdata = string_to_int_convert_test(
+        config_dict['realtime_ionice_classdata'])
+    if realtime_ionice_classdata is None:
+        print('Invalid realtime_ionice_classdata value, not integer\nExit')
+        exit()
+    if realtime_ionice_classdata < 0 or realtime_ionice_classdata > 7:
+        print('Invalid realtime_ionice_classdata value\nExit')
+        exit()
+else:
+    print('realtime_ionice_classdata not in config\nExit')
+    exit()
 
 
 mlockall = conf_parse_bool('mlockall')
@@ -952,12 +873,6 @@ if use_regex_lists:
     from re import fullmatch
 
 
-whitelist_regex = conf_parse_string('whitelist_regex')
-
-
-blacklist_regex = conf_parse_string('blacklist_regex')
-
-
 preferlist_regex = conf_parse_string('preferlist_regex')
 
 
@@ -990,10 +905,7 @@ else:
     exit()
 
 
-logging = conf_parse_bool('logging')
 
-
-logfile = conf_parse_string('logfile')
 
 
 low_memory_warnings = conf_parse_bool('low_memory_warnings')
@@ -1190,12 +1102,25 @@ else:
     mla_res = ''
 
 
-if os.geteuid() == 0:
+self_uid = os.geteuid()
+self_pid = os.getpid()
+
+
+if self_uid == 0:
     root = True
     decrease_res = 'OK'
 else:
     root = False
     decrease_res = 'Impossible'
+
+
+if root and realtime_ionice:
+    os.system('ionice -c 1 -n {} -p {}'.format(
+        realtime_ionice_classdata ,self_pid))
+    print('\nionice:'.format())
+    os.system('ionice')
+    print()
+
 
 
 ##########################################################################
@@ -1258,17 +1183,10 @@ if print_config:
     print('\nVII. AVOID AND PREFER VICTIM NAMES VIA REGEX')
     print('use_regex_lists:           {}'.format(use_regex_lists))
     if use_regex_lists:
-        print('whitelist_regex:           {}'.format(whitelist_regex))
-        print('blacklist_regex:           {}'.format(blacklist_regex))
         print('preferlist_regex:          {}'.format(preferlist_regex))
         print('preferlist_factor:         {}'.format(preferlist_factor))
         print('avoidlist_regex:           {}'.format(avoidlist_regex))
         print('avoidlist_factor:          {}'.format(avoidlist_factor))
-
-    print('\nVIII. LOGGING')
-    print('logging:                   {}'.format(logging))
-    if logging:
-        print('logfile:                   {}'.format(logfile))
 
     print('\nIX. LOW MEMORY WARNINGS')
     print('low_memory_warnings:       {}'.format(low_memory_warnings))

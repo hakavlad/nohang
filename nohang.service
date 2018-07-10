@@ -7,7 +7,7 @@ Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 [Service]
 Type=simple
 Restart=always
-StandardOutput=null
+StandardOutput=syslog
 StandardError=syslog
 ExecStart=/usr/local/bin/nohang
 
