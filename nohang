@@ -1208,7 +1208,7 @@ if print_config:
     print('print_mem_check_results:   {}'.format(print_mem_check_results))
     print('print_sleep_periods:       {}'.format(print_sleep_periods))
 
-    print('\nII. SELF-DEFENSE')
+    print('\nII. SELF-DEFENSE [displaying these options need fix]')
     print('mlockall:                  {} ({})'.format(mlockall, mla_res))
     print('self_nice:                 {} ({})'.format(
         self_nice, self_nice_result
@@ -1217,12 +1217,12 @@ if print_config:
         self_oom_score_adj, self_oom_score_adj_result
     ))
 
-    print('\nIII. MONITORING INTENSITY')
+    print('\nIII. INTENSITY OF MONITORING')
     print('rate_mem:                  {}'.format(rate_mem))
     print('rate_swap:                 {}'.format(rate_swap))
     print('rate_zram:                 {}'.format(rate_zram))
 
-    print('\nIV. THRESHOLDS FOR SENDING SIGNALS')
+    print('\nIV. THRESHOLDS FOR SENDING SIGNALS [displaying these options need fix]')
 
     print('mem_min_sigterm:           {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
@@ -1255,7 +1255,7 @@ if print_config:
         print('notify_options:            {}'.format(notify_options))
         print('root_display:              {}'.format(root_display))
 
-    print('\nVII. BLACK, WHITE, AVOID AND PREFER LISTS')
+    print('\nVII. AVOID AND PREFER VICTIM NAMES VIA REGEX')
     print('use_regex_lists:           {}'.format(use_regex_lists))
     if use_regex_lists:
         print('whitelist_regex:           {}'.format(whitelist_regex))
@@ -1285,7 +1285,7 @@ if print_config:
 
 
     print('\nX. EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL')
-    print('execute_the_command:           {}'.format(execute_the_command))
+    print('execute_the_command:       {}'.format(execute_the_command))
     if execute_the_command:
         print('\nPROCESS NAME     COMMAND TO EXECUTE')
         for key in etc_dict:

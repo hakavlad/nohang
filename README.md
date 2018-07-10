@@ -64,17 +64,17 @@ MemAvail: 4610 M, 78.5 % | SwapFree:  9024 M,  83.9 %
 
 ### Requirements
 
-- Linux 3.14+
-- Python 3.4+
+- `Linux 3.14+` (because the MemAvailable parameter appeared in /proc/meminfo since kernel version 3.14) and `Python 3.4+` (compatibility with earlier versions was not tested) for basic usage
+- `libnotify` (Fedora, Arch) or `libnotify-bin` (Debian, Ubuntu) for desktop notifications and `sudo` for desktop notifications as root
 
 ### Memory and CPU usage
 
-- VmRSS is 10 - 14 MiB depending on the settings
+- VmRSS is 10 — 13.5 MiB depending on the settings
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
 ### Status
 
-The program is unstable and some fixes are required before the first stable version will be released. (Need documentation, translation, review.)
+The program is unstable and some fixes are required before the first stable version will be released (need documentation, translation, review and some optimisation).
 
 ### Download
 
@@ -110,9 +110,22 @@ optional arguments:
 
 ### How to configure nohang
 
-Just read the config and edit values. Run the command `sudo systemctl restart nohang` to apply changes.
+The program can be configured by editing the config file. The configuration includes the following sections:
+
+- I. STANDARD OUTPUT VERBOSITY
+- II. SELF-DEFENSE
+- III. INTENSITY OF MONITORING
+- IV. THRESHOLDS FOR SENDING SIGNALS
+- V. PREVENTION OF KILLING INNOCENT VICTIMS
+- VI. DESKTOP NOTIFICATIONS
+- VII. AVOID AND PREFER VICTIM NAMES VIA REGEX
+- VIII. LOGGING
+- IX. LOW MEMORY WARNINGS
+- X. EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL
+
+Just read the description of the parameters and edit the values. Run the command `sudo systemctl restart nohang` to apply changes.
 
 ### Feedback
 
-Please create [issues](https://github.com/hakavlad/nohang/issues).
+Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
 
