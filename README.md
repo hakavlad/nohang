@@ -112,18 +112,18 @@ optional arguments:
 
 The program can be configured by editing the config file. The configuration includes the following sections:
 
-- I. STANDARD OUTPUT VERBOSITY
-- II. SELF-DEFENSE
-- III. INTENSITY OF MONITORING
-- IV. THRESHOLDS FOR SENDING SIGNALS
-- V. PREVENTION OF KILLING INNOCENT VICTIMS
-- VI. DESKTOP NOTIFICATIONS
-- VII. AVOID AND PREFER VICTIM NAMES VIA REGEX
-- VIII. LOGGING
-- IX. LOW MEMORY WARNINGS
-- X. EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL
+- THRESHOLDS FOR SENDING SIGNALS
+- INTENSITY OF MONITORING (AND CPU USAGE)
+- PREVENTION OF KILLING INNOCENT VICTIMS
+- AVOID AND PREFER VICTIM NAMES VIA REGEX
+- EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL
+- DESKTOP NOTIFICATIONS
+- LOW MEMORY WARNINGS
+- SELF-DEFENSE
+- OUTPUT VERBOSITY
+- LOGGING TO SEPARATE FILE
 
-Just read the description of the parameters and edit the values. Run the command `sudo systemctl restart nohang` to apply changes.
+Just read the description of the parameters and edit the values. Run the command `sudo systemctl restart nohang` to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
 
 ### Feedback
 
