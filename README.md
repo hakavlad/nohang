@@ -110,7 +110,7 @@ optional arguments:
 
 ### How to configure nohang
 
-The program can be configured by editing the config file. The configuration includes the following sections:
+The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
 - THRESHOLDS FOR SENDING SIGNALS
 - INTENSITY OF MONITORING (AND CPU USAGE)
