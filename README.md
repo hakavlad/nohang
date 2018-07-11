@@ -30,7 +30,7 @@ OOM killer doesn't prevent OOM conditions.
 
 
 ### An example of output
-
+...if command `while true; do stress -m 9 --vm-bytes 3G; done` has been executed with `rate_mem` = 9:
 ```
 MemAvail: 2515 M, 42.8 %
 MemAvail: 1510 M, 25.7 %
@@ -56,6 +56,7 @@ MemAvail: 4084 M, 69.5 %
 MemAvail: 2543 M, 43.3 %
 MemAvail: 1535 M, 26.1 %
 ```
+And demo: https://youtu.be/5d6UovJzK8k
 
 ### Requirements
 
