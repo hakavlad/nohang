@@ -33,6 +33,8 @@ conf_err_mess = '\nSet up the path to the valid config file with -c/--confi' \
 # но это утверждение противоречит опытным данным
 zram_disksize_factor = 0.0042
 
+name_strip_string = '\'"`\\!-$'
+
 ##########################################################################
 
 # function definition section
@@ -199,7 +201,7 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
     info = '"<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
         'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
         '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(
-            sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+            sig_dict[signal], name.strip(name_strip_string), pid, oom_score, vm_rss, vm_swap)
     if root:
         # отправляем уведомление всем залогиненным пользователям
         for uid in os.listdir('/run/user'):
@@ -227,7 +229,6 @@ def sleep_after_send_signal(signal):
 
 def find_victim_and_send_signal(signal):
 
-    print('****')
     print(mem_info)
 
     # выставляем потолок для oom_score_adj всех процессов
@@ -1320,7 +1321,7 @@ while True:
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
 
-        mem_info = '  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
+        mem_info = '* MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
             'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
@@ -1339,7 +1340,7 @@ while True:
     # ZRAM KILL
     elif mem_used_zram >= zram_max_sigkill_kb:
 
-        mem_info = '  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = '* MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1350,7 +1351,7 @@ while True:
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
 
-        mem_info = '  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
+        mem_info = '* MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
             'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1374,7 +1375,7 @@ while True:
     # ZRAM TERM
     elif mem_used_zram >= zram_max_sigterm_kb:
 
-        mem_info = '  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
+        mem_info = '* MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
             'm ({} M, {} %)'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 

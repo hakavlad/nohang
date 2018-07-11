@@ -89,17 +89,16 @@ optional arguments:
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
-- THRESHOLDS FOR SENDING SIGNALS
-- INTENSITY OF MONITORING (AND CPU USAGE)
-- PREVENTION OF KILLING INNOCENT VICTIMS
-- AVOID AND PREFER VICTIM NAMES VIA REGEX
-- EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL
-- GUI NOTIFICATIONS
-- LOW MEMORY WARNINGS
-- SELF-DEFENSE AND PREVENTING SLOWING DOWN THE PROGRAM
-- OUTPUT VERBOSITY
+- Thresholds for sending signals to victims
+- Intensity of monitoring (and CPU usage)
+- Prevention of killing innocent victims
+- Avoid and prefer victim names via regex matching
+- Execute the command instead of sending the SIGTERM signal
+- GUI notifications: results of preventing OOM and low memory warnings
+- Self-defense and preventing slowing down the program
+- Output verbosity
 
-Just read the description of the parameters and edit the values. Run the command `sudo systemctl restart nohang` to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
+Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
 
 ### Feedback
 
