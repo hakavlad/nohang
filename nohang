@@ -229,6 +229,8 @@ def sleep_after_send_signal(signal):
 
 def find_victim_and_send_signal(signal):
 
+    time0 = time()
+
     print(mem_info)
 
     # выставляем потолок для oom_score_adj всех процессов
@@ -326,7 +328,9 @@ def find_victim_and_send_signal(signal):
 
             try:
                 os.kill(int(pid), signal)
-                send_result = '  Success'
+                success_time = time()
+                delta_success = success_time - time0
+                send_result = '  Success; reaction time: {} ms'.format(round(delta_success * 1000))
 
                 if desktop_notifications:
                     send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
@@ -1247,6 +1251,7 @@ while True:
                 break
 
 
+
     # если swap_min_sigkill задан в процентах
     if swap_kill_is_percent:
         swap_min_sigkill_kb = swap_total * swap_min_sigkill_percent / 100.0
@@ -1396,8 +1401,10 @@ while True:
                 warn_timer = 0
         sleep_after_check_mem()
 
+
     # SLEEP BETWEEN MEM CHECKS
     else:
+
         sleep_after_check_mem()
 
 

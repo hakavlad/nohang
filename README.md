@@ -32,11 +32,29 @@ OOM killer doesn't prevent OOM conditions.
 ### An example of output
 
 ```
-  MemAvailable (0 MiB, 0.0 %) < mem_min_sigterm (588 MiB, 10.0 %)
-  SwapFree (943 MiB, 8.8 %) < swap_min_sigterm (1076 MiB, 10.0 %)
-  Preventing OOM: trying to send the SIGTERM signal to tail,
-  Pid: 14636, Badness: 777, VmRSS: 4446 MiB, VmSwap: 8510 MiB
-  Success
+MemAvail: 2515 M, 42.8 %
+MemAvail: 1510 M, 25.7 %
+MemAvail:  909 M, 15.5 %
+MemAvail:  520 M,  8.9 %
+* MemAvailable (520 MiB, 8.9 %) < mem_min_sigterm (529 MiB, 9.0 %)
+  SwapFree (0 MiB, 0.0 %) < swap_min_sigterm (0 MiB, - %)
+  Preventing OOM: trying to send the SIGTERM signal to stress,
+  Pid: 9828, Badness: 82, VmRSS: 485 MiB, VmSwap: 0 MiB
+  Success; reaction time: 11 ms
+MemAvail: 4114 M, 70.0 %
+MemAvail: 2532 M, 43.1 %
+MemAvail: 1495 M, 25.4 %
+MemAvail:  927 M, 15.8 %
+MemAvail:  553 M,  9.4 %
+MemAvail:  342 M,  5.8 %
+* MemAvailable (342 MiB, 5.8 %) < mem_min_sigkill (353 MiB, 6.0 %)
+  SwapFree (0 MiB, 0.0 %) < swap_min_sigkill (0 MiB, - %)
+  Preventing OOM: trying to send the SIGKILL signal to stress,
+  Pid: 9841, Badness: 87, VmRSS: 513 MiB, VmSwap: 0 MiB
+  Success; reaction time: 11 ms
+MemAvail: 4084 M, 69.5 %
+MemAvail: 2543 M, 43.3 %
+MemAvail: 1535 M, 26.1 %
 ```
 
 ### Requirements
