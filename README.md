@@ -1,19 +1,32 @@
 
-The No Hang Daemon
-==================
+# Nohang
 
-`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent out of memory conditions.
+`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent out of memory conditions and save disk cache.
 
-### What is the problem?
+## What is the problem?
 
-OOM killer doesn't prevent OOM conditions.
+OOM killer doesn't prevent OOM conditions. And OOM conditions may cause loss disk cache, [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock) and killing multiple processes.
 
-### Solutions
+"How do I prevent Linux from freezing when out of memory?
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple OOM preventer written in C.
-- Use of nohang. This is an advanced OOM preventer written in Python.
+Today I (accidentally) ran some program on my Linux box that quickly used a lot of memory. My system froze, became unresponsive and thus I was unable to kill the offender.
 
-### Some features
+How can I prevent this in the future? Can't it at least keep a responsive core or something running?"
+[serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory)
+
+"With or without swap it still freezes before the OOM killer gets run automatically. This is really a kernel bug that should be fixed (i.e. run OOM killer earlier, before dropping all disk cache). Unfortunately kernel developers and a lot of other folk fail to see the problem. Common suggestions such as disable/enable swap, buy more RAM, run less processes, set limits etc. do not address the underlying problem that the kernel's low memory handling sucks camel's balls."
+[serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory)
+
+Also look at "Why are low memory conditions handled so badly?" [r/linux](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) - discussion with 480+ posts.
+
+
+## Solutions
+
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and lightweight OOM preventer written in C.
+- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook.
+- Use of nohang.
+
+## Some features
 
 - convenient configuration with a well commented config file (there are 35 parameters in the config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
@@ -24,7 +37,7 @@ OOM killer doesn't prevent OOM conditions.
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
 - look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more
 
-### Demo
+## Demo
 
 [Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after the command `while true; do tail /dev/zero; done` has been executed.
 
@@ -58,40 +71,40 @@ MemAvail: 1535 M, 26.1 %
 ```
 And demo: https://youtu.be/5d6UovJzK8k
 
-### Requirements
+## Requirements
 
 - `Linux 3.14+` (because the MemAvailable parameter appeared in /proc/meminfo since kernel version 3.14) and `Python 3.4+` (compatibility with earlier versions was not tested) for basic usage
 - `libnotify` (Fedora, Arch) or `libnotify-bin` (Debian, Ubuntu) for desktop notifications and `sudo` for desktop notifications as root
 
-### Memory and CPU usage
+## Memory and CPU usage
 
 - VmRSS is 10 — 13.5 MiB depending on the settings
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
-### Status
+## Status
 
 The program is unstable and some fixes are required before the first stable version will be released (need documentation, translation, review and some optimisation).
 
-### Download
+## Download
 
 ```bash
 git clone https://github.com/hakavlad/nohang.git
 cd nohang
 ```
 
-### Installation and start for systemd users
+## Installation and start for systemd users
 
 ```bash
 sudo ./install.sh
 ```
 
-### Purge
+## Purge
 
 ```bash
 sudo ./purge.sh
 ```
 
-### Command line options
+## Command line options
 
 ```
 ./nohang -h
@@ -104,7 +117,7 @@ optional arguments:
                         ./nohang.conf, /etc/nohang/nohang.conf
 ```
 
-### How to configure nohang
+## How to configure nohang
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
@@ -119,7 +132,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
 
-### Feedback
+## Feedback
 
 Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
 
