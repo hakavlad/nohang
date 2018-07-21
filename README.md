@@ -5,7 +5,7 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 
 ## What is the problem?
 
-OOM killer doesn't prevent OOM conditions. And OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), loss disk cache and killing multiple processes.
+OOM killer doesn't prevent OOM conditions. And OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop caches and killing multiple processes.
 
 Here are the statements of some users:
 
@@ -45,7 +45,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Requirements
 
-- `Linux 3.14+` and `Python 3.4+` for basic usage
+- `Linux 3.14+` and `Python 3.4+` for basic use
 - `libnotify` (Fedora, Arch) or `libnotify-bin` (Debian, Ubuntu) to show GUI notifications
 
 ## Memory and CPU usage
@@ -108,5 +108,5 @@ Just read the description of the parameters and edit the values. Please restart 
 
 ## Feedback
 
-Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
+Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature uirequests and any questions are welcome.
 
