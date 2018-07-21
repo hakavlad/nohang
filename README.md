@@ -1,11 +1,11 @@
 
 # Nohang
 
-`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent out of memory (OOM) conditions and save disk cache.
+`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) conditions and save [disk cache](https://en.wikipedia.org/wiki/Page_cache).
 
 ## What is the problem?
 
-OOM killer doesn't prevent OOM conditions. And OOM conditions may cause loss disk cache, [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock) and killing multiple processes.
+OOM killer doesn't prevent OOM conditions. And OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), loss disk cache and killing multiple processes.
 
 Here are the words of some users:
 
