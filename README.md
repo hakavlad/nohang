@@ -10,19 +10,17 @@ OOM killer doesn't prevent OOM conditions. And OOM conditions may cause loss dis
 Here are the words of some users:
 
 >"How do I prevent Linux from freezing when out of memory?
-
 >Today I (accidentally) ran some program on my Linux box that quickly used a lot of memory. My system froze, became unresponsive and thus I was unable to kill the offender.
-
 >How can I prevent this in the future? Can't it at least keep a responsive core or something running?"
 
-[serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory)
+([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory))
 
 
 > "With or without swap it still freezes before the OOM killer gets run automatically. This is really a kernel bug that should be fixed (i.e. run OOM killer earlier, before dropping all disk cache). Unfortunately kernel developers and a lot of other folk fail to see the problem. Common suggestions such as disable/enable swap, buy more RAM, run less processes, set limits etc. do not address the underlying problem that the kernel's low memory handling sucks camel's balls."
 
-[serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625)
+([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625))
 
-Also look at "Why are low memory conditions handled so badly?" [r/linux](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) - discussion with 480+ posts.
+Also look at "Why are low memory conditions handled so badly?" ([r/linux](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/), discussion with 480+ posts).
 
 
 ## Solutions
