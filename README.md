@@ -5,7 +5,7 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 
 ## What is the problem?
 
-OOM killer doesn't prevent OOM conditions. And OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop caches and killing multiple processes.
+OOM killer doesn't prevent OOM conditions. And OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop caches and killing (via SIGKILL) multiple processes instead of terminating (via SIGTERM) one process.
 
 Here are the statements of some users:
 
