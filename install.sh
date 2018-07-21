@@ -6,7 +6,9 @@ chmod 755 /usr/local/bin/nohang
 mkdir /etc/nohang
 chmod 755 /etc/nohang
 cp nohang.conf /etc/nohang/
+cp default_values_backup.conf /etc/nohang/
 chmod 644 /etc/nohang/nohang.conf
+chmod 644 /etc/nohang/default_values_backup.conf
 
 gzip -k nohang.1
 mkdir /usr/local/share/man/man1
