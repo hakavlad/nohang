@@ -30,13 +30,13 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Some features
 
-- convenient configuration with a well commented config file (there are 35 parameters in the config)
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
+- impact on the badness of processes via matching their names with regular expressions
+- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
+- GUI notifications: results of preventings OOM and low memory warnings
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
-- desktop notifications: results of preventings OOM and low memory warnings
-- prefer and avoid lists via regex matching
-- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
+- convenient configuration with a well commented config file (there are 35 parameters in the config)
 - look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more
 
 ## Demo
