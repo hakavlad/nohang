@@ -483,14 +483,14 @@ try:
             c = line.startswith('\t')
             d = line.startswith(' ')
 
-            etc = line.startswith('**')
+            etc = line.startswith('$ETC')
 
             if not a and not b and not c and not d and not etc:
                 a = line.split('=')
                 config_dict[a[0].strip()] = a[1].strip()
 
             if etc:
-                a = line[2:].split('::')
+                a = line[4:].split('///')
                 etc_name = a[0].strip()
                 etc_command = a[1].strip()
                 if len(etc_name) > 15:
