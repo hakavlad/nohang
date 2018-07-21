@@ -1,7 +1,7 @@
 
 # Nohang
 
-`Nohang` is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) conditions and save [disk cache](https://en.wikipedia.org/wiki/Page_cache).
+Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) conditions and save [disk cache](https://en.wikipedia.org/wiki/Page_cache).
 
 ## What is the problem?
 
@@ -61,7 +61,7 @@ The program is unstable and some fixes are required before the first stable vers
 
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
-cd nohang
+$ cd nohang
 ```
 
 ## Installation and start for systemd users
@@ -99,8 +99,8 @@ The program can be configured by editing the [config file](https://github.com/ha
 4. Impact on the badness of processes via matching their names with regular expressions
 5. The execution of a specific command instead of sending the SIGTERM signal
 6. GUI notifications:
-    - results of preventing OOM
-    - low memory warnings
+   - results of preventing OOM
+   - low memory warnings
 7. Preventing the slowing down of the program
 8. Output verbosity
 
