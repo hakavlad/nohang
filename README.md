@@ -9,9 +9,9 @@ OOM killer doesn't prevent OOM conditions. And OOM conditions may cause loss dis
 
 Here are the words of some users:
 
->"How do I prevent Linux from freezing when out of memory?
->Today I (accidentally) ran some program on my Linux box that quickly used a lot of memory. My system froze, became unresponsive and thus I was unable to kill the offender.
->How can I prevent this in the future? Can't it at least keep a responsive core or something running?"
+> "How do I prevent Linux from freezing when out of memory?
+Today I (accidentally) ran some program on my Linux box that quickly used a lot of memory. My system froze, became unresponsive and thus I was unable to kill the offender.
+How can I prevent this in the future? Can't it at least keep a responsive core or something running?"
 
 ([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory))
 
@@ -20,7 +20,7 @@ Here are the words of some users:
 
 ([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625))
 
-Also look at "Why are low memory conditions handled so badly?" ([r/linux](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/), discussion with 480+ posts).
+Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) (discussion with 480+ posts on r/linux).
 
 
 ## Solutions
