@@ -45,12 +45,12 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Requirements
 
-- `Linux 3.14+` (because the MemAvailable parameter appeared in /proc/meminfo since kernel version 3.14) and `Python 3.4+` (compatibility with earlier versions was not tested) for basic usage
-- `libnotify` (Fedora, Arch) or `libnotify-bin` (Debian, Ubuntu) for desktop notifications and `sudo` for desktop notifications as root
+- `Linux 3.14+` and `Python 3.4+` for basic usage
+- `libnotify` (Fedora, Arch) or `libnotify-bin` (Debian, Ubuntu) to show GUI notifications
 
 ## Memory and CPU usage
 
-- VmRSS is 10 — 13.5 MiB depending on the settings
+- VmRSS is 10 — 14 MiB depending on the settings
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
 ## Status
@@ -60,20 +60,20 @@ The program is unstable and some fixes are required before the first stable vers
 ## Download
 
 ```bash
-git clone https://github.com/hakavlad/nohang.git
+$ git clone https://github.com/hakavlad/nohang.git
 cd nohang
 ```
 
 ## Installation and start for systemd users
 
 ```bash
-sudo ./install.sh
+$ sudo ./install.sh
 ```
 
 ## Purge
 
 ```bash
-sudo ./purge.sh
+$ sudo ./purge.sh
 ```
 
 ## Command line options
@@ -93,14 +93,16 @@ optional arguments:
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
-- Thresholds for sending signals to victims
-- Intensity of monitoring (and CPU usage)
-- Prevention of killing innocent victims
-- Avoid and prefer victim names via regex matching
-- Execute the command instead of sending the SIGTERM signal
-- GUI notifications: results of preventing OOM and low memory warnings
-- Self-defense and preventing slowing down the program
-- Output verbosity
+1. Memory levels to respond to as an OOM threat
+2. The frequency of checking the level of available memory (and CPU usage)
+3. The prevention of killing innocent victims
+4. Impact on the badness of processes via matching their names with regular expressions
+5. The execution of a specific command instead of sending the SIGTERM signal
+6. GUI notifications:
+    - results of preventing OOM
+    - low memory warnings
+7. Preventing the slowing down of the program
+8. Output verbosity
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
 
