@@ -36,7 +36,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - GUI notifications: results of preventings OOM and low memory warnings
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
-- convenient configuration with a well commented config file (there are 35 parameters in the config)
+- convenient configuration with a well commented config file (there are 36 parameters in the config)
 - look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more
 
 ## Demo
