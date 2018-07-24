@@ -1,7 +1,7 @@
 
 # Nohang
 
-Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) conditions and keep system responsiveness in low memory conditions.
+Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
 
 ## What is the problem?
 
