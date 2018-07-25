@@ -6,7 +6,7 @@ import os
 from operator import itemgetter
 from time import sleep, time
 from argparse import ArgumentParser
-# from subprocess import Popen
+from sys import stdout
 
 sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
 
@@ -457,8 +457,7 @@ else:
         exit()
 
 
-print('The path to the config file to be used:')
-print(config)
+print('The path to the config file to be used:', config)
 
 ##########################################################################
 
@@ -1252,7 +1251,7 @@ warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
 
-print('\nStart monitoring...')
+print('Start monitoring...')
 
 ##########################################################################
 
@@ -1431,7 +1430,7 @@ while True:
 
     # SLEEP BETWEEN MEM CHECKS
     else:
-
+        stdout.flush()
         sleep_after_check_mem()
 
 

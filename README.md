@@ -50,7 +50,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Memory and CPU usage
 
-- VmRSS is 10 — 14 MiB depending on the settings
+- VmRSS is 10 — 13 MiB depending on the settings (about 10 MiB by default)
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
 ## Status

@@ -5,10 +5,6 @@ After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
-Type=simple
-Restart=always
-StandardOutput=syslog
-StandardError=syslog
 ExecStart=/usr/local/bin/nohang
 
 [Install]
