@@ -1251,7 +1251,7 @@ warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
 
-print('Start monitoring...')
+print('Monitoring has begun!')
 
 ##########################################################################
 
