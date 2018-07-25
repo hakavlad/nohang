@@ -329,7 +329,7 @@ def find_victim_and_send_signal(signal):
                 
                 success_time = time()
                 delta_success = success_time - time0
-                send_result = '  Success; response time: {} ms\n'.format(round(delta_success * 1000)) + r'}'
+                send_result = '  Signal received; response time: {} ms'.format(round(delta_success * 1000))
 
                 if gui_notifications:
                     send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
@@ -343,10 +343,11 @@ def find_victim_and_send_signal(signal):
                 delta_success = success_time - time0
                 send_result = '  No such process; response time: {} ms'.format(round(delta_success * 1000))
 
-            try_to_send = '  Preventing OOM: trying to send the {} signal to {},\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+            try_to_send = '  \033[1mPreventing OOM:\033[0m trying to send the \033[1m{}\033[0m signal to \033[1m{}\033[0m,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
 
-            print(try_to_send)
-            print(send_result)
+            # print(try_to_send)
+            # print(send_result)
+            print('{}\n{}'.format(try_to_send, send_result))
 
     else:
 
@@ -1251,7 +1252,7 @@ warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
 
-print('Monitoring has begun!')
+print('Monitoring started!')
 
 ##########################################################################
 
@@ -1349,7 +1350,7 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '* MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
+        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
             'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
@@ -1369,7 +1370,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '* MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1381,7 +1382,7 @@ while True:
     elif mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
         time0 = time()
 
-        mem_info = r'{' + '\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
+        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
             'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1406,7 +1407,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '* MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
+        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
             'm ({} M, {} %)'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 
