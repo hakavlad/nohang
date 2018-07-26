@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 
-# Nohang - The No Hang Daemon for Linux
+# A daemon that prevents out of memory
 
 import os
+import signal
 from operator import itemgetter
 from time import sleep, time
 from argparse import ArgumentParser
 from sys import stdout
 
-sig_dict = {9: 'SIGKILL', 15: 'SIGTERM'}
+sig_dict = {signal.SIGKILL: 'SIGKILL',
+    signal.SIGTERM: 'SIGTERM'}
 
 # directory where the script is running
 cd = os.getcwd()
@@ -329,7 +331,7 @@ def find_victim_and_send_signal(signal):
                 
                 success_time = time()
                 delta_success = success_time - time0
-                send_result = '  Signal received; response time: {} ms'.format(round(delta_success * 1000))
+                send_result = 'signal received; response time: {} ms'.format(round(delta_success * 1000))
 
                 if gui_notifications:
                     send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
@@ -337,23 +339,22 @@ def find_victim_and_send_signal(signal):
             except FileNotFoundError:
                 success_time = time()
                 delta_success = success_time - time0
-                send_result = '  No such process; response time: {} ms'.format(round(delta_success * 1000))
+                send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
             except ProcessLookupError:
                 success_time = time()
                 delta_success = success_time - time0
-                send_result = '  No such process; response time: {} ms'.format(round(delta_success * 1000))
+                send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
 
-            try_to_send = '  \033[1mPreventing OOM:\033[0m trying to send the \033[1m{}\033[0m signal to \033[1m{}\033[0m,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB'.format(sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+            preventing_oom_message = ' Finding the process with the highest badness\n Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n Sending {} to the victim; {}'.format(name, pid, oom_score, vm_rss, vm_swap, sig_dict[signal], send_result)
 
-            # print(try_to_send)
-            # print(send_result)
-            print('{}\n{}'.format(try_to_send, send_result))
+            print(preventing_oom_message)
 
     else:
 
         success_time = time()
         delta_success = success_time - time0
         
+        # delta_success -> response_time
         
         badness_is_too_small = '  oom_score {} < min_badness {}; response time: {} ms'.format(
             oom_score, min_badness, round(delta_success * 1000))
@@ -458,7 +459,7 @@ else:
         exit()
 
 
-print('The path to the config file to be used:', config)
+print('The path to the config:', config)
 
 ##########################################################################
 
@@ -1342,6 +1343,8 @@ while True:
         swap_sigterm_pc = '-'
 
 
+
+
     # проверка превышения порогов
     # порог превышен - пытаемся предотвратить OOM
     # пороги не превышены - спим
@@ -1350,7 +1353,7 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
+        mem_info = 'TRIGGERED!\n MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n Swa' \
             'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
@@ -1364,25 +1367,26 @@ while True:
                 kib_to_mib(swap_min_sigkill_kb), 
                 swap_sigkill_pc)
 
-        find_victim_and_send_signal(9)
+        find_victim_and_send_signal(signal.SIGKILL)
 
     # ZRAM KILL
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = 'TRIGGERED!\n MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
             percent(zram_max_sigkill_kb / mem_total))
 
-        find_victim_and_send_signal(9)
+        find_victim_and_send_signal(signal.SIGKILL)
 
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
+        
         time0 = time()
 
-        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
+        mem_info = 'TRIGGERED!\n MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n Sw' \
             'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1401,20 +1405,20 @@ while True:
                 kib_to_mib(swap_min_sigterm_kb),
                 swap_sigterm_pc)
 
-        find_victim_and_send_signal(15)
+        find_victim_and_send_signal(signal.SIGTERM)
 
     # ZRAM TERM
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '\033[1mTRIGGERED:\033[0m\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
+        mem_info = 'TRIGGERED!\n MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
             'm ({} M, {} %)'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 
                 kib_to_mib(zram_max_sigterm_kb), 
                 percent(zram_max_sigterm_kb / mem_total))
 
-        find_victim_and_send_signal(15)
+        find_victim_and_send_signal(signal.SIGTERM)
 
     # LOW MEMORY WARNINGS
     elif gui_low_memory_warnings and gui_notifications:
@@ -1433,5 +1437,3 @@ while True:
     else:
         stdout.flush()
         sleep_after_check_mem()
-
-
