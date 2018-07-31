@@ -11,7 +11,6 @@ from sys import stdout
 
 from subprocess import Popen, PIPE
 
-
 sig_dict = {signal.SIGKILL: 'SIGKILL',
     signal.SIGTERM: 'SIGTERM'}
 
@@ -39,8 +38,6 @@ conf_err_mess = '\nSet up the path to the valid conf' \
 # found experimentally
 zram_disksize_factor = 0.0042
 
-name_strip_string = '\'"`\\!-$'
-
 ##########################################################################
 
 # function definition section
@@ -50,31 +47,27 @@ name_strip_string = '\'"`\\!-$'
 # username, DISPLAY and DBUS_SESSION_BUS_ADDRESS
 def root_notify_env():
 
-    ps_output_list = Popen(['ps', 'aue'], stdout=PIPE
+    ps_output_list = Popen(['ps', 'ae'], stdout=PIPE
         ).communicate()[0].decode().split('\n')
-
-    di = 'DISPLAY='
-    db = 'DBUS_SESSION_BUS_ADDRESS='
-    us = 'USER='
-    ro = 'root '
 
     lines_with_displays = []
     for line in ps_output_list:
-        if di in line and db in line and us in line and not line.startswith(ro):
+        if ' DISPLAY=' in line and ' DBUS_SESSION_BUS_ADDRES' \
+            'S=' in line and ' USER=' in line:
             lines_with_displays.append(line)
 
-    # list of tuples with all necessary
+    # list of tuples with needments
     deus = []
     for i in lines_with_displays:
         for i in i.split(' '):
-            if i.startswith(us):
+            if i.startswith('USER='):
                 user = i.strip('\n').split('=')[1]
                 continue
-            if i.startswith(di):
+            if i.startswith('DISPLAY='):
                 disp_value = i.strip('\n').split('=')[1][0:2]
-                disp = di + disp_value
+                disp = 'DISPLAY=' + disp_value
                 continue
-            if i.startswith(db):
+            if i.startswith('DBUS_SESSION_BUS_ADDRESS='):
                 dbus = i.strip('\n')
         deus.append(tuple([user, disp, dbus]))
 
@@ -242,30 +235,23 @@ def send_notify_warn():
 
 
 def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
-    # текст отправляемого уведомления
-    info = '"<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
+    head = 'Preventing OOM'
+    body = '<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
         'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
-        '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>" &'.format(
-            sig_dict[signal], name.strip(name_strip_string), pid, oom_score, vm_rss, vm_swap)
-
+        '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>'.format(
+            sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
     if root:
         # отправляем уведомление всем залогиненным пользователям
         b = root_notify_env()
         if len(b) > 0:
             for i in b:
-                username = i[0]
-                display_env = i[1]
-                dbus_env = i[2]
-                # su username - -c "env DISPLAY=... DBUS_SESSION_BUS_ADDRESS=... notify-send 'head' 'body'"
-                root_notify_command = 'sudo -u {} {} {} notify-send "Preventing OOM" '.format(
-                    username, display_env, dbus_env)
-                os.system(root_notify_command + info)
-
+                username, display_env, dbus_env = i[0], i[1], i[2]
+                Popen(['sudo', '-u', username, 'env', display_env,
+                       dbus_env, 'notify-send', '{}'.format(head),
+                       '{}'.format(body)])
     else:
         # отправляем уведомление пользователю, который запустил nohang
-        user_notify_command = 'notify-send {} "Preventing OOM" '.format(
-            notify_options)
-        os.system(user_notify_command + info)
+        Popen(['notify-send', '{}'.format(head), '{}'.format(body)])
 
 
 def sleep_after_send_signal(signal):
@@ -364,6 +350,9 @@ def find_victim_and_send_signal(signal):
             vm_rss = 0
             vm_swap = 0
         except IndexError:
+            vm_rss = 0
+            vm_swap = 0
+        except ValueError:
             vm_rss = 0
             vm_swap = 0
 
