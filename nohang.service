@@ -1,11 +1,11 @@
-
 [Unit]
 Description=No hang daemon
 After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
-ExecStart=/usr/local/bin/nohang
+ExecStart=/usr/sbin/nohang
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

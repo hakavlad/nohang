@@ -67,13 +67,16 @@ $ cd nohang
 ## Installation and start for systemd users
 
 ```bash
-$ sudo ./install.sh
+# to install:
+$ sudo make install
+# to enable and start systemd units:
+$ sudo make systemd
 ```
 
 ## Purge
 
 ```bash
-$ sudo ./purge.sh
+$ sudo make uninstall
 ```
 
 ## Command line options
