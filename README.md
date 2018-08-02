@@ -36,8 +36,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - GUI notifications: OOM prevention results and low memory warnings
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
-- convenient configuration with a well commented config file (there are 36 parameters in the config)
-- look at the [config](https://github.com/hakavlad/nohang/blob/master/nohang.conf) to find more
+- convenient configuration with a well commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Demo
 
@@ -50,7 +49,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Memory and CPU usage
 
-- VmRSS is 10 — 13 MiB depending on the settings (about 10 MiB by default)
+- VmRSS is 10 — 14 MiB depending on the settings (about 10 MiB by default)
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
 
 ## Status
@@ -107,7 +106,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 7. Preventing the slowing down of the program
 8. Output verbosity
 
-Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing via `./install.sh` is `/etc/nohang/nohang.conf`.
+Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing is `/etc/nohang/nohang.conf`.
 
 ## Feedback
 
