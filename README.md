@@ -68,7 +68,7 @@ To install:
 $ sudo make install
 ```
 
-To enable and start systemd units:
+To enable and start on systems with systemd:
 ```bash
 $ sudo make systemd
 ```
