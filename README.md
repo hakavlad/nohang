@@ -106,7 +106,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 7. Preventing the slowing down of the program
 8. Output verbosity
 
-Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config arter installing is `/etc/nohang/nohang.conf`.
+Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
 ## Feedback
 

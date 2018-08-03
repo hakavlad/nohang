@@ -247,15 +247,15 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
             for i in b:
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 Popen(['sudo', '-u', username, 'env', display_env,
-                       dbus_env, 'notify-send', '{}'.format(head),
-                       '{}'.format(body)])
+                       dbus_env, 'notify-send', '--icon=dialog-warning',
+                       '{}'.format(head), '{}'.format(body)])
     else:
         # отправляем уведомление пользователю, который запустил nohang
         Popen(['notify-send', '{}'.format(head), '{}'.format(body)])
 
 
 def sleep_after_send_signal(signal):
-    if signal is 9:
+    if signal is signal.SIGKILL:
         if print_sleep_periods:
             print('  sleep', min_delay_after_sigkill)
         sleep(min_delay_after_sigterm)
@@ -356,7 +356,7 @@ def find_victim_and_send_signal(signal):
             vm_rss = 0
             vm_swap = 0
 
-        if name in etc_dict and signal is 15:
+        if name in etc_dict and signal is signal.SIGTERM:
             command = etc_dict[name]
             etc_info = '  Process {} is a victim,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute command: {}'.format(name, pid, oom_score, vm_rss, vm_swap, command)
             os.system(etc_dict[name]) # все норм, это произвольная команда задана юзером
