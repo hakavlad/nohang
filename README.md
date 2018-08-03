@@ -56,24 +56,24 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 The program is unstable and some fixes are required before the first stable version will be released (need documentation, translation, review and some optimisation).
 
-## Download
+## Download, install, uninstall
 
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
 ```
 
-## Installation and start for systemd users
-
+To install:
 ```bash
-# to install:
 $ sudo make install
-# to enable and start systemd units:
+```
+
+To enable and start systemd units:
+```bash
 $ sudo make systemd
 ```
 
-## Purge
-
+To ininstall:
 ```bash
 $ sudo make uninstall
 ```
