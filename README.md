@@ -113,7 +113,7 @@ Just read the description of the parameters and edit the values. Please restart 
 If nohang is installed on a system that uses systemd, you can use the following command to view the log:
 
 ```bash
-$ sudo journalctl -u nohang -e
+$ sudo journalctl -eu nohang
 ```
 See also `man journalctl`.
 
