@@ -108,6 +108,16 @@ The program can be configured by editing the [config file](https://github.com/ha
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
+## Logging
+
+If nohang is installed on a system that uses systemd, you can use the following command to view the log:
+
+```bash
+$ sudo journalctl -u nohang -e
+```
+See also `man journalctl`.
+
+
 ## Feedback
 
 Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
