@@ -73,7 +73,7 @@ To enable and start systemd units:
 $ sudo make systemd
 ```
 
-To ininstall:
+To uninstall:
 ```bash
 $ sudo make uninstall
 ```
