@@ -9,7 +9,6 @@ from time import sleep, time
 from argparse import ArgumentParser
 from sys import stdout
 
-from subprocess import Popen, PIPE
 
 sig_dict = {signal.SIGKILL: 'SIGKILL',
     signal.SIGTERM: 'SIGTERM'}
@@ -204,38 +203,38 @@ def pid_to_name(pid):
 
 
 def send_notify_warn():
-
+    title = 'LOW MEMORY'
     if mem_used_zram > 0:
-        info = '"<i>MemAvailable:</i> <b>{} MiB</b>\n<i>SwapFree:</i> <b>{} MiB</b>\n<i>MemUsedZram:</i> <b>{} MiB</b>" &'.format(
+        body = '<i>Mem Available:</i> <b>{} MiB</b>\n<i>Swap Fre' \
+            'e:</i> <b>{} MiB</b>\n<i>MemUsedZram:</i> <b>{} MiB</b>'.format(
                 kib_to_mib(mem_available),
                 kib_to_mib(swap_free),
                 kib_to_mib(mem_used_zram))
     elif swap_free > 0:
-        info = '"<i>MemAvailable:</i> <b>{} MiB</b>\n<i>SwapFree:</i>' \
-            ' <b>{} MiB</b>" &'.format(
+        body = '<i>Mem Available:</i> <b>{} MiB</b>\n<i>Swap Free:</i>' \
+            ' <b>{} MiB</b>'.format(
                 kib_to_mib(mem_available),
                 kib_to_mib(swap_free))
     else:
-        info = '"<i>MemAvailable:</i> <b>{} MiB</b>, <b>{} %</b>" &'.format(
-            kib_to_mib(mem_available),
-            round(mem_available / mem_total * 100, 1))
-
+        body = '<b>Mem Available: {} %</b>'.format(
+            #kib_to_mib(mem_available),
+            round(mem_available / mem_total * 100))
     if root:
-        # отправляем уведомления всем залогиненным
-        for uid in os.listdir('/run/user'):
-            root_notify_command = 'sudo -u {} DISPLAY={} notify-s' \
-                'end {} "Warning: Low Memory" '.format(
-                    users_dict[uid], root_display, notify_options)
-            os.system(root_notify_command + info)
+        # отправляем уведомление всем залогиненным пользователям
+        b = root_notify_env()
+        if len(b) > 0:
+            for i in b:
+                username, display_env, dbus_env = i[0], i[1], i[2]
+                Popen(['sudo', '-u', username, 'env', display_env,
+                       dbus_env, 'notify-send', '--icon=dialog-warning',
+                       '{}'.format(title), '{}'.format(body)])
     else:
         # отправляем уведомление пользователю, который запустил nohang
-        user_notify_command = 'notify-send {} "Warning: Low Memory" '.format(
-            notify_options)
-        os.system(user_notify_command + info)
+        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
 
 
 def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
-    head = 'Preventing OOM'
+    title = 'Nohang TRIGGERED'
     body = '<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
         'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
         '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>'.format(
@@ -248,10 +247,10 @@ def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 Popen(['sudo', '-u', username, 'env', display_env,
                        dbus_env, 'notify-send', '--icon=dialog-warning',
-                       '{}'.format(head), '{}'.format(body)])
+                       '{}'.format(title), '{}'.format(body)])
     else:
         # отправляем уведомление пользователю, который запустил nohang
-        Popen(['notify-send', '{}'.format(head), '{}'.format(body)])
+        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
 
 
 def sleep_after_send_signal(signal):
@@ -365,26 +364,22 @@ def find_victim_and_send_signal(signal):
 
         else:
 
-            try: #                             SUCCESS -> RESPONSE TIME
+            try: #                             delta_sucess -> response_time
                 os.kill(int(pid), signal)
-                
-                success_time = time()
-                delta_success = success_time - time0
+                delta_success = time() - time0
                 send_result = 'signal received; response time: {} ms'.format(round(delta_success * 1000))
 
                 if gui_notifications:
                     send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
 
             except FileNotFoundError:
-                success_time = time()
-                delta_success = success_time - time0
+                delta_success = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
             except ProcessLookupError:
-                success_time = time()
-                delta_success = success_time - time0
+                delta_success = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
 
-            preventing_oom_message = ' Finding the process with the highest badness\n Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n Sending {} to the victim; {}'.format(name, pid, oom_score, vm_rss, vm_swap, sig_dict[signal], send_result)
+            preventing_oom_message = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(name, pid, oom_score, vm_rss, vm_swap, sig_dict[signal], send_result)
 
             print(preventing_oom_message)
 
@@ -907,13 +902,7 @@ if 'gui_notifications' in config_dict:
     gui_notifications = config_dict['gui_notifications']
     if gui_notifications == 'True':
         gui_notifications = True
-        users_dict = dict()
-        with open('/etc/passwd') as f:
-            for line in f:
-                line_list = line.split(':')
-                username = line_list[0]
-                uid = line_list[2]
-                users_dict[uid] = username
+        from subprocess import Popen, PIPE
     elif gui_notifications == 'False':
         gui_notifications = False
     else:
@@ -926,10 +915,7 @@ else:
     exit()
 
 
-notify_options = conf_parse_string('notify_options')
 
-
-root_display = conf_parse_string('root_display')
 
 
 regex_matching = conf_parse_bool('regex_matching')
@@ -1392,7 +1378,7 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n Swa' \
+        mem_info = 'TRIGGERED!\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
             'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
@@ -1412,7 +1398,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = 'TRIGGERED!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1425,7 +1411,7 @@ while True:
         
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n Sw' \
+        mem_info = 'TRIGGERED!\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
             'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1450,7 +1436,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
+        mem_info = 'TRIGGERED!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
             'm ({} M, {} %)'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 
@@ -1476,3 +1462,4 @@ while True:
     else:
         stdout.flush()
         sleep_after_check_mem()
+
