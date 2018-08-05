@@ -13,6 +13,10 @@ from sys import stdout
 sig_dict = {signal.SIGKILL: 'SIGKILL',
     signal.SIGTERM: 'SIGTERM'}
 
+notify_sig_dict = {signal.SIGKILL: 'Killing',
+    signal.SIGTERM: 'Terminating'}
+
+
 # directory where the script is running
 cd = os.getcwd()
 
@@ -232,10 +236,8 @@ def send_notify_warn():
 
 def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
     title = 'NOHANG TRIGGERED'
-    body = '<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
-        'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
-        '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>'.format(
-            sig_dict[signal], name, pid, oom_score, vm_rss, vm_swap)
+    body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
+        notify_sig_dict[signal], pid, name)
     if root:
         # отправляем уведомление всем залогиненным пользователям
         b = root_notify_env()
@@ -1458,4 +1460,3 @@ while True:
     else:
         stdout.flush()
         sleep_after_check_mem()
-
