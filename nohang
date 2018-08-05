@@ -205,19 +205,16 @@ def pid_to_name(pid):
 def send_notify_warn():
     title = 'LOW MEMORY'
     if mem_used_zram > 0:
-        body = '<i>Mem Available:</i> <b>{} MiB</b>\n<i>Swap Fre' \
-            'e:</i> <b>{} MiB</b>\n<i>MemUsedZram:</i> <b>{} MiB</b>'.format(
-                kib_to_mib(mem_available),
-                kib_to_mib(swap_free),
-                kib_to_mib(mem_used_zram))
+        body = '<b>Mem Available: {} %\nSwap Free: {} %\nMem Used Zram: {} %</b>'.format(
+            round(mem_available / mem_total * 100),
+            round(swap_free / (swap_total + 0.1) * 100),
+            round(mem_used_zram / mem_total * 100))
     elif swap_free > 0:
-        body = '<i>Mem Available:</i> <b>{} MiB</b>\n<i>Swap Free:</i>' \
-            ' <b>{} MiB</b>'.format(
-                kib_to_mib(mem_available),
-                kib_to_mib(swap_free))
+        body = '<b>Mem Available: {} %\nSwap Free: {} %</b>'.format(
+            round(mem_available / mem_total * 100),
+            round(swap_free / (swap_total + 0.1) * 100))
     else:
         body = '<b>Mem Available: {} %</b>'.format(
-            #kib_to_mib(mem_available),
             round(mem_available / mem_total * 100))
     if root:
         # отправляем уведомление всем залогиненным пользователям
@@ -234,7 +231,7 @@ def send_notify_warn():
 
 
 def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
-    title = 'Nohang TRIGGERED'
+    title = 'NOHANG TRIGGERED'
     body = '<u>Nohang</u> sent <u>{}</u> \nto the process <b>{}</b> \n<i>P' \
         'id:</i> <b>{}</b> \n<i>Badness:</i> <b>{}</b> \n<i>VmRSS:</i> <b' \
         '>{} MiB</b> \n<i>VmSwap:</i> <b>{} MiB</b>'.format(
@@ -394,6 +391,8 @@ def find_victim_and_send_signal(signal):
             oom_score, min_badness, round(delta_success * 1000))
 
         print(badness_is_too_small)
+
+    stdout.flush()
 
     sleep_after_send_signal(signal)
 
@@ -1230,9 +1229,6 @@ if print_config:
 
     print('\nVI. DESKTOP NOTIFICATIONS')
     print('gui_notifications:     {}'.format(gui_notifications))
-    if gui_notifications:
-        print('notify_options:            {}'.format(notify_options))
-        print('root_display:              {}'.format(root_display))
 
     print('\nVII. AVOID AND PREFER VICTIM NAMES VIA REGEX')
     print('regex_matching:           {}'.format(regex_matching))
