@@ -1158,9 +1158,6 @@ self_pid = os.getpid()
 
 
 
-
-
-
 if self_uid == 0:
     root = True
     decrease_res = 'OK'
@@ -1169,13 +1166,10 @@ else:
     decrease_res = 'Impossible'
 
 
+
 if root and realtime_ionice:
     os.system('ionice -c 1 -n {} -p {}'.format(
-        realtime_ionice_classdata ,self_pid))
-    print('\nionice:'.format())
-    os.system('ionice')
-    print()
-
+        realtime_ionice_classdata, self_pid))
 
 
 ##########################################################################
@@ -1183,26 +1177,8 @@ if root and realtime_ionice:
 
 if print_config:
 
-    print('\nI. STANDARD OUTPUT VERBOSITY')
-    print('print_config:              {}'.format(print_config))
-    print('print_mem_check_results:   {}'.format(print_mem_check_results))
-    print('print_sleep_periods:       {}'.format(print_sleep_periods))
 
-    print('\nII. SELF-DEFENSE [displaying these options need fix]')
-    print('mlockall:                  {} ({})'.format(mlockall, mla_res))
-    print('niceness:                 {} ({})'.format(
-        niceness, niceness_result
-    ))
-    print('oom_score_adj:        {} ({})'.format(
-        oom_score_adj, oom_score_adj_result
-    ))
-
-    print('\nIII. INTENSITY OF MONITORING')
-    print('rate_mem:                  {}'.format(rate_mem))
-    print('rate_swap:                 {}'.format(rate_swap))
-    print('rate_zram:                 {}'.format(rate_zram))
-
-    print('\nIV. THRESHOLDS FOR SENDING SIGNALS [displaying these options need fix]')
+    print('\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
 
     print('mem_min_sigterm:           {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
@@ -1217,10 +1193,17 @@ if print_config:
     print('zram_max_sigkill:          {} MiB, {} %'.format(
         round(zram_max_sigkill_mb), round(zram_max_sigkill_percent, 1)))
 
-    print('\nV. PREVENTION OF KILLING INNOCENT VICTIMS')
+
+    print('\n2. The frequency of checking the level of available memory (and CPU usage)\n')
+    print('rate_mem:                  {}'.format(rate_mem))
+    print('rate_swap:                 {}'.format(rate_swap))
+    print('rate_zram:                 {}'.format(rate_zram))
+
+
+    print('\n3. The prevention of killing innocent victims\n')
     print('min_delay_after_sigterm:   {}'.format(min_delay_after_sigterm))
     print('min_delay_after_sigkill:   {}'.format(min_delay_after_sigkill))
-    print('min_badness:             {}'.format(min_badness))
+    print('min_badness:               {}'.format(min_badness))
 
     # False (OK) - OK не нужен когда фолс
     print('decrease_oom_score_adj:    {} ({})'.format(
@@ -1229,19 +1212,28 @@ if print_config:
     if decrease_oom_score_adj:
         print('oom_score_adj_max:         {}'.format(oom_score_adj_max))
 
-    print('\nVI. DESKTOP NOTIFICATIONS')
-    print('gui_notifications:     {}'.format(gui_notifications))
 
-    print('\nVII. AVOID AND PREFER VICTIM NAMES VIA REGEX')
-    print('regex_matching:           {}'.format(regex_matching))
+    print('\n4. Impact on the badness of processes via matching their names\nwith regular expressions\n')
+    print('regex_matching:            {}'.format(regex_matching))
     if regex_matching:
-        print('prefer_regex:          {}'.format(prefer_regex))
-        print('prefer_factor:         {}'.format(prefer_factor))
-        print('avoid_regex:           {}'.format(avoid_regex))
-        print('avoid_factor:          {}'.format(avoid_factor))
+        print('prefer_regex:              {}'.format(prefer_regex))
+        print('prefer_factor:             {}'.format(prefer_factor))
+        print('avoid_regex:               {}'.format(avoid_regex))
+        print('avoid_factor:              {}'.format(avoid_factor))
 
-    print('\nIX. LOW MEMORY WARNINGS')
-    print('gui_low_memory_warnings:       {}'.format(gui_low_memory_warnings))
+
+    print('\n5. The execution of a specific command instead of sending the\nSIGTERM signal\n')
+    print('execute_the_command:       {}'.format(execute_the_command))
+    if execute_the_command:
+        print('\nPROCESS NAME     COMMAND TO EXECUTE')
+        for key in etc_dict:
+            print('{}  {}'.format(key.ljust(15), etc_dict[key]))
+
+
+    print('\n6. GUI notifications:\n- OOM prevention results and\n- low memory warnings\n')
+    print('gui_notifications:         {}'.format(gui_notifications))
+
+    print('gui_low_memory_warnings:   {}'.format(gui_low_memory_warnings))
     if gui_low_memory_warnings:
         print('min_time_between_warnings: {}'.format(min_time_between_warnings))
 
@@ -1254,12 +1246,24 @@ if print_config:
             round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
 
 
-    print('\nX. EXECUTE THE COMMAND INSTEAD OF SENDING THE SIGTERM SIGNAL')
-    print('execute_the_command:       {}'.format(execute_the_command))
-    if execute_the_command:
-        print('\nPROCESS NAME     COMMAND TO EXECUTE')
-        for key in etc_dict:
-            print('{}  {}'.format(key.ljust(15), etc_dict[key]))
+    print('\n7. Preventing the slowing down of the program\n[displaying these options need fix]\n')
+    print('mlockall:                  {} ({})'.format(mlockall, mla_res))
+    print('niceness:                  {} ({})'.format(
+        niceness, niceness_result
+    ))
+    print('oom_score_adj:             {} ({})'.format(
+        oom_score_adj, oom_score_adj_result
+    ))
+
+    print('realtime_ionice:           {} ({})'.format(realtime_ionice, ''))
+
+    if realtime_ionice:
+        print('realtime_ionice_classdata: {}'.format(realtime_ionice_classdata))
+
+    print('\n8. Output verbosity\n')
+    print('print_config:              {}'.format(print_config))
+    print('print_mem_check_results:   {}'.format(print_mem_check_results))
+    print('print_sleep_periods:       {}\n'.format(print_sleep_periods))
 
 
 ##########################################################################
@@ -1460,3 +1464,4 @@ while True:
     else:
         stdout.flush()
         sleep_after_check_mem()
+
