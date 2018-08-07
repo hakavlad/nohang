@@ -234,10 +234,28 @@ def send_notify_warn():
         Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
 
 
-def send_notify(signal, name, pid, oom_score, vm_rss, vm_swap):
+def send_notify(signal, name, pid):
     title = 'NOHANG TRIGGERED'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
-        notify_sig_dict[signal], pid, name)
+        notify_sig_dict[signal], pid, name.replace('&', '*'))
+    if root:
+        # отправляем уведомление всем залогиненным пользователям
+        b = root_notify_env()
+        if len(b) > 0:
+            for i in b:
+                username, display_env, dbus_env = i[0], i[1], i[2]
+                Popen(['sudo', '-u', username, 'env', display_env,
+                       dbus_env, 'notify-send', '--icon=dialog-warning',
+                       '{}'.format(title), '{}'.format(body)])
+    else:
+        # отправляем уведомление пользователю, который запустил nohang
+        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
+
+
+def send_notify_etc(pid, name, command):
+    title = 'NOHANG TRIGGERED'
+    body = 'Victim is process <b>{}</b>, <b>{}</b>\nExecute the command:\n<b>{}</b>'.format(
+        pid, name.replace('&', '*'), command.replace('&', '*'))
     if root:
         # отправляем уведомление всем залогиненным пользователям
         b = root_notify_env()
@@ -265,63 +283,55 @@ def sleep_after_send_signal(signal):
 
 def find_victim_and_send_signal(signal):
 
-    print(mem_info)
-
-    # выставляем потолок для oom_score_adj всех процессов
     if decrease_oom_score_adj and root:
         func_decrease_oom_score_adj(oom_score_adj_max)
 
-    # получаем список процессов ((pid, badness))
-    oom_list = []
+    pid_badness_list = []
 
     if regex_matching:
 
         for pid in os.listdir('/proc'):
-            if pid.isdigit() is not True:
+            if pid[0].isdecimal() is not True:
                 continue
+
             try:
-                # пошла итерация для каждого существующего процесса
-                oom_score = int(rline1('/proc/' + pid + '/oom_score'))
+                badness = int(rline1('/proc/' + pid + '/oom_score'))
                 name = pid_to_name(pid)
 
-                res = fullmatch(avoid_regex, name)
-                if res is not None:
-                    # тут уже получаем badness
-                    oom_score = int(oom_score / avoid_factor)
-                    print('  {} (Pid: {}, Badness {}) matches with avoid_regex'.format(name, pid, oom_score)),
+                if fullmatch(avoid_regex, name) is not None:
+                    badness = int(badness / avoid_factor)
 
-                res = fullmatch(prefer_regex, name)
-                if res is not None:
-                    oom_score = int((oom_score + 1) * prefer_factor)
-                    print('  {} (Pid: {}, Badness {}) matches with prefer_regex'.format(name, pid, oom_score)),
+                if fullmatch(prefer_regex, name) is not None:
+                    badness = int((badness + 1) * prefer_factor)
 
             except FileNotFoundError:
-                oom_score = 0
+                badness = 0
             except ProcessLookupError:
-                oom_score = 0
-            oom_list.append((pid, oom_score))
+                badness = 0
+            pid_badness_list.append((pid, badness))
 
     else:
 
-        # not use regex
-        for i in os.listdir('/proc'):
-            if i[0].isdecimal() is not True:
+        for pid in os.listdir('/proc'):
+            if pid[0].isdecimal() is not True:
                 continue
             try:
-                oom_score = int(rline1('/proc/' + i + '/oom_score'))
+                badness = int(rline1('/proc/' + pid + '/oom_score'))
             except FileNotFoundError:
-                oom_score = 0
+                badness = 0
             except ProcessLookupError:
-                oom_score = 0
-            oom_list.append((i, oom_score))
+                badness = 0
+            pid_badness_list.append((pid, badness))
 
-    # получаем отсортированный по oom_score (по badness!) список пар (pid, oom_score)
-    pid_tuple_list = sorted(oom_list, key=itemgetter(1), reverse=True)[0]
 
-    # получаем максимальный oom_score
-    oom_score = pid_tuple_list[1]
+    # получаем отсортированный по badness список пар (pid, badness)
+    pid_tuple_list = sorted(
+        pid_badness_list, key=itemgetter(1), reverse=True)[0]
 
-    if oom_score >= min_badness:
+    # получаем максимальный badness
+    victim_badness = pid_tuple_list[1]
+
+    if victim_badness >= min_badness:
 
         # пытаемся отправить сигнал найденной жертве
 
@@ -356,43 +366,41 @@ def find_victim_and_send_signal(signal):
 
         if name in etc_dict and signal is signal.SIGTERM:
             command = etc_dict[name]
-            etc_info = '  Process {} is a victim,\n  Pid: {}, Badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute command: {}'.format(name, pid, oom_score, vm_rss, vm_swap, command)
-            os.system(etc_dict[name]) # все норм, это произвольная команда задана юзером
+            exit_status = os.system(etc_dict[name])
+            response_time = time() - time0
+            etc_info = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute the command: {}\n  Exit status: {}; response time: {} ms'.format(name, pid, badness, vm_rss, vm_swap, command, exit_status, round(response_time * 1000))
+            print(mem_info)
             print(etc_info)
-            # еще ГУИ уведомление запустить
+            if gui_notifications:
+                send_notify_etc(pid, name, command)
 
         else:
 
-            try: #                             delta_sucess -> response_time
+            try:
                 os.kill(int(pid), signal)
-                delta_success = time() - time0
-                send_result = 'signal received; response time: {} ms'.format(round(delta_success * 1000))
+                response_time = time() - time0
+                send_result = 'signal received; response time: {} ms'.format(round(response_time * 1000))
 
                 if gui_notifications:
-                    send_notify(signal, name, pid, oom_score, vm_rss, vm_swap)
+                    send_notify(signal, name, pid)
 
             except FileNotFoundError:
-                delta_success = time() - time0
-                send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
+                response_time = time() - time0
+                send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
             except ProcessLookupError:
-                delta_success = time() - time0
-                send_result = 'no such process; response time: {} ms'.format(round(delta_success * 1000))
+                response_time = time() - time0
+                send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
 
-            preventing_oom_message = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(name, pid, oom_score, vm_rss, vm_swap, sig_dict[signal], send_result)
-
+            preventing_oom_message = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(name, pid, badness, vm_rss, vm_swap, sig_dict[signal], send_result)
+            print(mem_info)
             print(preventing_oom_message)
 
     else:
 
-        success_time = time()
-        delta_success = success_time - time0
-        
-        # delta_success -> response_time
-        
-        badness_is_too_small = '  oom_score {} < min_badness {}; response time: {} ms'.format(
-            oom_score, min_badness, round(delta_success * 1000))
+        response_time = time() - time0
+        victim_badness_is_too_small = '  victim badness {} < min_badness {}; nothing to do; response time: {} ms'.format(victim_badness, min_badness, round(response_time * 1000))
 
-        print(badness_is_too_small)
+        print(victim_badness_is_too_small)
 
     stdout.flush()
 
@@ -1462,6 +1470,9 @@ while True:
 
     # SLEEP BETWEEN MEM CHECKS
     else:
+
         stdout.flush()
+
         sleep_after_check_mem()
+
 
