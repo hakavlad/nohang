@@ -55,7 +55,7 @@ To show GUI notifications:
 ## Memory and CPU usage
 
 - VmRSS is 10 — 14 MiB depending on the settings (about 10 MiB by default)
-- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by user via config)
+- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by the user via the config)
 
 ## Status
 

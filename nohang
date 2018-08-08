@@ -13,6 +13,8 @@ from sys import stdout
 sig_dict = {signal.SIGKILL: 'SIGKILL',
     signal.SIGTERM: 'SIGTERM'}
 
+
+# спрятать в туда, где включены уведомления
 notify_sig_dict = {signal.SIGKILL: 'Killing',
     signal.SIGTERM: 'Terminating'}
 
@@ -575,8 +577,6 @@ realtime_ionice = conf_parse_bool('realtime_ionice')
 
 
 
-
-
 if 'realtime_ionice_classdata' in config_dict:
     realtime_ionice_classdata = string_to_int_convert_test(
         config_dict['realtime_ionice_classdata'])
@@ -594,10 +594,6 @@ else:
     print('All the necessary parameters must be in the config')
     print('There is no "realtime_ionice_classdata" parameter in the config')
     exit()
-
-
-
-
 
 
 mlockall = conf_parse_bool('mlockall')
@@ -747,7 +743,6 @@ if 'mem_min_sigkill' in config_dict:
 else:
     print('mem_min_sigkill not in config\nExit')
     exit()
-
 
 
 
@@ -907,29 +902,8 @@ else:
     exit()
 
 
-if 'gui_notifications' in config_dict:
-    gui_notifications = config_dict['gui_notifications']
-    if gui_notifications == 'True':
-        gui_notifications = True
-        from subprocess import Popen, PIPE
-    elif gui_notifications == 'False':
-        gui_notifications = False
-    else:
-        print('Invalid gui_notifications value {} (shoul' \
-            'd be True or False)\nExit'.format(
-                gui_notifications))
-        exit()
-else:
-    print('gui_notifications not in config\nExit')
-    exit()
-
-
-
-
 
 regex_matching = conf_parse_bool('regex_matching')
-if regex_matching:
-    from re import fullmatch
 
 
 prefer_regex = conf_parse_string('prefer_regex')
@@ -965,9 +939,10 @@ else:
 
 
 
-
-
 gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
+
+gui_notifications = conf_parse_bool('gui_notifications')
+
 
 
 if 'min_time_between_warnings' in config_dict:
@@ -1280,6 +1255,14 @@ if print_config:
 # for calculating the column width when printing mem and zram
 mem_len = len(str(round(mem_total / 1024.0)))
 
+
+if gui_notifications or gui_low_memory_warnings:
+    from subprocess import Popen, PIPE
+
+if regex_matching:
+    from re import fullmatch
+
+
 rate_mem = rate_mem * 1048576
 rate_swap = rate_swap * 1048576
 rate_zram = rate_zram * 1048576
@@ -1291,7 +1274,6 @@ warn_timer = 0
 print('Monitoring started!')
 
 ##########################################################################
-
 
 
 while True:
@@ -1456,7 +1438,7 @@ while True:
         find_victim_and_send_signal(signal.SIGTERM)
 
     # LOW MEMORY WARNINGS
-    elif gui_low_memory_warnings and gui_notifications:
+    elif gui_low_memory_warnings:
 
         if mem_available < mem_min_warnings_kb and swap_free < swap_min_warnings_kb + 0.1 or mem_used_zram > zram_max_warnings_kb:
             warn_time_delta = time() - warn_time_now
@@ -1474,5 +1456,4 @@ while True:
         stdout.flush()
 
         sleep_after_check_mem()
-
 
