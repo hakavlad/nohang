@@ -45,12 +45,12 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Requiements
 
 For basic usage:
-- Linux 3.14+
-- Python 3.4+
+- `Linux` 3.14+
+- `Python` 3.4+
 
 To show GUI notifications:
-- libnotify (Fedora, Arch) or libnotify-bin (Debian, Ubuntu)
-- sudo and procps if nohang started as root
+- `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
+- `sudo` and `procps` if nohang started as root
 
 ## Memory and CPU usage
 
