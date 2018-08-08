@@ -42,7 +42,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 [Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after the command `while true; do tail /dev/zero; done` has been executed.
 
-## Requiements
+## Requirements
 
 For basic usage:
 - `Linux` 3.14+
@@ -50,7 +50,7 @@ For basic usage:
 
 To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
-- `sudo` and `procps` if nohang started as root
+- `sudo` and `procps` if nohang is started as root
 
 ## Memory and CPU usage
 
