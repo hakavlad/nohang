@@ -13,12 +13,6 @@ from sys import stdout
 sig_dict = {signal.SIGKILL: 'SIGKILL',
     signal.SIGTERM: 'SIGTERM'}
 
-
-# спрятать в туда, где включены уведомления
-notify_sig_dict = {signal.SIGKILL: 'Killing',
-    signal.SIGTERM: 'Terminating'}
-
-
 # directory where the script is running
 cd = os.getcwd()
 
@@ -1258,6 +1252,9 @@ mem_len = len(str(round(mem_total / 1024.0)))
 
 if gui_notifications or gui_low_memory_warnings:
     from subprocess import Popen, PIPE
+    notify_sig_dict = {signal.SIGKILL: 'Killing',
+        signal.SIGTERM: 'Terminating'}
+
 
 if regex_matching:
     from re import fullmatch
