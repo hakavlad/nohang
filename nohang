@@ -364,7 +364,7 @@ def find_victim_and_send_signal(signal):
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
-            etc_info = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute the command: {}\n  Exit status: {}; response time: {} ms'.format(name, pid, badness, vm_rss, vm_swap, command, exit_status, round(response_time * 1000))
+            etc_info = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Execute the command: {}\n  Exit status: {}; response time: {} ms'.format(name, pid, victim_badness, vm_rss, vm_swap, command, exit_status, round(response_time * 1000))
             print(mem_info)
             print(etc_info)
             if gui_notifications:
@@ -375,7 +375,7 @@ def find_victim_and_send_signal(signal):
             try:
                 os.kill(int(pid), signal)
                 response_time = time() - time0
-                send_result = 'signal received; response time: {} ms'.format(round(response_time * 1000))
+                send_result = 'OK; response time: {} ms'.format(round(response_time * 1000))
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -387,7 +387,7 @@ def find_victim_and_send_signal(signal):
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
 
-            preventing_oom_message = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(name, pid, badness, vm_rss, vm_swap, sig_dict[signal], send_result)
+            preventing_oom_message = '  Finding the process with the highest badness\n  Victim is {}, pid: {}, badness: {}, VmRSS: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(name, pid, victim_badness, vm_rss, vm_swap, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
 
