@@ -360,7 +360,7 @@ def find_victim_and_send_signal(signal):
             vm_rss = 0
             vm_swap = 0
 
-        if name in etc_dict and signal is signal.SIGTERM:
+        if execute_the_command and signal is signal.SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
