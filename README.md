@@ -40,7 +40,8 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Demo
 
-[Video](https://youtu.be/DefJBaKD7C8): nohang prevents OOM after the command `while true; do tail /dev/zero; done` has been executed.
+Nohang prevents Out Of Memory with GUI notifications: [video](https://youtu.be/ChTNu9m7uMU)
+
 
 ## Requirements
 
