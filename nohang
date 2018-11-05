@@ -203,19 +203,24 @@ def pid_to_name(pid):
 
 
 def send_notify_warn():
-    title = 'LOW MEMORY'
+
+    fat_tuple = fattest()
+
     if mem_used_zram > 0:
-        body = '<b>Mem Available: {} %\nSwap Free: {} %\nMem Used Zram: {} %</b>'.format(
+        title = 'Low memory: {}% {}% {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100),
             round(mem_used_zram / mem_total * 100))
     elif swap_free > 0:
-        body = '<b>Mem Available: {} %\nSwap Free: {} %</b>'.format(
+        title = 'Low memory: {}% {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100))
     else:
-        body = '<b>Mem Available: {} %</b>'.format(
+        title = 'Low memory: {}%'.format(
             round(mem_available / mem_total * 100))
+
+    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(fat_tuple[1], fat_tuple[0])
+
     if root:
         # отправляем уведомление всем залогиненным пользователям
         b = root_notify_env()
@@ -231,7 +236,7 @@ def send_notify_warn():
 
 
 def send_notify(signal, name, pid):
-    title = 'NOHANG TRIGGERED'
+    title = 'Preventing OOM'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
         notify_sig_dict[signal], pid, name.replace('&', '*'))
     if root:
@@ -249,7 +254,7 @@ def send_notify(signal, name, pid):
 
 
 def send_notify_etc(pid, name, command):
-    title = 'NOHANG TRIGGERED'
+    title = 'Preventing OOM'
     body = 'Victim is process <b>{}</b>, <b>{}</b>\nExecute the command:\n<b>{}</b>'.format(
         pid, name.replace('&', '*'), command.replace('&', '*'))
     if root:
@@ -424,6 +429,58 @@ def sleep_after_check_mem():
         sleep(t)
     except KeyboardInterrupt:
         exit()
+
+
+
+def fattest():
+    pid_badness_list = []
+
+    if regex_matching:
+
+        for pid in os.listdir('/proc'):
+            if pid[0].isdecimal() is not True:
+                continue
+
+            try:
+                badness = int(rline1('/proc/' + pid + '/oom_score'))
+                name = pid_to_name(pid)
+
+                if fullmatch(avoid_regex, name) is not None:
+                    badness = int(badness / avoid_factor)
+
+                if fullmatch(prefer_regex, name) is not None:
+                    badness = int((badness + 1) * prefer_factor)
+
+            except FileNotFoundError:
+                badness = 0
+            except ProcessLookupError:
+                badness = 0
+            pid_badness_list.append((pid, badness))
+
+    else:
+
+        for pid in os.listdir('/proc'):
+            if pid[0].isdecimal() is not True:
+                continue
+            try:
+                badness = int(rline1('/proc/' + pid + '/oom_score'))
+            except FileNotFoundError:
+                badness = 0
+            except ProcessLookupError:
+                badness = 0
+            pid_badness_list.append((pid, badness))
+
+
+    # получаем отсортированный по badness список пар (pid, badness)
+    pid_tuple_list = sorted(
+        pid_badness_list, key=itemgetter(1), reverse=True)[0]
+
+    pid = pid_tuple_list[0]
+
+    name = pid_to_name(pid)
+
+    return (name, pid)
+
 
 
 ##########################################################################
@@ -1273,6 +1330,11 @@ print('Monitoring started!')
 ##########################################################################
 
 
+
+
+
+
+
 while True:
 
     # find mem_available, swap_total, swap_free
@@ -1367,7 +1429,7 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
+        mem_info = 'Low memory; corrective action required!\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
             'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
@@ -1387,7 +1449,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = 'Low memory; corrective action required!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1400,7 +1462,7 @@ while True:
         
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
+        mem_info = 'Low memory; corrective action required!\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
             'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1425,7 +1487,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = 'TRIGGERED!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
+        mem_info = 'Low memory; corrective action required!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
             'm ({} M, {} %)'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 
