@@ -84,6 +84,13 @@ To uninstall:
 $ sudo make uninstall
 ```
 
+For Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/):
+```
+yaourt -S nohang-git
+sudo systemctl enable nohang-git
+sudo systemctl start nohang-git
+```
+
 ## Command line options
 
 ```
