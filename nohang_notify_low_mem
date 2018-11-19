@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+# notify_low_mem --mem '14% 12%' --name 'stress' --pid '6666'
+
+# output:
+# Low memory: 14% 12%
+# Fattest process: 6666, stress
+
+from argparse import ArgumentParser
+from subprocess import Popen, PIPE
+
+parser = ArgumentParser()
+
+parser.add_argument(
+    '--mem',
+    help="""available memory percent (15%, for example)""",
+    default=None,
+    type=str
+)
+
+parser.add_argument(
+    '--pid',
+    help="""pid""",
+    default=None,
+    type=str
+)
+
+parser.add_argument(
+    '--name',
+    help="""process name""",
+    default=None,
+    type=str
+)
+
+args = parser.parse_args()
+
+pid = args.pid
+name = args.name
+mem = args.mem
+
+title = 'Low memory: {}'.format(mem)
+
+body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(pid, name)
+
+# return list of tuples with
+# username, DISPLAY and DBUS_SESSION_BUS_ADDRESS
+def root_notify_env():
+
+    ps_output_list = Popen(['ps', 'ae'], stdout=PIPE
+        ).communicate()[0].decode().split('\n')
+
+    lines_with_displays = []
+    for line in ps_output_list:
+        if ' DISPLAY=' in line and ' DBUS_SESSION_BUS_ADDRES' \
+            'S=' in line and ' USER=' in line:
+            lines_with_displays.append(line)
+
+    # list of tuples with needments
+    deus = []
+    for i in lines_with_displays:
+        for i in i.split(' '):
+            if i.startswith('USER='):
+                user = i.strip('\n').split('=')[1]
+                continue
+            if i.startswith('DISPLAY='):
+                disp_value = i.strip('\n').split('=')[1][0:2]
+                disp = 'DISPLAY=' + disp_value
+                continue
+            if i.startswith('DBUS_SESSION_BUS_ADDRESS='):
+                dbus = i.strip('\n')
+        deus.append(tuple([user, disp, dbus]))
+
+    # unique list of tuples
+    vult = []
+    for user_env_tuple in set(deus):
+        vult.append(user_env_tuple)
+
+    return vult
+
+b = root_notify_env()
+
+if len(b) > 0:
+    for i in b:
+        username, display_env, dbus_env = i[0], i[1], i[2]
+        Popen(['sudo', '-u', username, 'env', display_env,
+                dbus_env, 'notify-send', '--icon=dialog-warning',
+                '{}'.format(title), '{}'.format(body)])

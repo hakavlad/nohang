@@ -204,35 +204,33 @@ def pid_to_name(pid):
 
 def send_notify_warn():
 
+    # find process with max badness
     fat_tuple = fattest()
+    pid = fat_tuple[1]
+    name = fat_tuple[0]
 
     if mem_used_zram > 0:
-        title = 'Low memory: {}% {}% {}%'.format(
+        low_mem_percent = '{}% {}% {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100),
             round(mem_used_zram / mem_total * 100))
     elif swap_free > 0:
-        title = 'Low memory: {}% {}%'.format(
+        low_mem_percent = '{}% {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100))
     else:
-        title = 'Low memory: {}%'.format(
+        low_mem_percent = '{}%'.format(
             round(mem_available / mem_total * 100))
 
-    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(fat_tuple[1], fat_tuple[0])
+    title = 'Low memory: {}'.format(low_mem_percent)
+    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(pid, name)
 
     if root:
-        # отправляем уведомление всем залогиненным пользователям
-        b = root_notify_env()
-        if len(b) > 0:
-            for i in b:
-                username, display_env, dbus_env = i[0], i[1], i[2]
-                Popen(['sudo', '-u', username, 'env', display_env,
-                       dbus_env, 'notify-send', '--icon=dialog-warning',
-                       '{}'.format(title), '{}'.format(body)])
+        # send notification to all active users
+        Popen(['/usr/sbin/nohang_notify_low_mem', '--mem', low_mem_percent, '--pid', pid, '--name', name])
     else:
         # отправляем уведомление пользователю, который запустил nohang
-        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
+        Popen(['notify-send', '--icon=dialog-warning', 'Low memory: {}'.format(title), '{}'.format(body)])
 
 
 def send_notify(signal, name, pid):
@@ -1515,4 +1513,3 @@ while True:
         stdout.flush()
 
         sleep_after_check_mem()
-

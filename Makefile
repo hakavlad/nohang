@@ -8,6 +8,9 @@ install:
 	install -d $(DESTDIR)/$(PREFIX)/usr/sbin
 	install -m0755 ./nohang $(DESTDIR)/$(PREFIX)/usr/sbin/nohang
 	
+	install -d $(DESTDIR)/$(PREFIX)/usr/sbin
+	install -m0755 ./nohang_notify_low_mem $(DESTDIR)/$(PREFIX)/usr/sbin/nohang_notify_low_mem
+	
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang
 	install -m0644 ./default_values_backup.conf $(DESTDIR)/$(PREFIX)/etc/nohang
@@ -23,6 +26,7 @@ uninstall:
 	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
 	systemctl disable nohang.service || true
 	rm -fv $(PREFIX)/usr/sbin/nohang
+	rm -fv $(PREFIX)/usr/sbin/nohang_notify_low_mem
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service
 	rm -fvr $(PREFIX)/etc/nohang/
