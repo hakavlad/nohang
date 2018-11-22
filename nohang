@@ -1427,8 +1427,8 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemAvailable ({} MiB, {} %) < mem_min_sigkill ({} MiB, {} %)\n  Swa' \
-            'pFree ({} MiB, {} %) < swap_min_sigkill ({} MiB, {} %)'.format(
+        mem_info = 'Low memory; corrective action required!\n  MemAvailable [{} MiB, {} %] <= mem_min_sigkill [{} MiB, {} %]\n  Swa' \
+            'pFree [{} MiB, {} %] <= swap_min_sigkill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available), 
                 percent(mem_available / mem_total), 
 
@@ -1447,7 +1447,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigkill ({} MiB, {} %)'.format(
+        mem_info = 'Low memory; corrective action required!\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigkill [{} MiB, {} %]'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1460,8 +1460,8 @@ while True:
         
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemAvailable ({} MiB, {} %) < mem_min_sigterm ({} MiB, {} %)\n  Sw' \
-            'apFree ({} MiB, {} %) < swap_min_sigterm ({} MiB, {} %)'.format(
+        mem_info = 'Low memory; corrective action required!\n  MemAvailable [{} MiB, {} %] <= mem_min_sigterm [{} MiB, {} %]\n  Sw' \
+            'apFree [{} MiB, {} %] <= swap_min_sigterm [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 
@@ -1485,8 +1485,8 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemUsedZram ({} MiB, {} %) > zram_max_sigter' \
-            'm ({} M, {} %)'.format(
+        mem_info = 'Low memory; corrective action required!\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigter' \
+            'm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram), 
                 percent(mem_used_zram / mem_total), 
                 kib_to_mib(zram_max_sigterm_kb), 
@@ -1497,7 +1497,7 @@ while True:
     # LOW MEMORY WARNINGS
     elif gui_low_memory_warnings:
 
-        if mem_available < mem_min_warnings_kb and swap_free < swap_min_warnings_kb + 0.1 or mem_used_zram > zram_max_warnings_kb:
+        if mem_available <= mem_min_warnings_kb and swap_free <= swap_min_warnings_kb + 0.1 or mem_used_zram >= zram_max_warnings_kb:
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
             warn_timer += warn_time_delta

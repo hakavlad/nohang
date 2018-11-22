@@ -1,5 +1,5 @@
 [Unit]
-Description=No hang daemon
+Description=Highly configurable out of memory preventer
 After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 

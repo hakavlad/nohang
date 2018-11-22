@@ -13,7 +13,7 @@ install:
 	
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang
-	install -m0644 ./default_values_backup.conf $(DESTDIR)/$(PREFIX)/etc/nohang
+	install -m0644 ./nohang.conf.backup $(DESTDIR)/$(PREFIX)/etc/nohang
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/share/man/man1
 	gzip -k -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz

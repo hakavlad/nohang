@@ -68,9 +68,9 @@ zram_max_warnings = 40 %
     7. Preventing the slowing down of the program
 
 mlockall = False
-niceness = -15
-oom_score_adj = -100
-realtime_ionice = True
+niceness = -9
+oom_score_adj = -50
+realtime_ionice = False
 realtime_ionice_classdata = 4
 
 #####################################################################
