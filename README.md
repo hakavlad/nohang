@@ -58,10 +58,6 @@ To show GUI notifications:
 - VmRSS is 10 — 14 MiB depending on the settings (about 10 MiB by default)
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by the user via the config)
 
-## Status
-
-The program is unstable and some fixes are required before the first stable version will be released (need documentation, translation, review and some optimisation).
-
 ## Download, install, uninstall
 
 ```bash
@@ -126,6 +122,10 @@ $ sudo journalctl -eu nohang
 ```
 See also `man journalctl`.
 
+
+## Known problems
+
+- Awful documentation
 
 ## Feedback
 
