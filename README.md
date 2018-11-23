@@ -43,7 +43,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 Nohang prevents Out Of Memory with GUI notifications: [video](https://youtu.be/ChTNu9m7uMU)
 
-![pic](https://i.imgur.com/FmVxqzM.png)
+![pic](https://i.imgur.com/wTZCtrN.png)
 
 ## Requirements
 
