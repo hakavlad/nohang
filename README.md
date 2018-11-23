@@ -38,10 +38,12 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - customizable intensity of monitoring
 - convenient configuration with a well commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
+
 ## Demo
 
 Nohang prevents Out Of Memory with GUI notifications: [video](https://youtu.be/ChTNu9m7uMU)
 
+![pic](https://i.imgur.com/FmVxqzM.png)
 
 ## Requirements
 
