@@ -805,7 +805,7 @@ def calculate_percent(arg_key):
 
             # mem_min_sigterm_percent is clean and valid float percentage. Can translate into Kb
             mem_min_kb = mem_min_percent / 100 * mem_total
-            mem_min_mb = round(mem_min_sigterm_kb / 1024)
+            mem_min_mb = round(mem_min_kb / 1024)
 
         elif mem_min.endswith('M'):
             mem_min_mb = string_to_float_convert_test(mem_min[:-1].strip())
