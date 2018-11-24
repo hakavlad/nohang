@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """A daemon that prevents OOM in linux systems."""
 import os
 import signal
@@ -1018,7 +1018,7 @@ if 'min_delay_after_sigterm' in config_dict:
         print('Invalid min_delay_after_sigterm value, not float\nExit')
         exit()
     if min_delay_after_sigterm < 0:
-        print('min_delay_after_sigterm должен быть неотрицательным\nExit')
+        print('min_delay_after_sigterm must be positiv\nExit')
         exit()
 else:
     print('min_delay_after_sigterm not in config\nExit')
@@ -1032,7 +1032,7 @@ if 'min_delay_after_sigkill' in config_dict:
         print('Invalid min_delay_after_sigkill value, not float\nExit')
         exit()
     if min_delay_after_sigkill < 0:
-        print('min_delay_after_sigkill должен быть неотрицательным\nExit')
+        print('min_delay_after_sigkill must be positiv\nExit')
         exit()
 else:
     print('min_delay_after_sigkill not in config\nExit')
@@ -1046,7 +1046,7 @@ if 'min_badness' in config_dict:
         print('Invalid min_badness value, not integer\nExit')
         exit()
     if min_badness < 0 or min_badness > 1000:
-        print('Недопустимое значение min_badness\nExit')
+        print('Invalud min_badness value\nExit')
         exit()
 else:
     print('min_badness not in config\nExit')
@@ -1063,7 +1063,7 @@ if 'oom_score_adj_max' in config_dict:
         print('Invalid oom_score_adj_max value, not integer\nExit')
         exit()
     if oom_score_adj_max < 0 or oom_score_adj_max > 1000:
-        print('Недопустимое значение oom_score_adj_max\nExit')
+        print('Invalid oom_score_adj_max value\nExit')
         exit()
 else:
     print('oom_score_adj_max not in config\nExit')
@@ -1082,7 +1082,7 @@ if 'prefer_factor' in config_dict:
         print('Invalid prefer_factor value, not float\nExit')
         exit()
     if prefer_factor < 1 and prefer_factor > 1000:
-        print('prefer_factor должен быть в диапазоне [1; 1000]\nExit')
+        print('prefer_factor value out of range [1; 1000]\nExit')
         exit()
 else:
     print('prefer_factor not in config\nExit')
@@ -1098,7 +1098,7 @@ if 'avoid_factor' in config_dict:
         print('Invalid avoid_factor value, not float\nExit')
         exit()
     if avoid_factor < 1 and avoid_factor > 1000:
-        print('avoid_factor должен быть в диапазоне [1; 1000]\nExit')
+        print('avoid_factor value out of range [1; 1000]\nExit')
         exit()
 else:
     print('avoid_factor not in config\nExit')
@@ -1117,7 +1117,7 @@ if 'min_time_between_warnings' in config_dict:
         print('Invalid min_time_between_warnings value, not float\nExit')
         exit()
     if min_time_between_warnings < 1 or min_time_between_warnings > 300:
-        print('Недопустимое значение min_time_between_warnings, должно быть в диапазоне [1; 300]\nExit')
+        print('min_time_between_warnings value out of range [1; 300]\nExit')
         exit()
 else:
     print('min_time_between_warnings not in config\nExit')
@@ -1174,7 +1174,7 @@ else:
     exit()
 
 
-zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent('zram_max_warnings..')
+zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent('zram_max_warnings')
 
 # if 'zram_max_warnings' in config_dict:
 #     zram_max_warnings = config_dict['zram_max_warnings']
@@ -1221,23 +1221,23 @@ execute_the_command = conf_parse_bool('execute_the_command')
 
 ##########################################################################
 
-# получение уровней в кибибайтах
+# Get Kibibytes levels
 
 
-# возвращает число килобайт при задании в конфиге абсолютного значения,
-# или кортеж с числом процентов
+# Returns Kilobytes value if absolute value was set in config,
+# or tuple with percentage
 def sig_level_to_kb_swap(string):
-
+    """Returns Kilobytes value if abs val was set in config, or tuple with %"""
     if string.endswith('%'):
         return float(string[:-1].strip()), True
     elif string.endswith('M'):
         return float(string[:-1].strip()) * 1024
     else:
-        print('Конфиг инвалид, где-то неверно указаны единицы измерения\nExit')
+        print('Invalid config file. There are invalid units somewhere\nExit')
         exit()
 
 
-# получаем число килобайт или кортеж с процентами
+# So, get them
 swap_min_sigterm_swap = sig_level_to_kb_swap(swap_min_sigterm)
 swap_min_sigkill_swap = sig_level_to_kb_swap(swap_min_sigkill)
 
@@ -1271,7 +1271,7 @@ else:
 
 #  self-defense
 
-# повышаем приоритет
+# Increase priority
 try:
     os.nice(niceness)
     niceness_result = 'OK'
@@ -1279,7 +1279,7 @@ except PermissionError:
     niceness_result = 'Fail'
     pass
 
-# возможность запрета самоубийства
+# Deny self-killing
 try:
     with open('/proc/self/oom_score_adj', 'w') as file:
         file.write('{}\n'.format(oom_score_adj))
@@ -1291,7 +1291,7 @@ except OSError:
     oom_score_adj_result = 'Fail'
     pass
 
-# запрет своппинга процесса
+# Deny process swapping
 if mlockall:
     from ctypes import CDLL
     result = CDLL('libc.so.6', use_errno=True).mlockall(3)
@@ -1476,10 +1476,10 @@ while True:
 
     if print_mem_check_results:
 
-        # для рассчета ширины столбца свопа
+        # Calculate 'swap-column' width
         swap_len = len(str(round(swap_total / 1024.0)))
 
-        # печать размеров доступной памяти
+        # Output avialable mem sizes
         if swap_total == 0 and mem_used_zram == 0:
             print('MemAvail: {} M, {} %'.format(
                 human(mem_available, mem_len),
@@ -1503,7 +1503,7 @@ while True:
                       just_percent_mem(mem_used_zram / mem_total)))
 
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
-    if swap_total > swap_min_sigkill_kb:
+    if swap_total > swap_min_sigkill_kb:  # If swap_min_sigkill is absolute
         swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
     else:
         swap_sigkill_pc = '-'
@@ -1515,9 +1515,9 @@ while True:
         # СТОИТ ПЕЧАТАТЬ СВОП ТОЛЬКО ПРИ SwapTotal > 0
         swap_sigterm_pc = '-'
 
-    # проверка превышения порогов
-    # порог превышен - пытаемся предотвратить OOM
-    # пороги не превышены - спим
+    # Limits overdrafting checks
+    # If overdrafted - try to prevent OOM
+    # else - just sleep
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
