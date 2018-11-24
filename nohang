@@ -826,7 +826,7 @@ def calculate_percent(arg_key):
         print('{} not in config\nExit'.format(arg_key))
         mem_min_percent = None
 
-    return mem_min_percent
+    return mem_min_kb, mem_min_percent, mem_min_percent
 
 
 # if 'mem_min_sigterm' in config_dict:
@@ -909,8 +909,8 @@ def calculate_percent(arg_key):
 #     exit()
 
 
-mem_min_sigterm_percent = calculate_percent('mem_min_sigterm')
-mem_min_sigkill_percent = calculate_percent('mem_min_sigkill')
+mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent('mem_min_sigterm')
+mem_min_sigkill_kb, mem_min_sigkill_mb, mem_min_sigkill_percent = calculate_percent('mem_min_sigkill')
 
 # НУЖНА ВАЛИДАЦИЯ НА МЕСТЕ!
 if 'swap_min_sigterm' in config_dict:
@@ -928,8 +928,8 @@ else:
     exit()
 
 
-zram_max_sigterm_percent = calculate_percent('zram_max_sigterm')
-zram_max_sigkill_percent = calculate_percent('zram_max_sigkill')
+zram_max_sigterm_kb, zram_max_sigterm_mb, zram_max_sigterm_percent = calculate_percent('zram_max_sigterm')
+zram_max_sigkill_kb, zram_max_sigkill_mb, zram_max_sigkill_percent = calculate_percent('zram_max_sigkill')
 
 # if 'zram_max_sigterm' in config_dict:
 #     zram_max_sigterm = config_dict['zram_max_sigterm']
@@ -1124,7 +1124,7 @@ else:
     exit()
 
 
-mem_min_warnings_percent = calculate_percent('mem_min_warnings')
+mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent = calculate_percent('mem_min_warnings')
 
 # if 'mem_min_warnings' in config_dict:
 #     mem_min_warnings = config_dict['mem_min_warnings']
@@ -1174,7 +1174,7 @@ else:
     exit()
 
 
-zram_max_warnings_percent = calculate_percent('zram_max_warnings..')
+zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent('zram_max_warnings..')
 
 # if 'zram_max_warnings' in config_dict:
 #     zram_max_warnings = config_dict['zram_max_warnings']
@@ -1608,6 +1608,3 @@ while True:
         stdout.flush()
 
         sleep_after_check_mem()
-_check_mem()
-em()
-_check_mem()
