@@ -135,18 +135,23 @@ Usage:
 $ oom-top
 ```
 
-Output like this (monitors top 20 processes):
+Output like this (monitors top 20 processes with period = 1 sec):
 
 ```
 oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
 --------- ------- ------------- ----- --------------- --------- ---------
-       59       0             0  4133 firefox-esr         671 M      24 M
-       18       0             0  4543 Web Content         213 M       8 M
-        5       0             0   815 Xorg                 46 M      21 M
-        5       0             0  4088 kate                 51 M       9 M
-        4       0             0  4716 kate                 48 M       0 M
-        3       0             0   835 tor                  18 M      18 M
-        3       0             0  1412 dolphin              35 M      10 M
+      314       5           300  2397 chromium             84 M       0 M
+      307       5           300  2470 chromium             44 M       0 M
+      217       3           200  2378 chromium            101 M       0 M
+      202       3           200  2444 chromium             16 M       0 M
+       41       0             0  2526 firefox.real        242 M       0 M
+       21       0             0  2327 chromium            126 M       0 M
+       18       0             0  2598 Web Content         106 M       0 M
+       15       0             0  1816 dolphin              88 M       0 M
+       15       0             0  1840 kate                 90 M       0 M
+       14       0             0   852 Xorg                 86 M       0 M
+       12       0             0  2644 Web Content          70 M       0 M
+        8       0             0  1108 mate-panel           50 M       0 M
 ```
 
 ## Logging
