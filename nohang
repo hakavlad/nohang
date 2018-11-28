@@ -1322,7 +1322,6 @@ if root and realtime_ionice:
 
 ##########################################################################
 
-
 if print_config:
 
     print('\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
