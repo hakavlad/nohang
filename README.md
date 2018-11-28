@@ -62,10 +62,19 @@ To show GUI notifications:
 
 ## Download, install, uninstall
 
+Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be more unstable.
+
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
 ```
+
+Run without installing:
+
+```
+./nohang
+```
+
 
 To install:
 ```bash
