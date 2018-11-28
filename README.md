@@ -127,7 +127,7 @@ Just read the description of the parameters and edit the values. Please restart 
 
 ## Oom-top
 
-oom-top is an additional diagnostic utility from the nohang package. It sorts the processes in descending order of their oom_score.
+`oom-top` is an additional diagnostic utility from the nohang package. It sorts the processes in descending order of their oom_score and also displays oom_score_adj, Pid, Name, VmRSS, VmSwap. It will be installed together with nohang. 
 
 Usage:
 
@@ -135,7 +135,7 @@ Usage:
 $ oom-top
 ```
 
-It will be installed together with nohang. Output like this:
+ Output like this:
 
 ```
 oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
