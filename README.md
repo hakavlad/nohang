@@ -135,7 +135,7 @@ Usage:
 $ oom-top
 ```
 
- Output like this:
+Output like this (monitors top 20 processes):
 
 ```
 oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
@@ -147,7 +147,6 @@ oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
         4       0             0  4716 kate                 48 M       0 M
         3       0             0   835 tor                  18 M      18 M
         3       0             0  1412 dolphin              35 M      10 M
-
 ```
 
 ## Logging
