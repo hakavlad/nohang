@@ -826,7 +826,7 @@ def calculate_percent(arg_key):
         print('{} not in config\nExit'.format(arg_key))
         mem_min_percent = None
 
-    return mem_min_kb, mem_min_percent, mem_min_percent
+    return mem_min_kb, mem_min_mb, mem_min_percent
 
 
 # if 'mem_min_sigterm' in config_dict:
@@ -1321,7 +1321,6 @@ if root and realtime_ionice:
 
 
 ##########################################################################
-
 
 if print_config:
 
