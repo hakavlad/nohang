@@ -140,17 +140,17 @@ Output like this (monitors top 20 processes with period = 1 sec):
 ```
 oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
 --------- ------- ------------- ----- --------------- --------- ---------
-      314       5           300  2397 chromium             84 M       0 M
-      307       5           300  2470 chromium             44 M       0 M
-      217       3           200  2378 chromium            101 M       0 M
-      202       3           200  2444 chromium             16 M       0 M
-       41       0             0  2526 firefox.real        242 M       0 M
-       21       0             0  2327 chromium            126 M       0 M
-       18       0             0  2598 Web Content         106 M       0 M
+      314       5           300  3519 chromium             85 M       0 M
+      307       5           300  3581 chromium             44 M       0 M
+      215       3           200  3485 chromium             93 M       0 M
+      202       3           200  3509 chromium             16 M       0 M
+      133       0             0  2696 firefox-esr         782 M       0 M
+       74       0             0  3150 VirtualBox          436 M       0 M
+       38       0             0  3388 Web Content         223 M       0 M
+       20       0             0  3439 chromium            121 M       0 M
+       15       0             0   852 Xorg                 96 M       0 M
        15       0             0  1816 dolphin              88 M       0 M
        15       0             0  1840 kate                 90 M       0 M
-       14       0             0   852 Xorg                 86 M       0 M
-       12       0             0  2644 Web Content          70 M       0 M
         8       0             0  1108 mate-panel           50 M       0 M
 ```
 
