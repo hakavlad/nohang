@@ -69,10 +69,10 @@ $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
 ```
 
-Run without installing:
+Run without installing (low memory warnings may not works; note that processes with UID != your UID will not receive signals):
 
 ```
-./nohang
+$ ./nohang
 ```
 
 
