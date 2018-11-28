@@ -69,7 +69,7 @@ $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
 ```
 
-Run without installing (low memory warnings may not works; note that processes with UID != your UID will not receive signals):
+Run without installing (low memory warnings may not work; note that processes with UID != your UID will not receive signals if nohang is started as a regular user):
 
 ```
 $ ./nohang
@@ -149,7 +149,6 @@ oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
         3       0             0  1412 dolphin              35 M      10 M
 
 ```
-
 
 ## Logging
 
