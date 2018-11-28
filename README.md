@@ -124,6 +124,33 @@ The program can be configured by editing the [config file](https://github.com/ha
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
+
+## Oom-top
+
+oom-top is an additional diagnostic utility from the nohang package. It sorts the processes in descending order of their oom_score.
+
+Usage:
+
+```
+$ oom-top
+```
+
+It will be installed together with nohang. Output like this:
+
+```
+oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
+--------- ------- ------------- ----- --------------- --------- ---------
+       59       0             0  4133 firefox-esr         671 M      24 M
+       18       0             0  4543 Web Content         213 M       8 M
+        5       0             0   815 Xorg                 46 M      21 M
+        5       0             0  4088 kate                 51 M       9 M
+        4       0             0  4716 kate                 48 M       0 M
+        3       0             0   835 tor                  18 M      18 M
+        3       0             0  1412 dolphin              35 M      10 M
+
+```
+
+
 ## Logging
 
 If nohang is installed on a system that uses systemd, you can use the following command to view the log:
