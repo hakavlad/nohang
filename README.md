@@ -13,11 +13,11 @@ Here are the statements of some users:
 Today I (accidentally) ran some program on my Linux box that quickly used a lot of memory. My system froze, became unresponsive and thus I was unable to kill the offender.
 How can I prevent this in the future? Can't it at least keep a responsive core or something running?"
 
-([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory))
+— [serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory)
 
 > "With or without swap it still freezes before the OOM killer gets run automatically. This is really a kernel bug that should be fixed (i.e. run OOM killer earlier, before dropping all disk cache). Unfortunately kernel developers and a lot of other folk fail to see the problem. Common suggestions such as disable/enable swap, buy more RAM, run less processes, set limits etc. do not address the underlying problem that the kernel's low memory handling sucks camel's balls."
 
-([serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625))
+— [serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625)
 
 Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) (discussion with 480+ posts on r/linux).
 
@@ -125,7 +125,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
 
-## Oom-top
+## oom-top
 
 `oom-top` is an additional diagnostic tool from the nohang package. It sorts the processes in descending order of their oom_score and also displays oom_score_adj, Pid, Name, VmRSS, VmSwap. It will be installed together with nohang. 
 
@@ -150,8 +150,6 @@ oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
        20       0             0  3439 chromium            121 M       0 M
        15       0             0   852 Xorg                 96 M       0 M
        15       0             0  1816 dolphin              88 M       0 M
-       15       0             0  1840 kate                 90 M       0 M
-        8       0             0  1108 mate-panel           50 M       0 M
 ```
 
 ## Logging
