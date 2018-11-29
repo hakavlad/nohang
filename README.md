@@ -173,11 +173,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 ## Changelog
 
-
 - In progress
     - add oom-top
 
-- v0.1, 2018-11-23
+- [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
-
-
