@@ -169,3 +169,15 @@ See also `man journalctl`.
 ## Feedback
 
 Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
+
+
+## Changelog
+
+
+- In progress
+    - add oom-top
+
+- v0.1, 2018-11-23
+    - 1st release
+
+
