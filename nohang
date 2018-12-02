@@ -8,6 +8,10 @@ from argparse import ArgumentParser
 from sys import stdout
 
 
+import re
+
+vm_rss = 9
+
 sig_dict = {signal.SIGKILL: 'SIGKILL',
             signal.SIGTERM: 'SIGTERM'}
 
@@ -222,6 +226,28 @@ def pid_to_name(pid):
         return '<unknown>'
 
 
+
+def pid_to_cmdline(pid):
+    """
+    Get process cmdline by pid.
+
+    pid: str pid of required process
+    returns string cmdline
+    """
+    with open('/proc/' + pid + '/cmdline') as file:
+        try:
+            return file.readlines()[0].replace('\x00', ' ').strip()
+        except IndexError:
+            return ''
+
+
+
+
+
+
+
+
+
 def send_notify_warn():
     """
     Look for process with maximum 'badness' and warn user with notification.
@@ -266,7 +292,9 @@ def send_notify(signal, name, pid):
     """
     title = 'Preventing OOM'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
-        notify_sig_dict[signal], pid, name.replace('&', '*'))
+        notify_sig_dict[signal], pid, name.replace(
+            # & может ломать уведомления в некоторых темах оформления notify-send, поэтому заменяется на *
+            '&', '*'))
     if root:
         # send notification to all active users with notify-send
         b = root_notify_env()
@@ -324,36 +352,76 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigterm)
 
 
+
+
+
+
+
+
+
 def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
     if decrease_oom_score_adj and root:
+        # это не оптимальное решение
         func_decrease_oom_score_adj(oom_score_adj_max)
 
     pid_badness_list = []
 
+    # not implemented, in progress
+    prefer_re_cmdline = ''
+    prefer_cmd_factor = 1
+
+
     if regex_matching:
 
+
         for pid in os.listdir('/proc'):
-            if pid[0].isdecimal() is not True:
+            # только директории, имена которых состоят только из цифр, за исключением /proc/1/
+            if pid[0].isdecimal() is not True or pid == '1':
                 continue
 
             try:
                 badness = int(rline1('/proc/' + pid + '/oom_score'))
-                name = pid_to_name(pid)
 
-                if fullmatch(avoid_regex, name) is not None:
+
+                name = pid_to_name(pid)
+                cmdline = pid_to_cmdline(pid)
+                # отсеять потоки ядра
+                if cmdline == '':
+                    continue
+
+                #print([pid], [name], [cmdline])
+
+                if re.search(avoid_regex, name) is not None:
                     badness = int(badness / avoid_factor)
 
-                if fullmatch(prefer_regex, name) is not None:
+                if re.search(prefer_regex, name) is not None:
                     badness = int((badness + 1) * prefer_factor)
+
+
+
+                if re.search(avoid_re_cmdline, cmdline) is not None:
+                    badness = int(badness / avoid_factor)
+
+
+                if re.search(prefer_re_cmdline, cmdline) is not None:
+                    badness = int((badness + 1) * prefer_cmd_factor)
+
 
             except FileNotFoundError:
                 badness = 0
             except ProcessLookupError:
                 badness = 0
             pid_badness_list.append((pid, badness))
+
+
+
+
+
+
+
 
     else:
 
@@ -380,45 +448,48 @@ def find_victim_and_send_signal(signal):
         pid = pid_tuple_list[0]
         name = pid_to_name(pid)
 
-        # Get VmRSS and VmSwap of victim process and try to send signal
+        # Get VmRSS and VmSwap and cmdline of victim process and try to send signal
         try:
             with open('/proc/' + pid + '/status') as f:
                 for n, line in enumerate(f):
+                    if n is uid_index:
+                        uid = line.split('\t')[1]
+                        continue
                     if n is vm_rss_index:
-                        vm_rss = kib_to_mib(int(
-                            line.split('\t')[1][:-4]))
+                        vm_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
                         continue
                     if n is vm_swap_index:
-                        vm_swap = kib_to_mib(int(
-                            line.split('\t')[1][:-4]))
+                        vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
                         break
+            with open('/proc/' + pid + '/cmdline') as file:
+                try:
+                    cmdline = file.readlines()[0].replace('\x00', ' ')
+                except IndexError:
+                    cmdline = ''
+
         except FileNotFoundError:
-            vm_rss = 0
-            vm_swap = 0
+            pass
+        
+        
+        # исключение - значит вообще не надо бить этот процесс. Или искать новый, или принт: процесс хуёвый, стоп!
+        
         except ProcessLookupError:
-            vm_rss = 0
-            vm_swap = 0
+            pass
         except IndexError:
-            vm_rss = 0
-            vm_swap = 0
+            pass
         except ValueError:
-            vm_rss = 0
-            vm_swap = 0
+            pass
 
         if execute_the_command and signal is signal.SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
-            etc_info = '''  Finding the process with the highest badness\n
-               Victim is {}, pid:{}, badness:{}, VmRSS: {} MiB, VmSwap: {} MiB\n
-               Execute the command: {}\n
-               Exit status: {}; response time: {} ms'''.format(
-                name, pid, victim_badness, vm_rss, vm_swap, command,
-                exit_status, round(response_time * 1000))
+
+            etc_info = '''  Found the victim with highest badness:\n    Name:    {}\n    Pid:     {}\n    Uid:     {}\n    Badness: {}\n    VmRSS:   {} MiB\n    VmSwap:  {} MiB\n  Execute the command: {}\n  Exit status: {}; response time: {} ms'''.format(name, pid, uid, victim_badness, vm_rss, vm_swap, command, exit_status, round(response_time * 1000))
+
             print(mem_info)
             print(etc_info)
-            if gui_notifications:
-                send_notify_etc(pid, name, command)
+            if gui_notifications: send_notify_etc(pid, name, command)
 
         else:
 
@@ -440,11 +511,8 @@ def find_victim_and_send_signal(signal):
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
 
-            preventing_oom_message = '  Finding the process with the highes' \
-                't badness\n  Victim is {}, pid: {}, badness: {}, VmRS' \
-                'S: {} MiB, VmSwap: {} MiB\n  Sending {} to the victim; {}'.format(
-                name, pid, victim_badness, vm_rss, vm_swap, sig_dict[signal],
-                send_result)
+            preventing_oom_message = '  Found the process with highest badness:\n  Name:    {}\n  Pid:     {}\n  Uid:     {}\n  Badness: {}\n  VmRSS:   {} MiB\n  VmSwap:  {} MiB\n  Cmdline: {}\n  Sending {} to the victim; {}'.format(
+                name, pid, uid, victim_badness, vm_rss, vm_swap, cmdline, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
 
@@ -629,7 +697,7 @@ for s in status_list:
 
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
-
+uid_index = status_names.index('Uid')
 
 ##########################################################################
 
@@ -750,6 +818,7 @@ execute_the_command = conf_parse_bool('execute_the_command')
 
 prefer_regex = conf_parse_string('prefer_regex')
 avoid_regex = conf_parse_string('avoid_regex')
+
 
 mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
     'mem_min_sigterm')

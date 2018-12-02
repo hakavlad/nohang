@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""
+sort processes by oom_score
+"""
+from operator import itemgetter
+from os import listdir
+
+def human(num):
+    '''KiB to MiB'''
+    return str(round(num / 1024.0)).rjust(6, ' ')
+
+
+with open('/proc/self/status') as file:
+    status_list = file.readlines()
+
+# список имен из /proc/*/status для дальнейшего поиска позиций VmRSS and VmSwap
+status_names = []
+for s in status_list:
+    status_names.append(s.split(':')[0])
+
+vm_rss_index = status_names.index('VmRSS')
+vm_swap_index = status_names.index('VmSwap')
+uid_index = status_names.index('Uid')
+
+oom_list = []
+for pid in listdir('/proc'):
+    # пропускаем элементы, состоящие не из цифр и PID 1
+    if pid.isdigit() is not True or pid == '1':
+        continue
+    try:
+        with open('/proc/' + pid + '/cmdline') as file:
+            try:
+                cmdline = file.readlines()[0].replace('\x00', ' ')
+            except IndexError:
+                continue
+        with open('/proc/' + pid + '/oom_score') as file:
+            oom_score = int(file.readlines()[0][:-1])
+        with open('/proc/' + pid + '/oom_score_adj') as file:
+            oom_score_adj = int(file.readlines()[0][:-1])
+    except FileNotFoundError:
+        continue
+    except ProcessLookupError:
+        continue
+
+    oom_list.append((pid, oom_score, oom_score_adj, cmdline))
+
+# list sorted by oom_score
+oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
+
+print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline')
+print('--------- ------------- ----- ----- --------------- -------- -------- -------')
+
+# итерируемся по сортированному списку oom_score, печатая name, pid etc
+for i in oom_list_sorted:
+    pid = i[0]
+    oom_score = i[1]
+    oom_score_adj = i[2]
+    cmdline = i[3].strip()
+
+    try:
+        # читать часть файла не дальше VmSwap - когда-нибудь
+        with open('/proc/' + pid + '/status') as file:
+            status_list = file.readlines()
+
+        vm_rss = int(status_list[vm_rss_index].split(':')[1].split(' ')[-2])
+        vm_swap = int(status_list[vm_swap_index].split(':')[1].split(' ')[-2])
+        name = status_list[0][:-1].split('\t')[1]
+        uid = status_list[uid_index].split('\t')[1]
+
+    except FileNotFoundError:
+        continue
+
+    except ProcessLookupError:
+        continue
+
+    print(
+        '{} {} {} {} {} {} M {} M {}'.format(
+            str(oom_score).rjust(9),
+            str(oom_score_adj).rjust(13),
+            uid.rjust(5),
+            str(pid).rjust(5),
+            name.ljust(15),
+            human(vm_rss),
+            human(vm_swap),
+            cmdline[:]
+        )
+    )

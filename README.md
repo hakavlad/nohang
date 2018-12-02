@@ -114,7 +114,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 1. Memory levels to respond to as an OOM threat
 2. The frequency of checking the level of available memory (and CPU usage)
 3. The prevention of killing innocent victims
-4. Impact on the badness of processes via matching their names with regular expressions
+4. Impact on the badness of processes via matching their names and cmdlines with regular expressions
 5. The execution of a specific command instead of sending the SIGTERM signal
 6. GUI notifications:
    - results of preventing OOM
@@ -125,17 +125,17 @@ The program can be configured by editing the [config file](https://github.com/ha
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
 
-## oom-top
+## oom-sort
 
-`oom-top` is an additional diagnostic tool from the nohang package. It sorts the processes in descending order of their oom_score and also displays oom_score_adj, Pid, Name, VmRSS, VmSwap. It will be installed together with nohang. 
+`oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their oom_score and also displays oom_score_adj, Uid, Pid, Name, VmRSS, VmSwap and optionally cmdline. Run `oom-sort --help` for more info.
 
 Usage:
 
 ```
-$ oom-top
+$ oom-sort
 ```
 
-Output like this (monitors top 20 processes with period = 1 sec):
+Output like follow:
 
 ```
 oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
@@ -170,11 +170,14 @@ See also `man journalctl`.
 
 Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
 
-
 ## Changelog
 
 - In progress
-    - add oom-top
+    - add oom-sort
+    - add oom-trigger
+    - fix regex matching: replace re.fullmatch() by re.search()
+    - add suppot cmdline regex matching
+    - improve output: display cmdline and Uid in corrective action reports
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
