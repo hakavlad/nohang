@@ -4,6 +4,56 @@ sort processes by oom_score
 """
 from operator import itemgetter
 from os import listdir
+from argparse import ArgumentParser
+'''
+oom-sort -n 9
+oom-sort -c
+oom-sort --cmdline 20
+watch oom-sort
+'''
+
+
+parser = ArgumentParser()
+
+parser.add_argument(
+    '--number',
+    '-n',
+    help="""number of lines; integer, not negative; 0 - unlimited; unlimited by default""",
+    default=None,
+    type=str
+)
+
+parser.add_argument(
+    '--cmdline',
+    '-c',
+    help="""display cmdlines""",
+    default=None,
+    type=str
+)
+
+
+args = parser.parse_args()
+
+display_cmdline = args.cmdline
+num_lines = args.number
+
+
+if num_lines == None:
+    num_lines = 99999
+
+
+if display_cmdline == None:
+    display_cmdline = 9999
+
+
+
+
+
+#print([num_lines], [display_cmdline])
+
+
+
+
 
 def human(num):
     '''KiB to MiB'''
@@ -51,7 +101,7 @@ print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmd
 print('--------- ------------- ----- ----- --------------- -------- -------- -------')
 
 # итерируемся по сортированному списку oom_score, печатая name, pid etc
-for i in oom_list_sorted:
+for i in oom_list_sorted[:int(num_lines)]:
     pid = i[0]
     oom_score = i[1]
     oom_score_adj = i[2]
@@ -82,6 +132,6 @@ for i in oom_list_sorted:
             name.ljust(15),
             human(vm_rss),
             human(vm_swap),
-            cmdline[:]
+            cmdline[:int(display_cmdline)]
         )
     )
