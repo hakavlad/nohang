@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""
+Interactive OOM trigger
+"""
+
+import os
+
+
+##########################################################################
+
+
+# find mem_total
+# find positions of SwapFree and SwapTotal in /proc/meminfo
+
+with open('/proc/meminfo') as file:
+    mem_list = file.readlines()
+
+mem_list_names = []
+for s in mem_list:
+    mem_list_names.append(s.split(':')[0])
+
+if mem_list_names[2] != 'MemAvailable':
+    print('Your Linux kernel is too old, Linux 3.14+ requied\nExit')
+    exit()
+
+swap_total_index = mem_list_names.index('SwapTotal')
+swap_free_index = swap_total_index + 1
+
+mem_total = int(mem_list[0].split(':')[1].strip(' kB\n'))
+
+# Get names from /proc/*/status to be able to get VmRSS and VmSwap values
+
+with open('/proc/self/status') as file:
+    status_list = file.readlines()
+
+status_names = []
+for s in status_list:
+    status_names.append(s.split(':')[0])
+
+vm_rss_index = status_names.index('VmRSS')
+vm_swap_index = status_names.index('VmSwap')
+
+
+# вариант - сжирать мегабайты исходя из собственного VmRSS + VmSwap
+
+
+print(mem_total, swap_total_index, swap_free_index, vm_rss_index, vm_swap_index)
+
+
+##########################################################################
+
+
+def continue_anyway():
+    """
+    Mem hog if mem err
+    """
+    expanding_list = []
+    while True:
+        try:
+            expanding_list.append(os.urandom(1))
+        except MemoryError:
+            continue
+
+
+def unlimited_memhog():
+    '''
+    unlimited mem hogging
+    '''
+    print('Вводите целые неотрицательные числа. Чем больше, тем быстрее потребление памяти.\n1000 same обеспечивает потребление на уровне полтора гиг в секунду,\nurandom работает на скорости максимум 170 M/s')
+
+    same = input("same: ")
+    urandom = input("urandom: ")
+
+    expanding_list = []
+
+    print('Unlimited memhogging started!')
+
+    while True:
+        try:
+            expanding_list.append(os.urandom(int(urandom)))
+            expanding_list.append('#' * int(same))
+        except MemoryError:
+            print('MemoryError; continue anyway!')
+            continue_anyway()
+
+
+##########################################################################
+
+
+# basic bifurcation
+
+print('WARNING: эта прога способна потратить память и повесить систему, будьте осторожны.')
+print('При ее работе следите за показателями памяти.')
+
+
+expanding_list = []
+
+
+'''
+hogging не то
+u - unlimited mem hogging with choice of speed and entropy
+n - limited mem hogging (hog указанный далее объем метров)
+a - уменьшать обем общей доступной памяти (MemAvailable + SwapFree) до тех пор, пока он не станет ниже заданного далее объема
+
+'''
+
+
+try:
+    while True:
+
+        print('Select an option from the list below, enter selected letter and press Enter')
+        print('8 или i или I - запустить бесконечное потребление, предложив выбрать скорость потребления и энтропию')
+        print('q или любой другой символ - выход (можно просто нажать Enter)')
+
+        li = input(': ')
+
+        if li is 'i' or li is 'I' or li is '8':
+            unlimited_memhog()
+        else:
+            exit()
+
+except KeyboardInterrupt:
+    print()
+    os.kill(os.getpid(), 15)

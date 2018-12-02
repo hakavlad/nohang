@@ -20,6 +20,8 @@ install:
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/share/man/man1
 	gzip -k -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
+	gzip -k -c oom-sort.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-sort.1.gz
+	gzip -k -c oom-trigger.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-trigger.1.gz
 	
 	install -d $(DESTDIR)/$(PREFIX)/lib/systemd/system
 	install -m0644 ./nohang.service $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
@@ -31,6 +33,8 @@ uninstall:
 	rm -fv $(PREFIX)/usr/sbin/nohang_notify_low_mem
 	rm -fv $(PREFIX)/usr/bin/oom-sort
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
+	rm -fv $(PREFIX)/usr/share/man/man1/oom-sort.1.gz
+	rm -fv $(PREFIX)/usr/share/man/man1/oom-trigger.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service
 	rm -fvr $(PREFIX)/etc/nohang/
 	
