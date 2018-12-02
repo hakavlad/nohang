@@ -166,6 +166,8 @@ See also `man journalctl`.
 ## Known problems
 
 - Awful documentation
+- Current version is broken, use nohang v0.1!
+- regex matching need fixes
 
 ## Feedback
 
