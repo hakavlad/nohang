@@ -127,7 +127,7 @@ Just read the description of the parameters and edit the values. Please restart 
 
 ## oom-sort
 
-`oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their oom_score and also displays oom_score_adj, Uid, Pid, Name, VmRSS, VmSwap and optionally cmdline. Run `oom-sort --help` for more info.
+`oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info.
 
 Usage:
 
@@ -154,6 +154,8 @@ oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
         7             0  1000  1106 mate-panel          43 M      0 M mate-panel
         6             0  1000  1157 wnck-applet         35 M      0 M /usr/lib/mate-panel/wnck-applet
 ```
+
+Kthreads and Pid 1 will not be displayed.
 
 ## oom-trigger
 
