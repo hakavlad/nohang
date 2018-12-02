@@ -13,6 +13,7 @@ install:
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/bin
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
+	install -m0755 ./oom-trigger $(DESTDIR)/$(PREFIX)/usr/bin/oom-trigger
 	
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang
