@@ -31,7 +31,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Some features
 
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
-- impact on the badness of processes via matching their names with regular expressions
+- impact on the badness of processes via matching their names and cmdlines with regular expressions
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
 - GUI notifications: OOM prevention results and low memory warnings
 - `zram` support (`mem_used_total` as a trigger)
@@ -147,9 +147,6 @@ oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
       133       0             0  2696 firefox-esr         782 M       0 M
        74       0             0  3150 VirtualBox          436 M       0 M
        38       0             0  3388 Web Content         223 M       0 M
-       20       0             0  3439 chromium            121 M       0 M
-       15       0             0   852 Xorg                 96 M       0 M
-       15       0             0  1816 dolphin              88 M       0 M
 ```
 
 ## Logging
@@ -173,11 +170,11 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 ## Changelog
 
 - In progress
-    - add oom-sort
-    - add oom-trigger
+    - add `oom-sort`
+    - add `oom-trigger`
     - fix regex matching: replace re.fullmatch() by re.search()
-    - add suppot cmdline regex matching
-    - improve output: display cmdline and Uid in corrective action reports
+    - add suppot `cmdline` regex matching
+    - improve output: display `cmdline` and `Uid` in corrective action reports
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
