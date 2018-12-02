@@ -5,60 +5,38 @@ sort processes by oom_score
 from operator import itemgetter
 from os import listdir
 from argparse import ArgumentParser
-'''
-oom-sort -n 9
-oom-sort -c
-oom-sort --cmdline 20
-watch oom-sort
-'''
-
 
 parser = ArgumentParser()
 
 parser.add_argument(
-    '--number',
+    '--num',
     '-n',
-    help="""number of lines; integer, not negative; 0 - unlimited; unlimited by default""",
+    help="""max number of lines; integer, not negative; default: 99999""",
     default=None,
     type=str
 )
 
 parser.add_argument(
-    '--cmdline',
-    '-c',
-    help="""display cmdlines""",
+    '--len',
+    '-l',
+    help="""max cmdline length; default: 99999""",
     default=None,
     type=str
 )
 
-
 args = parser.parse_args()
 
-display_cmdline = args.cmdline
-num_lines = args.number
-
-
+display_cmdline = args.len
+num_lines = args.num
 if num_lines == None:
     num_lines = 99999
 
-
 if display_cmdline == None:
-    display_cmdline = 9999
-
-
-
-
-
-#print([num_lines], [display_cmdline])
-
-
-
-
+    display_cmdline = 99999
 
 def human(num):
     '''KiB to MiB'''
     return str(round(num / 1024.0)).rjust(6, ' ')
-
 
 with open('/proc/self/status') as file:
     status_list = file.readlines()
@@ -97,8 +75,12 @@ for pid in listdir('/proc'):
 # list sorted by oom_score
 oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
 
-print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline')
-print('--------- ------------- ----- ----- --------------- -------- -------- -------')
+if display_cmdline == '0':
+    print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap')
+    print('--------- ------------- ----- ----- --------------- -------- --------')
+else:
+    print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline')
+    print('--------- ------------- ----- ----- --------------- -------- -------- -------')
 
 # итерируемся по сортированному списку oom_score, печатая name, pid etc
 for i in oom_list_sorted[:int(num_lines)]:

@@ -138,15 +138,21 @@ $ oom-sort
 Output like follow:
 
 ```
-oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
---------- ------- ------------- ----- --------------- --------- ---------
-      314       5           300  3519 chromium             85 M       0 M
-      307       5           300  3581 chromium             44 M       0 M
-      215       3           200  3485 chromium             93 M       0 M
-      202       3           200  3509 chromium             16 M       0 M
-      133       0             0  2696 firefox-esr         782 M       0 M
-       74       0             0  3150 VirtualBox          436 M       0 M
-       38       0             0  3388 Web Content         223 M       0 M
+oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
+--------- ------------- ----- ----- --------------- -------- -------- -------
+      314           300  1000   991 chromium            84 M      0 M /usr/lib/chromium/chromium --type=renderer --field-trial-handle=868244496792098610,5765419126773948943,131072 --service-pipe-token=14782672631740123203 --lang=ru --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-client-side-phishing-detection --enable-offline-auto-reload --enable-offline-auto-reload-visible-only --num-raster-threads=1 --service-request-channel-token=14782672631740123203 --renderer-client-id=4 --no-v8-untrusted-code-mitigations --shared-files=v8_context_snapshot_data:100,v8_natives_data:101
+      307           300  1000  1124 chromium            44 M      0 M /usr/lib/chromium/chromium --type=renderer --field-trial-handle=868244496792098610,5765419126773948943,131072 --service-pipe-token=10276223625123198448 --lang=ru --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-client-side-phishing-detection --enable-offline-auto-reload --enable-offline-auto-reload-visible-only --num-raster-threads=1 --service-request-channel-token=10276223625123198448 --renderer-client-id=6 --no-v8-untrusted-code-mitigations --shared-files=v8_context_snapshot_data:100,v8_natives_data:101
+      217           200  1000   962 chromium            99 M      0 M /usr/lib/chromium/chromium --type=gpu-process --field-trial-handle=868244496792098610,5765419126773948943,131072 --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-breakpad --gpu-preferences=KAAAAAAAAACAAABAAQAAAAAAAAAAAGAAAAAAAAEAAAAIAAAAAAAAAAgAAAAAAAAA --user-data-dir=/tmp/tmp.TJ91B6F0zB --service-request-channel-token=2848128951654484113
+      202           200  1000  1032 chromium            16 M      0 M /usr/lib/chromium/chromium --type=-broker
+       43             0  1000   736 firefox-esr        251 M      0 M /usr/lib/firefox-esr/firefox-esr
+       21             0  1000   914 chromium           124 M      0 M /usr/lib/chromium/chromium --show-component-extension-options --ignore-gpu-blacklist --no-default-browser-check --disable-pings --media-router=0 --enable-remote-extensions --user-data-dir=/tmp/tmp.TJ91B6F0zB
+       17             0  1000   844 Web Content        103 M      0 M /usr/lib/firefox-esr/plugin-container -greomni /usr/lib/firefox-esr/omni.ja -appomni /usr/lib/firefox-esr/browser/omni.ja -appdir /usr/lib/firefox-esr/browser 736 true tab
+       16             0  1000 31555 dolphin             95 M      0 M dolphin
+       15             0     0   863 Xorg                92 M      0 M /usr/lib/xorg/Xorg :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch
+        8             0   110   860 tor                 50 M      0 M /usr/bin/tor --defaults-torrc /usr/share/tor/tor-service-defaults-torrc -f /etc/tor/torrc --RunAsDaemon 0
+        8             0  1000   918 chromium            48 M      0 M /usr/lib/chromium/chromium --type=zygote --user-data-dir=/tmp/tmp.TJ91B6F0zB
+        7             0  1000  1106 mate-panel          43 M      0 M mate-panel
+        6             0  1000  1157 wnck-applet         35 M      0 M /usr/lib/mate-panel/wnck-applet
 ```
 
 ## oom-trigger
