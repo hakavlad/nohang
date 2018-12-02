@@ -149,6 +149,10 @@ oom_score oom_adj oom_score_adj   Pid Name                 RSS       Swap
        38       0             0  3388 Web Content         223 M       0 M
 ```
 
+## oom-trigger
+
+Interactive OOM trigger (not implemented)
+
 ## Logging
 
 If nohang is installed on a system that uses systemd, you can use the following command to view the log:
