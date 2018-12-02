@@ -12,7 +12,7 @@ install:
 	install -m0755 ./nohang_notify_low_mem $(DESTDIR)/$(PREFIX)/usr/sbin/nohang_notify_low_mem
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/bin
-	install -m0755 ./oom-top $(DESTDIR)/$(PREFIX)/usr/bin/oom-top
+	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
 	
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang
@@ -29,7 +29,7 @@ uninstall:
 	systemctl disable nohang.service || true
 	rm -fv $(PREFIX)/usr/sbin/nohang
 	rm -fv $(PREFIX)/usr/sbin/nohang_notify_low_mem
-	rm -fv $(PREFIX)/usr/bin/oom-top
+	rm -fv $(PREFIX)/usr/bin/oom-sort
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service
 	rm -fvr $(PREFIX)/etc/nohang/
