@@ -43,7 +43,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 Nohang prevents Out Of Memory with GUI notifications: [video](https://youtu.be/ChTNu9m7uMU)
 
-![pic](https://i.imgur.com/wTZCtrN.png)
+![pic](https://i.imgur.com/7Fj8nZR.png)
 
 ## Requirements
 
@@ -187,7 +187,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - add `oom-trigger`
     - fix regex matching: replace re.fullmatch() by re.search()
     - add suppot `cmdline` regex matching
-    - add colored output
+    - print in terminal with colors
     - improve output: display `cmdline` and `Uid` in corrective action reports
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
