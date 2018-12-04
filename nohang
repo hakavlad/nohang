@@ -6,11 +6,8 @@ from operator import itemgetter
 from time import sleep, time
 from argparse import ArgumentParser
 from sys import stdout
-
-
 import re
 
-vm_rss = 9
 
 sig_dict = {signal.SIGKILL: 'SIGKILL',
             signal.SIGTERM: 'SIGTERM'}
@@ -129,7 +126,7 @@ def conf_parse_bool(param):
 
 def func_decrease_oom_score_adj(oom_score_adj_max):
     """
-    Stupid function, must be removed or remaked
+    Stupid function, must be remaked
     """
     for i in os.listdir('/proc'):
         if i.isdigit() is not True:
@@ -293,7 +290,7 @@ def send_notify(signal, name, pid):
     title = 'Preventing OOM'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
         notify_sig_dict[signal], pid, name.replace(
-            # & может ломать уведомления в некоторых темах оформления notify-send, поэтому заменяется на *
+            # сивол & может ломать уведомления в некоторых темах оформления, поэтому заменяется на *
             '&', '*'))
     if root:
         # send notification to all active users with notify-send
@@ -371,6 +368,8 @@ def find_victim_and_send_signal(signal):
 
     # not implemented, in progress
     prefer_re_cmdline = ''
+    avoid_re_cmdline = ''
+    prefer_cmd_factor = 1
     prefer_cmd_factor = 1
 
 
@@ -388,7 +387,8 @@ def find_victim_and_send_signal(signal):
 
                 name = pid_to_name(pid)
                 cmdline = pid_to_cmdline(pid)
-                # отсеять потоки ядра
+                
+                # skip kthreads
                 if cmdline == '':
                     continue
 
@@ -415,10 +415,6 @@ def find_victim_and_send_signal(signal):
             except ProcessLookupError:
                 badness = 0
             pid_badness_list.append((pid, badness))
-
-
-
-
 
 
 
@@ -469,10 +465,6 @@ def find_victim_and_send_signal(signal):
 
         except FileNotFoundError:
             pass
-        
-        
-        # исключение - значит вообще не надо бить этот процесс. Или искать новый, или принт: процесс хуёвый, стоп!
-        
         except ProcessLookupError:
             pass
         except IndexError:
@@ -485,7 +477,7 @@ def find_victim_and_send_signal(signal):
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
 
-            etc_info = '''  Found the victim with highest badness:\n    Name:    {}\n    Pid:     {}\n    Uid:     {}\n    Badness: {}\n    VmRSS:   {} MiB\n    VmSwap:  {} MiB\n  Execute the command: {}\n  Exit status: {}; response time: {} ms'''.format(name, pid, uid, victim_badness, vm_rss, vm_swap, command, exit_status, round(response_time * 1000))
+            etc_info = '''  Found the victim with highest badness:\n  Name:    \033[33m{}\033[0m\n  PID:     \033[33m{}\033[0m\n  UID:     \033[33m{}\033[0m\n  Badness: \033[33m{}\033[0m\n  VmRSS:   \033[33m{}\033[0m MiB\n  VmSwap:  \033[33m{}\033[0m MiB\n  CmdLine: \033[33m{}\033[0m\n  Execute the command: \033[4m{}\033[0m\n  Exit status: {}; response time: {} ms'''.format(name, pid, uid, victim_badness, vm_rss, vm_swap, cmdline, command, exit_status, round(response_time * 1000))
 
             print(mem_info)
             print(etc_info)
@@ -496,7 +488,7 @@ def find_victim_and_send_signal(signal):
             try:
                 os.kill(int(pid), signal)
                 response_time = time() - time0
-                send_result = 'OK; response time: {} ms'.format(
+                send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
                     round(response_time * 1000))
 
                 if gui_notifications:
@@ -511,7 +503,7 @@ def find_victim_and_send_signal(signal):
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
 
-            preventing_oom_message = '  Found the process with highest badness:\n  Name:    {}\n  Pid:     {}\n  Uid:     {}\n  Badness: {}\n  VmRSS:   {} MiB\n  VmSwap:  {} MiB\n  Cmdline: {}\n  Sending {} to the victim; {}'.format(
+            preventing_oom_message = '  Found the process with highest badness:\n  Name:    \033[33m{}\033[0m\n  PID:     \033[33m{}\033[0m\n  UID:     \033[33m{}\033[0m\n  Badness: \033[33m{}\033[0m\n  VmRSS:   \033[33m{}\033[0m MiB\n  VmSwap:  \033[33m{}\033[0m MiB\n  CmdLine: \033[33m{}\033[0m\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
                 name, pid, uid, victim_badness, vm_rss, vm_swap, cmdline, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
@@ -1367,7 +1359,7 @@ while True:
     if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemAvailable [{} MiB, {} %] <= mem_min_sigkill [{} MiB, {} %]\n  Swa' \
+        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sigkill [{} MiB, {} %]\n  Swa' \
             'pFree [{} MiB, {} %] <= swap_min_sigkill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1387,7 +1379,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigkill [{} MiB, {} %]'.format(
+        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigkill [{} MiB, {} %]'.format(
             kib_to_mib(mem_used_zram),
             percent(mem_used_zram / mem_total),
             kib_to_mib(zram_max_sigkill_kb),
@@ -1400,7 +1392,7 @@ while True:
 
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemAvailable [{} MiB, {} %] <= mem_min_sigterm [{} MiB, {} %]\n  Sw' \
+        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sigterm [{} MiB, {} %]\n  Sw' \
             'apFree [{} MiB, {} %] <= swap_min_sigterm [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
@@ -1425,7 +1417,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = 'Low memory; corrective action required!\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigter' \
+        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigter' \
             'm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),

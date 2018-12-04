@@ -174,7 +174,6 @@ See also `man journalctl`.
 ## Known problems
 
 - Awful documentation
-- Current version is broken, use nohang v0.1!
 - regex matching need fixes
 
 ## Feedback
@@ -188,6 +187,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - add `oom-trigger`
     - fix regex matching: replace re.fullmatch() by re.search()
     - add suppot `cmdline` regex matching
+    - add colored output
     - improve output: display `cmdline` and `Uid` in corrective action reports
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
