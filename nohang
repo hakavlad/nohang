@@ -1,27 +1,14 @@
 #!/usr/bin/env python3
 """A daemon that prevents OOM in Linux systems."""
 import os
-import signal
 from operator import itemgetter
 from time import sleep, time
 from argparse import ArgumentParser
 from sys import stdout
-import re
+from signal import SIGKILL, SIGTERM
 
-
-sig_dict = {signal.SIGKILL: 'SIGKILL',
-            signal.SIGTERM: 'SIGTERM'}
-
-# directory where the script is running
-cd = os.getcwd()
-
-# where to look for a config if not specified via the -c/--config option
-default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')
-
-# universal message if config is invalid
-conf_err_mess = '\nSet up the path to the valid conf' \
-    'ig file with -c/--config option!\nExit'
-
+sig_dict = {SIGKILL: 'SIGKILL', 
+            SIGTERM: 'SIGTERM'}
 
 ##########################################################################
 
@@ -129,7 +116,7 @@ def func_decrease_oom_score_adj(oom_score_adj_max):
     Stupid function, must be remaked
     """
     for i in os.listdir('/proc'):
-        if i.isdigit() is not True:
+        if i.isdigit() is False:
             continue
         try:
             oom_score_adj = int(rline1('/proc/' + i + '/oom_score_adj'))
@@ -339,7 +326,7 @@ def sleep_after_send_signal(signal):
 
     signal: sent signal
     """
-    if signal is signal.SIGKILL:
+    if signal is SIGKILL:
         if print_sleep_periods:
             print('  sleep', min_delay_after_sigkill)
         sleep(min_delay_after_sigterm)
@@ -378,7 +365,7 @@ def find_victim_and_send_signal(signal):
 
         for pid in os.listdir('/proc'):
             # только директории, имена которых состоят только из цифр, за исключением /proc/1/
-            if pid[0].isdecimal() is not True or pid == '1':
+            if pid[0].isdecimal() is False or pid == '1':
                 continue
 
             try:
@@ -422,7 +409,7 @@ def find_victim_and_send_signal(signal):
     else:
 
         for pid in os.listdir('/proc'):
-            if pid[0].isdecimal() is not True:
+            if pid[0].isdecimal() is False:
                 continue
             try:
                 badness = int(rline1('/proc/' + pid + '/oom_score'))
@@ -472,7 +459,7 @@ def find_victim_and_send_signal(signal):
         except ValueError:
             pass
 
-        if execute_the_command and signal is signal.SIGTERM and name in etc_dict:
+        if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
@@ -556,17 +543,17 @@ def fattest():
     if regex_matching:
 
         for pid in os.listdir('/proc'):
-            if pid[0].isdecimal() is not True:
+            if pid[0].isdecimal() is False:
                 continue
 
             try:
                 badness = int(rline1('/proc/' + pid + '/oom_score'))
                 name = pid_to_name(pid)
 
-                if fullmatch(avoid_regex, name) is not None:
+                if search(avoid_regex, name) is not None:
                     badness = int(badness / avoid_factor)
 
-                if fullmatch(prefer_regex, name) is not None:
+                if search(prefer_regex, name) is not None:
                     badness = int((badness + 1) * prefer_factor)
 
             except FileNotFoundError:
@@ -578,7 +565,7 @@ def fattest():
     else:
 
         for pid in os.listdir('/proc'):
-            if pid[0].isdecimal() is not True:
+            if pid[0].isdecimal() is False:
                 continue
             try:
                 badness = int(rline1('/proc/' + pid + '/oom_score'))
@@ -695,6 +682,18 @@ uid_index = status_names.index('Uid')
 
 
 # Configurations
+
+
+# directory where the script is running
+cd = os.getcwd()
+
+# where to look for a config if not specified via the -c/--config option
+default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')
+
+# universal message if config is invalid
+conf_err_mess = '\nSet up the path to the valid conf' \
+    'ig file with -c/--config option!\nExit'
+
 
 # Cmd argparse
 parser = ArgumentParser()
@@ -1233,12 +1232,11 @@ mem_len = len(str(round(mem_total / 1024.0)))
 
 if gui_notifications or gui_low_memory_warnings:
     from subprocess import Popen, PIPE
-    notify_sig_dict = {signal.SIGKILL: 'Killing',
-                       signal.SIGTERM: 'Terminating'}
-
+    notify_sig_dict = {SIGKILL: 'Killing',
+                       SIGTERM: 'Terminating'}
 
 if regex_matching:
-    from re import fullmatch
+    from re import search
 
 
 rate_mem = rate_mem * 1048576
@@ -1296,16 +1294,15 @@ while True:
     # уменьшится на 42 MiB.
     # Найден экспериментально, требует уточнения с разными ядрами и архитектурами.
     # На небольших дисксайзах (до гигабайта) может быть больше, до 0.0045.
-    # Создатель модуля zram утверждает, что zram_disksize_factor доожен быть 0.001
+    # Создатель модуля zram утверждает, что ZRAM_DISKSIZE_FACTOR доожен быть 0.001
     # ("zram uses about 0.1% of the size of the disk"
     # - https://www.kernel.org/doc/Documentation/blockdev/zram.txt),
     # но это утверждение противоречит опытным данным.
-    # zram_disksize_factor = deltaMemAvailavle / disksize
+    # ZRAM_DISKSIZE_FACTOR = deltaMemAvailavle / disksize
     # found experimentally
-    zram_disksize_factor = 0.0042
-
+    ZRAM_DISKSIZE_FACTOR = 0.0042
     mem_used_zram = (
-        mem_used_total_sum + disksize_sum * zram_disksize_factor
+        mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR
     ) / 1024.0
 
 
@@ -1373,7 +1370,7 @@ while True:
                 kib_to_mib(swap_min_sigkill_kb),
                 swap_sigkill_pc)
 
-        find_victim_and_send_signal(signal.SIGKILL)
+        find_victim_and_send_signal(SIGKILL)
 
     # ZRAM KILL
     elif mem_used_zram >= zram_max_sigkill_kb:
@@ -1385,7 +1382,7 @@ while True:
             kib_to_mib(zram_max_sigkill_kb),
             percent(zram_max_sigkill_kb / mem_total))
 
-        find_victim_and_send_signal(signal.SIGKILL)
+        find_victim_and_send_signal(SIGKILL)
 
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
@@ -1411,7 +1408,7 @@ while True:
                 kib_to_mib(swap_min_sigterm_kb),
                 swap_sigterm_pc)
 
-        find_victim_and_send_signal(signal.SIGTERM)
+        find_victim_and_send_signal(SIGTERM)
 
     # ZRAM TERM
     elif mem_used_zram >= zram_max_sigterm_kb:
@@ -1424,7 +1421,7 @@ while True:
                 kib_to_mib(zram_max_sigterm_kb),
                 percent(zram_max_sigterm_kb / mem_total))
 
-        find_victim_and_send_signal(signal.SIGTERM)
+        find_victim_and_send_signal(SIGTERM)
 
     # LOW MEMORY WARNINGS
     elif gui_low_memory_warnings:
