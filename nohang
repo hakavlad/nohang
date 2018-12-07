@@ -259,8 +259,12 @@ def send_notify_warn():
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
-        Popen(['/usr/sbin/nohang_notify_low_mem', '--mem', low_mem_percent,
-               '--pid', pid, '--name', name])
+        Popen([
+            '/usr/bin/nohang_notify_low_mem',
+            '--mem', low_mem_percent,
+            '--pid', pid,
+            '--name', name
+            ])
     else:  # Or by regular user
         # send notification to user that runs this nohang
         Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
@@ -686,6 +690,8 @@ uid_index = status_names.index('Uid')
 
 # directory where the script is running
 cd = os.getcwd()
+
+print('CD:', cd)
 
 # where to look for a config if not specified via the -c/--config option
 default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')

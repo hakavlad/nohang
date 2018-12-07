@@ -92,4 +92,4 @@ if len(b) > 0:
              'env', display_env, dbus_env,
              'notify-send', '--icon=dialog-warning',
              '{}'.format(title), '{}'.format(body)]
-            ).wait(1)
+            )
