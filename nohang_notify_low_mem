@@ -62,10 +62,18 @@ def root_notify_env():
     for i in lines_with_displays:
         for i in i.split(' '):
             if i.startswith('USER='):
+                
+                
+                # .partition('=') !!!
                 user = i.strip('\n').split('=')[1]
                 continue
             if i.startswith('DISPLAY='):
                 disp_value = i.strip('\n').split('=')[1][0:2]
+                
+                
+                
+                
+                # Здесь можно не склеивать, а сразу сделать пару ключ: значение
                 disp = 'DISPLAY=' + disp_value
                 continue
             if i.startswith('DBUS_SESSION_BUS_ADDRESS='):
@@ -83,13 +91,16 @@ b = root_notify_env()
 
 # if somebody logged in with GUI
 if len(b) > 0:
-
     # iterating over logged-in users
     for i in b:
         username, display_env, dbus_env = i[0], i[1], i[2]
-        Popen(
-            ['sudo', '-u', username,
-             'env', display_env, dbus_env,
-             'notify-send', '--icon=dialog-warning',
-             '{}'.format(title), '{}'.format(body)]
-            )
+        display_tuple = display_env.partition('=')
+        dbus_tuple = dbus_env.partition('=')
+        display_key, display_value = display_tuple[0], display_tuple[2]
+        dbus_key, dbus_value = dbus_tuple[0], dbus_tuple[2]
+        Popen(['sudo', '-u', username,
+            'notify-send', '--icon=dialog-warning',
+            '{}'.format(title), '{}'.format(body)
+            ], env={
+                display_key: display_value, dbus_key: dbus_value
+                }).wait(3)
