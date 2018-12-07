@@ -2,6 +2,8 @@
 
 # notify_low_mem --mem '14% 12%' --name 'stress' --pid '6666'
 
+# should be remaked without run `ps`
+
 # output:
 # Low memory: 14% 12%
 # Fattest process: 6666, stress
@@ -79,9 +81,15 @@ def root_notify_env():
 
 b = root_notify_env()
 
+# if somebody logged in with GUI
 if len(b) > 0:
+
+    # iterating over logged-in users
     for i in b:
         username, display_env, dbus_env = i[0], i[1], i[2]
-        Popen(['sudo', '-u', username, 'env', display_env,
-                dbus_env, 'notify-send', '--icon=dialog-warning',
-                '{}'.format(title), '{}'.format(body)])
+        Popen(
+            ['sudo', '-u', username,
+             'env', display_env, dbus_env,
+             'notify-send', '--icon=dialog-warning',
+             '{}'.format(title), '{}'.format(body)]
+            ).wait(1)
