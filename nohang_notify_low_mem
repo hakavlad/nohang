@@ -104,3 +104,5 @@ if len(b) > 0:
             ], env={
                 display_key: display_value, dbus_key: dbus_value
                 }).wait(3)
+else:
+    print('Low memory warnings: nobody logged in with GUI. Nothing to do.')

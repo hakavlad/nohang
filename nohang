@@ -7,6 +7,8 @@ from argparse import ArgumentParser
 from sys import stdout
 from signal import SIGKILL, SIGTERM
 
+start_time = time()
+
 sig_dict = {SIGKILL: 'SIGKILL', 
             SIGTERM: 'SIGTERM'}
 
@@ -357,15 +359,7 @@ def find_victim_and_send_signal(signal):
 
     pid_badness_list = []
 
-    # not implemented, in progress
-    prefer_re_cmdline = ''
-    avoid_re_cmdline = ''
-    prefer_cmd_factor = 1
-    prefer_cmd_factor = 1
-
-
     if regex_matching:
-
 
         for pid in os.listdir('/proc'):
             # только директории, имена которых состоят только из цифр, за исключением /proc/1/
@@ -376,29 +370,40 @@ def find_victim_and_send_signal(signal):
                 badness = int(rline1('/proc/' + pid + '/oom_score'))
 
 
+
                 name = pid_to_name(pid)
                 cmdline = pid_to_cmdline(pid)
-                
+                #uid = pid_to_uid(pid)
+
                 # skip kthreads
                 if cmdline == '':
                     continue
 
                 #print([pid], [name], [cmdline])
 
-                if re.search(avoid_regex, name) is not None:
+                if search(avoid_regex, name) is not None:
                     badness = int(badness / avoid_factor)
+                    print('  Name matches with avoid_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
+                        avoid_regex, name, cmdline))
 
-                if re.search(prefer_regex, name) is not None:
+                if search(prefer_regex, name) is not None:
                     badness = int((badness + 1) * prefer_factor)
+                    print('  Name matches with prefer_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
+                        prefer_regex, name, cmdline))
 
 
+                if search(avoid_re_cmdline, cmdline) is not None:
+                    badness = int(badness / avoid_cmd_factor)
+                    print('  Cmdline matches with avoid_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
+                        avoid_re_cmdline, cmdline, name))
 
-                if re.search(avoid_re_cmdline, cmdline) is not None:
-                    badness = int(badness / avoid_factor)
 
-
-                if re.search(prefer_re_cmdline, cmdline) is not None:
+                if search(prefer_re_cmdline, cmdline) is not None:
                     badness = int((badness + 1) * prefer_cmd_factor)
+                    print('  Cmdline matches with prefer_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
+                        prefer_re_cmdline, cmdline, name))
+
+
 
 
             except FileNotFoundError:
@@ -406,7 +411,6 @@ def find_victim_and_send_signal(signal):
             except ProcessLookupError:
                 badness = 0
             pid_badness_list.append((pid, badness))
-
 
 
 
@@ -433,6 +437,7 @@ def find_victim_and_send_signal(signal):
     if victim_badness >= min_badness:  # Try to send signal to found victim
 
         pid = pid_tuple_list[0]
+
         name = pid_to_name(pid)
 
         # Get VmRSS and VmSwap and cmdline of victim process and try to send signal
@@ -448,12 +453,12 @@ def find_victim_and_send_signal(signal):
                     if n is vm_swap_index:
                         vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
                         break
+
             with open('/proc/' + pid + '/cmdline') as file:
                 try:
                     cmdline = file.readlines()[0].replace('\x00', ' ')
                 except IndexError:
                     cmdline = ''
-
         except FileNotFoundError:
             pass
         except ProcessLookupError:
@@ -503,11 +508,12 @@ def find_victim_and_send_signal(signal):
 
         response_time = time() - time0
         victim_badness_is_too_small = '  victim badness {} < min_badness {}; nothing to do; response time: {} ms'.format(
-            victim_badness, min_badness, round(response_time * 1000))
+            victim_badness,
+            min_badness,
+            round(response_time * 1000))
 
         print(victim_badness_is_too_small)
 
-    stdout.flush()
 
     sleep_after_send_signal(signal)
 
@@ -528,13 +534,12 @@ def sleep_after_check_mem():
 
     try:
         if print_sleep_periods:
-            print(
-                'sleep', round(
-                    t, 2), '  (t_mem={}, t_swap={}, t_zram={})'.format(
-                    round(
-                        t_mem, 2), round(
-                        t_swap, 2), round(
-                        t_zram, 2)))
+            print('sleep', round(t, 2),
+                '  (t_mem={}, t_swap={}, t_zram={})'.format(
+                    round(t_mem, 2),
+                    round(t_swap, 2),
+                    round(t_zram, 2)))
+        stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
         exit()
@@ -816,6 +821,13 @@ execute_the_command = conf_parse_bool('execute_the_command')
 prefer_regex = conf_parse_string('prefer_regex')
 avoid_regex = conf_parse_string('avoid_regex')
 
+prefer_re_cmdline = conf_parse_string('prefer_re_cmdline')
+avoid_re_cmdline = conf_parse_string('avoid_re_cmdline')
+
+
+
+
+
 
 mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
     'mem_min_sigterm')
@@ -1014,6 +1026,57 @@ if 'avoid_factor' in config_dict:
 else:
     print('avoid_factor not in config\nExit')
     exit()
+
+
+
+
+
+
+
+
+
+
+
+if 'prefer_cmd_factor' in config_dict:
+    prefer_cmd_factor = string_to_float_convert_test(config_dict['prefer_cmd_factor'])
+    if prefer_cmd_factor is None:
+        print('Invalid prefer_cmd_factor value, not float\nExit')
+        exit()
+    if prefer_cmd_factor < 1 and prefer_cmd_factor > 1000:
+        print('prefer_cmd_factor value out of range [1; 1000]\nExit')
+        exit()
+else:
+    print('prefer_cmd_factor not in config\nExit')
+    exit()
+
+
+if 'avoid_cmd_factor' in config_dict:
+    avoid_cmd_factor = string_to_float_convert_test(config_dict['avoid_cmd_factor'])
+    if avoid_cmd_factor is None:
+        print('Invalid avoid_cmd_factor value, not float\nExit')
+        exit()
+    if avoid_cmd_factor < 1 and avoid_cmd_factor > 1000:
+        print('avoid_cmd_factor value out of range [1; 1000]\nExit')
+        exit()
+else:
+    print('avoid_cmd_factor not in config\nExit')
+    exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if 'min_time_between_warnings' in config_dict:
@@ -1253,10 +1316,14 @@ warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
 
+x = time() - start_time
+print(
+    'The duration of startup:', round(
+    x * 1000, 1), 'ms')
+
 print('Monitoring started!')
 
-
-
+stdout.flush()
 
 ##########################################################################
 
