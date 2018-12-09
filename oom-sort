@@ -2,6 +2,9 @@
 """
 sort processes by oom_score
 """
+
+# нужна еще валидация cli ввода
+
 from operator import itemgetter
 from os import listdir
 from argparse import ArgumentParser
@@ -11,7 +14,7 @@ parser = ArgumentParser()
 parser.add_argument(
     '--num',
     '-n',
-    help="""max number of lines; integer, not negative; default: 99999""",
+    help="""max number of lines; default: 99999""",
     default=None,
     type=str
 )
@@ -76,10 +79,10 @@ for pid in listdir('/proc'):
 oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
 
 if display_cmdline == '0':
-    print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap')
+    print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap')
     print('--------- ------------- ----- ----- --------------- -------- --------')
 else:
-    print('oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline')
+    print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap   cmdline')
     print('--------- ------------- ----- ----- --------------- -------- -------- -------')
 
 # итерируемся по сортированному списку oom_score, печатая name, pid etc
