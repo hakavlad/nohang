@@ -1,14 +1,55 @@
 
-    This is nohang config file (deafault values backup)
+    This is nohang config file.
+
+    Lines starting with #, tabs and spaces are comments.
+
+    The configuration includes the following sections:
+
+    1. Memory levels to respond to as an OOM threat
+    2. The frequency of checking the level of available memory
+       (and CPU usage)
+    3. The prevention of killing innocent victims
+    4. Impact on the badness of processes via matching their names
+       with regular expressions
+    5. The execution of a specific command instead of sending the
+       SIGTERM signal
+    6. GUI notifications:
+       - OOM prevention results and
+       - low memory warnings
+    7. Preventing the slowing down of the program
+    8. Output verbosity
+
+    Just read the description of the parameters and edit the values.
+    Please restart the program after editing the config.
 
 #####################################################################
 
-    1. Memory levels to respond to as an OOM threat
+    1. Thresholds below which a signal should be sent to the victim
+
+    Sets the available memory levels at or below which SIGTERM or SIGKILL
+    signals are sent. The signal will be sent if MemAvailable and
+    SwapFree (in /proc/meminfo) at the same time will drop below the
+    corresponding values. Can be specified in % (percent) and M (MiB).
+    Valid values are floating-point numbers from the range [0; 100] %.
+
+    MemAvailable levels.
 
 mem_min_sigterm = 10 %
 mem_min_sigkill = 5 %
+
+    SwapFree levels.
+
 swap_min_sigterm = 10 %
 swap_min_sigkill = 5 %
+
+    Specifying the total share of zram in memory, if exceeded the
+    corresponding signals are sent. As the share of zram in memory
+    increases, it may fall responsiveness of the system. 90 % is a
+    usual hang level, not recommended to set very high.
+
+    Can be specified in % and M. Valid values are floating-point
+    numbers from the range [0; 100] %. 
+
 zram_max_sigterm = 50 %
 zram_max_sigkill = 55 %
 
@@ -17,66 +58,256 @@ zram_max_sigkill = 55 %
     2. The frequency of checking the amount of available memory
        (and CPU usage)
 
+    Coefficients that affect the intensity of monitoring. Reducing
+    the coefficients can reduce CPU usage and increase the periods
+    between memory checks.
+
+    Why three coefficients instead of one? Because the swap fill rate
+    is usually lower than the RAM fill rate.
+
+    It is possible to set a lower intensity of monitoring for swap
+    without compromising to prevent OOM and thus reduce the CPU load.
+
+    Default values are well for desktop. On servers without rapid
+    fluctuations in memory levels the values can be reduced.
+
+    Valid values are positive floating-point numbers.
+
 rate_mem = 6
 rate_swap = 3
 rate_zram = 1
+
+    See also https://github.com/rfjakob/earlyoom/issues/61
 
 #####################################################################
 
     3. The prevention of killing innocent victims
 
+    Минимальное значение oom_score, которым должен обладать
+    процесс для того, чтобы ему был отправлен сигнал.
+    Позволяет предотвратить убийство невиновных если что-то
+    пойдет не так.
+
+    Valid values are integers from the range [0; 1000].
+
 min_badness = 10
+
+    Минимальная задержка после отправки соответствующих сигналов
+    для предотвращения риска убийства сразу множества процессов.
+
+    Valid values are non-negative floating-point numbers.
+
 min_delay_after_sigterm = 0.5
 min_delay_after_sigkill = 3
+
+    Процессы браузера chromium обычно имеют oom_score_adj
+    200 или 300. Это приводит к тому, что процессы хрома умирают
+    первыми вместо действительно тяжелых процессов.
+    Если параметр decrease_oom_score_adj установлен
+    в значение True, то у процессов, имеющих oom_score_adj выше
+    oom_score_adj_max значение oom_score_adj будет опущено
+    до oom_score_adj_max перед поиском жертвы.
+
+    Enabling the option requires root privileges.
+    Valid values are True and False.
+    Values are case sensitive.
+
 decrease_oom_score_adj = False
+
+    Valid values are integers from the range [0; 1000].
+
 oom_score_adj_max = 30
 
 #####################################################################
 
     4. Impact on the badness of processes via matching their names
-       with regular expressions.
+       and cmdlines with regular expressions using re.search().
+
+    See https://en.wikipedia.org/wiki/Regular_expression and
+    https://en.wikipedia.org/wiki/Perl_Compatible_Regular_Expressions
+
+    Enabling this option slows down the search for the victim
+    because the names or cmdlines of all processes
+    (except init and kthreads) are compared with the
+    specified regex patterns (in fact slowing down is caused by
+    reading all /proc/*/cmdline and /proc/*/status files).
+
+    Valid values are True and False.
 
 regex_matching = False
-prefer_regex = tail|python3
+
+    Badness of processes whose names correspond to prefer_regex will
+    be calculated by the following formula:
+    badness = (oom_score + 1) * prefer_factor
+
+    RE pattern must not be empty!
+
+    Matching with process names
+
+prefer_regex = foo
+
+    Valid values are floating-point numbers from the range [1; 1000].
+
 prefer_factor = 3
-avoid_regex = Xorg|sshd
+
+    Badness of processes whose names correspond to avoid_regex will
+    be calculated by the following formula:
+    badness = oom_score / avoid_factor
+
+    # Need more examples
+
+avoid_regex = ^(sshd|Xorg)$
+
+    Valid values are floating-point numbers from the range [1; 1000].
+
 avoid_factor = 3
+
+
+    Matching with cmdlines
+
+prefer_re_cmdline = ^/usr/lib/firefox
+
+avoid_re_cmdline = ^/usr/lib/virtualbox
+
+prefer_cmd_factor = 3
+
+avoid_cmd_factor = 3
+
 
 #####################################################################
 
     5. The execution of a specific command instead of sending the
        SIGTERM signal.
 
+    For processes with a specific name you can specify a command to
+    run instead of sending the SIGTERM signal.
+
+    For example, if the process is running as a daemon, you can run
+    the restart command instead of sending SIGTERM.
+
+    Valid values are True and False.
+
 execute_the_command = False
+
+    The length of the process name can't exceed 15 characters.
+    The syntax is as follows: lines starting with keyword $ETC are
+    considered as the lines containing names of processes and
+    corresponding commands. After a name of process the triple slash
+    (///) follows. And then follows the command that will be
+    executed if the specified process is selected as a victim. The
+    ampersand (&) at the end of the command will allow nohang to
+    continue runing without waiting for the end of the command
+    execution.
+
+    For example:
+    $ETC mysqld          /// systemctl restart mariadb.service &
+    $ETC php-fpm7.0      /// systemctl restart php7.0-fpm.service
+
 $ETC name /// some command
 
 #####################################################################
 
     6. GUI notifications:
-       - results of preventing OOM
+       - OOM prevention results and
        - low memory warnings
 
+    Включение этой опции требует наличия notify-send в системе.
+    В Debian/Ubuntu это обеспечивается установкой пакета
+    libnotify-bin. В Fedora и Arch Linux - пакет libnotify.
+    Также требуется наличие сервера уведомлений.
+    При запуске nohang от рута уведомления рассылаются всем
+    залогиненным пользователям.
+    See also wiki.archlinux.org/index.php/Desktop_notifications
+    Valid values are True and False.
+
 gui_notifications = False
+
+    Enable GUI notifications about the low level of available memory.
+    Valid values are True and False.
+
 gui_low_memory_warnings = False
+
+    Минимальное время между отправками уведомлений в секундах.
+    Valid values are floating-point numbers from the range [1; 300].
+
 min_time_between_warnings = 20
+
+    Если значения MemAvailable и SwapFree одновременно будут ниже
+    соотвестствующих значений, то будут отправлены уведомления.
+
+    Can be specified in % (percent) and M (MiB).
+    Valid values are floating-point numbers from the range [0; 100] %.
+
 mem_min_warnings = 20 %
+
 swap_min_warnings = 20 %
+
+    Если доля zram в памяти превысит значение zram_max_warnings,
+    то будут отправляться уведомления с минимальным периодом равным
+    min_time_between_warnings.
+
 zram_max_warnings = 40 %
+
+    Ampersands (&) will be replaced with asterisks (*) in process
+    names and in commands.
 
 #####################################################################
 
     7. Preventing the slowing down of the program
 
+    mlockall() lock ... all of the calling process's virtual address
+    space into RAM, preventing that memory from being paged to the
+    swap area. - `man mlockall`
+
+    It is disabled by default because the value mlockall = True in
+    Fedora 28 causes the process to increase memory consumption by
+    200 MiB. On Debian 8 and 9 there is no such problem.
+
 mlockall = False
+
+    Установка отрицательных значений niceness и oom_score_adj
+    требует наличия root прав.
+
+    Установка отрицательного niceness повышает приоритет процесса.
+
+    Valid values are integers from the range [-20; 19].
+
 niceness = -9
+
+    Set oom_score_adj for the nohang process.
+    Valid values are integers from the range [-1000; 1000].
+    Setting the values to -1000 will prohibit suicide.
+
 oom_score_adj = -50
+
+    Read `man ionice` to understand the following parameters.
+    Setting the True value requires the root privileges.
+
 realtime_ionice = False
+
+    'For realtime and best-effort, 0-7 are valid data
+    (priority levels), and 0 represents the highest priority level.'
+    - `man ionice`
+    Valid values are integers from the range [0; 7].
+
 realtime_ionice_classdata = 4
 
 #####################################################################
 
     8. Output verbosity
 
+    Display the configuration when the program starts.
+    Valid values are True and False.
+
 print_config = False
+
+    Print memory check results or not print.
+    Valid values are True and False.
+
 print_mem_check_results = False
+
+    Print sleep periods between memory checks or not print.
+    Valid values are True and False.
+
 print_sleep_periods = False
+
