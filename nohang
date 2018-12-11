@@ -973,6 +973,82 @@ if regex_matching:
               'invalid RE pattern: {}'.format(avoid_re_uid))
         exit()
 
+    if 'prefer_factor' in config_dict:
+        prefer_factor = string_to_float_convert_test(config_dict['prefer_factor'])
+        if prefer_factor is None:
+            print('Invalid prefer_factor value, not float\nExit')
+            exit()
+        if prefer_factor < 1 and prefer_factor > 1000:
+            print('prefer_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('prefer_factor not in config\nExit')
+        exit()
+
+    if 'avoid_factor' in config_dict:
+        avoid_factor = string_to_float_convert_test(config_dict['avoid_factor'])
+        if avoid_factor is None:
+            print('Invalid avoid_factor value, not float\nExit')
+            exit()
+        if avoid_factor < 1 and avoid_factor > 1000:
+            print('avoid_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('avoid_factor not in config\nExit')
+        exit()
+
+    if 'prefer_cmd_factor' in config_dict:
+        prefer_cmd_factor = string_to_float_convert_test(
+            config_dict['prefer_cmd_factor'])
+        if prefer_cmd_factor is None:
+            print('Invalid prefer_cmd_factor value, not float\nExit')
+            exit()
+        if prefer_cmd_factor < 1 and prefer_cmd_factor > 1000:
+            print('prefer_cmd_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('prefer_cmd_factor not in config\nExit')
+        exit()
+
+    if 'avoid_cmd_factor' in config_dict:
+        avoid_cmd_factor = string_to_float_convert_test(
+            config_dict['avoid_cmd_factor'])
+        if avoid_cmd_factor is None:
+            print('Invalid avoid_cmd_factor value, not float\nExit')
+            exit()
+        if avoid_cmd_factor < 1 and avoid_cmd_factor > 1000:
+            print('avoid_cmd_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('avoid_cmd_factor not in config\nExit')
+        exit()
+
+    if 'prefer_uid_factor' in config_dict:
+        prefer_uid_factor = string_to_float_convert_test(
+            config_dict['prefer_uid_factor'])
+        if prefer_uid_factor is None:
+            print('Invalid prefer_uid_factor value, not float\nExit')
+            exit()
+        if prefer_uid_factor < 1 and prefer_uid_factor > 1000:
+            print('prefer_uid_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('prefer_uid_factor not in config\nExit')
+        exit()
+
+    if 'avoid_uid_factor' in config_dict:
+        avoid_uid_factor = string_to_float_convert_test(
+            config_dict['avoid_uid_factor'])
+        if avoid_uid_factor is None:
+            print('Invalid avoid_uid_factor value, not float\nExit')
+            exit()
+        if avoid_uid_factor < 1 and avoid_uid_factor > 1000:
+            print('avoid_uid_factor value out of range [1; 1000]\nExit')
+            exit()
+    else:
+        print('avoid_uid_factor not in config\nExit')
+        exit()
+
 
 mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
     'mem_min_sigterm')
@@ -1144,88 +1220,6 @@ if 'oom_score_adj_max' in config_dict:
         exit()
 else:
     print('oom_score_adj_max not in config\nExit')
-    exit()
-
-
-if 'prefer_factor' in config_dict:
-    prefer_factor = string_to_float_convert_test(config_dict['prefer_factor'])
-    if prefer_factor is None:
-        print('Invalid prefer_factor value, not float\nExit')
-        exit()
-    if prefer_factor < 1 and prefer_factor > 1000:
-        print('prefer_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('prefer_factor not in config\nExit')
-    exit()
-
-
-if 'avoid_factor' in config_dict:
-    avoid_factor = string_to_float_convert_test(config_dict['avoid_factor'])
-    if avoid_factor is None:
-        print('Invalid avoid_factor value, not float\nExit')
-        exit()
-    if avoid_factor < 1 and avoid_factor > 1000:
-        print('avoid_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('avoid_factor not in config\nExit')
-    exit()
-
-
-if 'prefer_cmd_factor' in config_dict:
-    prefer_cmd_factor = string_to_float_convert_test(
-        config_dict['prefer_cmd_factor'])
-    if prefer_cmd_factor is None:
-        print('Invalid prefer_cmd_factor value, not float\nExit')
-        exit()
-    if prefer_cmd_factor < 1 and prefer_cmd_factor > 1000:
-        print('prefer_cmd_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('prefer_cmd_factor not in config\nExit')
-    exit()
-
-
-if 'avoid_cmd_factor' in config_dict:
-    avoid_cmd_factor = string_to_float_convert_test(
-        config_dict['avoid_cmd_factor'])
-    if avoid_cmd_factor is None:
-        print('Invalid avoid_cmd_factor value, not float\nExit')
-        exit()
-    if avoid_cmd_factor < 1 and avoid_cmd_factor > 1000:
-        print('avoid_cmd_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('avoid_cmd_factor not in config\nExit')
-    exit()
-
-
-if 'prefer_uid_factor' in config_dict:
-    prefer_uid_factor = string_to_float_convert_test(
-        config_dict['prefer_uid_factor'])
-    if prefer_uid_factor is None:
-        print('Invalid prefer_uid_factor value, not float\nExit')
-        exit()
-    if prefer_uid_factor < 1 and prefer_uid_factor > 1000:
-        print('prefer_uid_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('prefer_uid_factor not in config\nExit')
-    exit()
-
-
-if 'avoid_uid_factor' in config_dict:
-    avoid_uid_factor = string_to_float_convert_test(
-        config_dict['avoid_uid_factor'])
-    if avoid_uid_factor is None:
-        print('Invalid avoid_uid_factor value, not float\nExit')
-        exit()
-    if avoid_uid_factor < 1 and avoid_uid_factor > 1000:
-        print('avoid_uid_factor value out of range [1; 1000]\nExit')
-        exit()
-else:
-    print('avoid_uid_factor not in config\nExit')
     exit()
 
 
