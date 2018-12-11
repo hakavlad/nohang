@@ -835,94 +835,91 @@ mlockall = conf_parse_bool('mlockall')
 gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
+execute_the_command = conf_parse_bool('execute_the_command')
 
 regex_matching = conf_parse_bool('regex_matching')
+
 if regex_matching:
     from re import search
     import sre_constants
 
-execute_the_command = conf_parse_bool('execute_the_command')
+    prefer_regex = conf_parse_string('prefer_regex')
+    if prefer_regex == '':
+        print('Invalid prefer_regex value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(prefer_regex, '')
+    except sre_constants.error:
+        print('Invalid prefer_regex value, ' \
+            'invalid RE pattern: {}'.format(prefer_regex))
+        exit()
 
-prefer_regex = conf_parse_string('prefer_regex')
-if prefer_regex == '':
-    print('Invalid prefer_regex value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(prefer_regex, '')
-except sre_constants.error:
-    print('Invalid prefer_regex value, ' \
-        'invalid RE pattern: {}'.format(prefer_regex))
-    exit()
+    avoid_regex = conf_parse_string('avoid_regex')
+    if avoid_regex == '':
+        print('Invalid avoid_regex value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(avoid_regex, '')
+    except sre_constants.error:
+        print('Invalid avoid_regex value, ' \
+            'invalid RE pattern: {}'.format(avoid_regex))
+        exit()
 
-avoid_regex = conf_parse_string('avoid_regex')
-if avoid_regex == '':
-    print('Invalid avoid_regex value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(avoid_regex, '')
-except sre_constants.error:
-    print('Invalid avoid_regex value, ' \
-        'invalid RE pattern: {}'.format(avoid_regex))
-    exit()
+    prefer_re_cmdline = conf_parse_string('prefer_re_cmdline')
+    if prefer_re_cmdline == '':
+        print('Invalid prefer_re_cmdline value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(prefer_re_cmdline, '')
+    except sre_constants.error:
+        print('Invalid prefer_re_cmdline value, ' \
+            'invalid RE pattern: {}'.format(prefer_re_cmdline))
+        exit()
 
-prefer_re_cmdline = conf_parse_string('prefer_re_cmdline')
-if prefer_re_cmdline == '':
-    print('Invalid prefer_re_cmdline value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(prefer_re_cmdline, '')
-except sre_constants.error:
-    print('Invalid prefer_re_cmdline value, ' \
-        'invalid RE pattern: {}'.format(prefer_re_cmdline))
-    exit()
+    avoid_re_cmdline = conf_parse_string('avoid_re_cmdline')
+    if avoid_re_cmdline == '':
+        print('Invalid avoid_re_cmdline value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(avoid_re_cmdline, '')
+    except sre_constants.error:
+        print('Invalid avoid_re_cmdline value, ' \
+            'invalid RE pattern: {}'.format(avoid_re_cmdline))
+        exit()
 
+    prefer_re_uid = conf_parse_string('prefer_re_uid')
+    if prefer_re_uid == '':
+        print('Invalid prefer_re_uid value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(prefer_re_uid, '')
+    except sre_constants.error:
+        print('Invalid prefer_re_uid value, ' \
+            'invalid RE pattern: {}'.format(prefer_re_uid))
+        exit()
 
-avoid_re_cmdline = conf_parse_string('avoid_re_cmdline')
-if avoid_re_cmdline == '':
-    print('Invalid avoid_re_cmdline value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(avoid_re_cmdline, '')
-except sre_constants.error:
-    print('Invalid avoid_re_cmdline value, ' \
-        'invalid RE pattern: {}'.format(avoid_re_cmdline))
-    exit()
-
-
-prefer_re_uid = conf_parse_string('prefer_re_uid')
-if prefer_re_uid == '':
-    print('Invalid prefer_re_uid value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(prefer_re_uid, '')
-except sre_constants.error:
-    print('Invalid prefer_re_uid value, ' \
-        'invalid RE pattern: {}'.format(prefer_re_uid))
-    exit()
-
-
-avoid_re_uid = conf_parse_string('avoid_re_uid')
-if avoid_re_uid == '':
-    print('Invalid avoid_re_uid value, ' \
-        'regex pattern must not be empty')
-    exit()
-# RE pattern validation
-try:
-    search(avoid_re_uid, '')
-except sre_constants.error:
-    print('Invalid avoid_re_uid value, ' \
-        'invalid RE pattern: {}'.format(avoid_re_uid))
-    exit()
+    avoid_re_uid = conf_parse_string('avoid_re_uid')
+    if avoid_re_uid == '':
+        print('Invalid avoid_re_uid value, ' \
+            'regex pattern must not be empty')
+        exit()
+    # RE pattern validation
+    try:
+        search(avoid_re_uid, '')
+    except sre_constants.error:
+        print('Invalid avoid_re_uid value, ' \
+            'invalid RE pattern: {}'.format(avoid_re_uid))
+        exit()
 
 
 mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
