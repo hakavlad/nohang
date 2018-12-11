@@ -183,12 +183,17 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 ## Changelog
 
 - In progress
-    - add `oom-sort`
-    - add `oom-trigger`
-    - fix regex matching: replace re.fullmatch() by re.search()
-    - add suppot `cmdline` regex matching
-    - print in terminal with colors
-    - improve output: display `cmdline` and `Uid` in corrective action reports
+    - Improve modifing badness by matching with RE pattern: 
+        - Add suppot matching `cmdline and `UID` with regular expressions
+        - Fix: replace `re.fullmatch()` by `re.search()`
+        - Validation RE patterns at startup
+    - Improve output:
+        - Display `UID`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
+        - Print in terminal with colors
+    - Fix limiting `oom_score_adj`: now it can works without UID=0
+    - Fix GUI warnings: find env without run `ps` and `env` (partially implemented)
+    - Add `oom-sort`
+    - Add `oom-trigger` (partially implemented)
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
