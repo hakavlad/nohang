@@ -9,7 +9,7 @@ from signal import SIGKILL, SIGTERM
 
 start_time = time()
 
-sig_dict = {SIGKILL: 'SIGKILL', 
+sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
 
 ##########################################################################
@@ -247,10 +247,11 @@ def send_notify_warn():
             '--mem', low_mem_percent,
             '--pid', pid,
             '--name', name
-            ])
+        ])
     else:  # Or by regular user
         # send notification to user that runs this nohang
-        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'.format(body)])
+        Popen(['notify-send', '--icon=dialog-warning',
+               '{}'.format(title), '{}'.format(body)])
 
 
 def send_notify(signal, name, pid):
@@ -264,7 +265,8 @@ def send_notify(signal, name, pid):
     title = 'Preventing OOM'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
         notify_sig_dict[signal], pid, name.replace(
-            # сивол & может ломать уведомления в некоторых темах оформления, поэтому заменяется на *
+            # сивол & может ломать уведомления в некоторых темах оформления,
+            # поэтому заменяется на *
             '&', '*'))
     if root:
         # send notification to all active users with notify-send
@@ -327,6 +329,8 @@ def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
+    print()
+
     pid_badness_list = []
 
     for pid in os.listdir('/proc'):
@@ -365,6 +369,7 @@ def find_victim_and_send_signal(signal):
                     print('  Name matches with prefer_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
                         prefer_regex, name, cmdline))
 
+
                 if search(avoid_re_cmdline, cmdline) is not None:
                     badness = int(badness / avoid_cmd_factor)
                     print('  Cmdline matches with avoid_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
@@ -375,13 +380,14 @@ def find_victim_and_send_signal(signal):
                     print('  Cmdline matches with prefer_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
                         prefer_re_cmdline, cmdline, name))
 
+
                 if search(avoid_re_uid, uid) is not None:
                     badness = int(badness / avoid_uid_factor)
                     print('  UID matches with avoid_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
                         avoid_re_uid, uid, name))
 
                 if search(prefer_re_uid, uid) is not None:
-                    badness = int((badness + 1) * prefer_cmd_factor)
+                    badness = int((badness + 1) * prefer_uid_factor)
                     print('  UID matches with prefer_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
                         prefer_re_uid, uid, name))
 
@@ -390,7 +396,6 @@ def find_victim_and_send_signal(signal):
         except ProcessLookupError:
             badness = 0
         pid_badness_list.append((pid, badness))
-
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
     pid_tuple_list = sorted(
@@ -407,7 +412,8 @@ def find_victim_and_send_signal(signal):
 
         name = pid_to_name(pid)
 
-        # Get VmRSS and VmSwap and cmdline of victim process and try to send signal
+        # Get VmRSS and VmSwap and cmdline of victim process and try to send
+        # signal
         try:
             with open('/proc/' + pid + '/status') as f:
                 for n, line in enumerate(f):
@@ -423,15 +429,18 @@ def find_victim_and_send_signal(signal):
                     if detailed_rss:
 
                         if n is anon_index:
-                            anon_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            anon_rss = kib_to_mib(
+                                int(line.split('\t')[1][:-4]))
                             continue
 
                         if n is file_index:
-                            file_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            file_rss = kib_to_mib(
+                                int(line.split('\t')[1][:-4]))
                             continue
 
                         if n is shmem_index:
-                            shmem_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            shmem_rss = kib_to_mib(
+                                int(line.split('\t')[1][:-4]))
                             continue
 
                     if n is vm_swap_index:
@@ -461,6 +470,7 @@ def find_victim_and_send_signal(signal):
             response_time = time() - time0
 
             # todo: mem_info, victim_info, exe_info, signal_info
+            # todo: display VmSize, oom_score, oom_score_adj
 
             etc_info = '  Found the victim with highest badness:' \
                 '\n  Name:    \033[33m{}\033[0m' \
@@ -478,7 +488,8 @@ def find_victim_and_send_signal(signal):
 
             print(mem_info)
             print(etc_info)
-            if gui_notifications: send_notify_etc(pid, name, command)
+            if gui_notifications:
+                send_notify_etc(pid, name, command)
 
         else:
 
@@ -501,26 +512,27 @@ def find_victim_and_send_signal(signal):
                     round(response_time * 1000))
 
             preventing_oom_message = '  Found the process with highest badness:' \
-            '\n  Name:    \033[33m{}\033[0m' \
-            '\n  PID:     \033[33m{}\033[0m' \
-            '\n  UID:     \033[33m{}\033[0m' \
-            '\n  Badness: \033[33m{}\033[0m' \
-            '\n  VmRSS:   \033[33m{}\033[0m MiB' \
-            '\n  VmSwap:  \033[33m{}\033[0m MiB' \
-            '\n  CmdLine: \033[33m{}\033[0m' \
-            '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
-                name, pid, uid, victim_badness, vm_rss, vm_swap,
-                cmdline, sig_dict[signal], send_result)
+                '\n  Name:    \033[33m{}\033[0m' \
+                '\n  PID:     \033[33m{}\033[0m' \
+                '\n  UID:     \033[33m{}\033[0m' \
+                '\n  Badness: \033[33m{}\033[0m' \
+                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
+                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
+                '\n  CmdLine: \033[33m{}\033[0m' \
+                '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
+                    name, pid, uid, victim_badness, vm_rss, vm_swap,
+                    cmdline, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
 
     else:
 
         response_time = time() - time0
-        victim_badness_is_too_small = '  victim badness {} < min_badness {}; nothing to do; response time: {} ms'.format(
-            victim_badness,
-            min_badness,
-            round(response_time * 1000))
+        victim_badness_is_too_small = '  victim badness {} < min_b' \
+            'adness {}; nothing to do; response time: {} ms'.format(
+                victim_badness,
+                min_badness,
+                round(response_time * 1000))
 
         print(victim_badness_is_too_small)
 
@@ -544,10 +556,10 @@ def sleep_after_check_mem():
     try:
         if print_sleep_periods:
             print('sleep', round(t, 2),
-                '  (t_mem={}, t_swap={}, t_zram={})'.format(
-                    round(t_mem, 2),
-                    round(t_swap, 2),
-                    round(t_zram, 2)))
+                  '  (t_mem={}, t_swap={}, t_zram={})'.format(
+                round(t_mem, 2),
+                round(t_swap, 2),
+                round(t_zram, 2)))
         stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
@@ -801,7 +813,7 @@ try:
                 etc_name = a[0].strip()
                 etc_command = a[1].strip()
                 if len(etc_name) > 15:
-                    print('Invalid config, the length of the process ' \
+                    print('Invalid config, the length of the process '
                           'name must not exceed 15 characters\nExit')
                     exit()
                 etc_dict[etc_name] = etc_command
@@ -845,80 +857,80 @@ if regex_matching:
 
     prefer_regex = conf_parse_string('prefer_regex')
     if prefer_regex == '':
-        print('Invalid prefer_regex value, ' \
-            'regex pattern must not be empty')
+        print('Invalid prefer_regex value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(prefer_regex, '')
     except sre_constants.error:
-        print('Invalid prefer_regex value, ' \
-            'invalid RE pattern: {}'.format(prefer_regex))
+        print('Invalid prefer_regex value, '
+              'invalid RE pattern: {}'.format(prefer_regex))
         exit()
 
     avoid_regex = conf_parse_string('avoid_regex')
     if avoid_regex == '':
-        print('Invalid avoid_regex value, ' \
-            'regex pattern must not be empty')
+        print('Invalid avoid_regex value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(avoid_regex, '')
     except sre_constants.error:
-        print('Invalid avoid_regex value, ' \
-            'invalid RE pattern: {}'.format(avoid_regex))
+        print('Invalid avoid_regex value, '
+              'invalid RE pattern: {}'.format(avoid_regex))
         exit()
 
     prefer_re_cmdline = conf_parse_string('prefer_re_cmdline')
     if prefer_re_cmdline == '':
-        print('Invalid prefer_re_cmdline value, ' \
-            'regex pattern must not be empty')
+        print('Invalid prefer_re_cmdline value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(prefer_re_cmdline, '')
     except sre_constants.error:
-        print('Invalid prefer_re_cmdline value, ' \
-            'invalid RE pattern: {}'.format(prefer_re_cmdline))
+        print('Invalid prefer_re_cmdline value, '
+              'invalid RE pattern: {}'.format(prefer_re_cmdline))
         exit()
 
     avoid_re_cmdline = conf_parse_string('avoid_re_cmdline')
     if avoid_re_cmdline == '':
-        print('Invalid avoid_re_cmdline value, ' \
-            'regex pattern must not be empty')
+        print('Invalid avoid_re_cmdline value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(avoid_re_cmdline, '')
     except sre_constants.error:
-        print('Invalid avoid_re_cmdline value, ' \
-            'invalid RE pattern: {}'.format(avoid_re_cmdline))
+        print('Invalid avoid_re_cmdline value, '
+              'invalid RE pattern: {}'.format(avoid_re_cmdline))
         exit()
 
     prefer_re_uid = conf_parse_string('prefer_re_uid')
     if prefer_re_uid == '':
-        print('Invalid prefer_re_uid value, ' \
-            'regex pattern must not be empty')
+        print('Invalid prefer_re_uid value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(prefer_re_uid, '')
     except sre_constants.error:
-        print('Invalid prefer_re_uid value, ' \
-            'invalid RE pattern: {}'.format(prefer_re_uid))
+        print('Invalid prefer_re_uid value, '
+              'invalid RE pattern: {}'.format(prefer_re_uid))
         exit()
 
     avoid_re_uid = conf_parse_string('avoid_re_uid')
     if avoid_re_uid == '':
-        print('Invalid avoid_re_uid value, ' \
-            'regex pattern must not be empty')
+        print('Invalid avoid_re_uid value, '
+              'regex pattern must not be empty')
         exit()
     # RE pattern validation
     try:
         search(avoid_re_uid, '')
     except sre_constants.error:
-        print('Invalid avoid_re_uid value, ' \
-            'invalid RE pattern: {}'.format(avoid_re_uid))
+        print('Invalid avoid_re_uid value, '
+              'invalid RE pattern: {}'.format(avoid_re_uid))
         exit()
 
 
@@ -1122,7 +1134,8 @@ else:
 
 
 if 'prefer_cmd_factor' in config_dict:
-    prefer_cmd_factor = string_to_float_convert_test(config_dict['prefer_cmd_factor'])
+    prefer_cmd_factor = string_to_float_convert_test(
+        config_dict['prefer_cmd_factor'])
     if prefer_cmd_factor is None:
         print('Invalid prefer_cmd_factor value, not float\nExit')
         exit()
@@ -1135,7 +1148,8 @@ else:
 
 
 if 'avoid_cmd_factor' in config_dict:
-    avoid_cmd_factor = string_to_float_convert_test(config_dict['avoid_cmd_factor'])
+    avoid_cmd_factor = string_to_float_convert_test(
+        config_dict['avoid_cmd_factor'])
     if avoid_cmd_factor is None:
         print('Invalid avoid_cmd_factor value, not float\nExit')
         exit()
@@ -1148,7 +1162,8 @@ else:
 
 
 if 'prefer_uid_factor' in config_dict:
-    prefer_uid_factor = string_to_float_convert_test(config_dict['prefer_uid_factor'])
+    prefer_uid_factor = string_to_float_convert_test(
+        config_dict['prefer_uid_factor'])
     if prefer_uid_factor is None:
         print('Invalid prefer_uid_factor value, not float\nExit')
         exit()
@@ -1161,7 +1176,8 @@ else:
 
 
 if 'avoid_uid_factor' in config_dict:
-    avoid_uid_factor = string_to_float_convert_test(config_dict['avoid_uid_factor'])
+    avoid_uid_factor = string_to_float_convert_test(
+        config_dict['avoid_uid_factor'])
     if avoid_uid_factor is None:
         print('Invalid avoid_uid_factor value, not float\nExit')
         exit()
@@ -1338,10 +1354,33 @@ if print_config:
     print('\n4. Impact on the badness of processes via matching their names\nwith regular expressions\n')
     print('regex_matching:            {}'.format(regex_matching))
     if regex_matching:
+
+        print()
         print('prefer_regex:              {}'.format(prefer_regex))
         print('prefer_factor:             {}'.format(prefer_factor))
+
+        print()
         print('avoid_regex:               {}'.format(avoid_regex))
         print('avoid_factor:              {}'.format(avoid_factor))
+
+        print()
+        print('prefer_re_cmdline:         {}'.format(prefer_re_cmdline))
+        print('prefer_cmd_factor:         {}'.format(prefer_cmd_factor))
+
+        print()
+        print('avoid_re_cmdline:          {}'.format(avoid_re_cmdline))
+        print('avoid_cmd_factor:          {}'.format(avoid_cmd_factor))
+
+        print()
+        print('prefer_re_uid:             {}'.format(prefer_re_uid))
+        print('prefer_uid_factor:         {}'.format(prefer_uid_factor))
+
+        print()
+        print('avoid_re_uid:              {}'.format(avoid_re_uid))
+        print('avoid_uid_factor:          {}'.format(avoid_uid_factor))
+
+
+
 
     print('\n5. The execution of a specific command instead of sending the\nSIGTERM signal\n')
     print('execute_the_command:       {}'.format(execute_the_command))
@@ -1366,7 +1405,8 @@ if print_config:
             round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
 
     print(
-        '\n7. Preventing the slowing down of the program\n[displaying these options need fix]\n')
+        '\n7. Preventing the slowing down of the program'
+        '\n[displaying these options need fix]\n')
     print('mlockall:                  {} ({})'.format(mlockall, mla_res))
     print('niceness:                  {} ({})'.format(
         niceness, niceness_result
@@ -1407,7 +1447,7 @@ warn_timer = 0
 
 x = time() - start_time
 print('The duration of startup:',
-    round(x * 1000, 1), 'ms')
+      round(x * 1000, 1), 'ms')
 
 print('Monitoring started!')
 
@@ -1441,7 +1481,6 @@ while True:
     if swap_warn_is_percent:
         swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
 
-
     # find MemUsedZram
     disksize_sum = 0
     mem_used_total_sum = 0
@@ -1465,7 +1504,6 @@ while True:
     mem_used_zram = (
         mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR
     ) / 1024.0
-
 
     if print_mem_check_results:
 
@@ -1514,20 +1552,20 @@ while True:
     # else - just sleep
 
     # MEM SWAP KILL
-    if mem_available <= mem_min_sigkill_kb and swap_free <= swap_min_sigkill_kb:
+    if mem_available <= mem_min_sigkill_kb and \
+            swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sigkill [{} MiB, {} %]\n  Swa' \
-            'pFree [{} MiB, {} %] <= swap_min_sigkill [{} MiB, {} %]'.format(
+        mem_info = '\033[4mLow memory; corrective action required!' \
+            '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
+            'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
+            'p_min_sigkill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
-
                 kib_to_mib(mem_min_sigkill_kb),
                 percent(mem_min_sigkill_kb / mem_total),
-
                 kib_to_mib(swap_free),
                 percent(swap_free / (swap_total + 0.1)),
-
                 kib_to_mib(swap_min_sigkill_kb),
                 swap_sigkill_pc)
 
@@ -1537,35 +1575,34 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigkill [{} MiB, {} %]'.format(
-            kib_to_mib(mem_used_zram),
-            percent(mem_used_zram / mem_total),
-            kib_to_mib(zram_max_sigkill_kb),
-            percent(zram_max_sigkill_kb / mem_total))
+        mem_info = '\033[4mLow memory; corrective action required!' \
+            '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
+            'kill [{} MiB, {} %]'.format(
+                kib_to_mib(mem_used_zram),
+                percent(mem_used_zram / mem_total),
+                kib_to_mib(zram_max_sigkill_kb),
+                percent(zram_max_sigkill_kb / mem_total))
 
         find_victim_and_send_signal(SIGKILL)
 
     # MEM SWAP TERM
-    elif mem_available <= mem_min_sigterm_kb and swap_free <= swap_min_sigterm_kb:
+    elif mem_available <= mem_min_sigterm_kb and \
+            swap_free <= swap_min_sigterm_kb:
 
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sigterm [{} MiB, {} %]\n  Sw' \
-            'apFree [{} MiB, {} %] <= swap_min_sigterm [{} MiB, {} %]'.format(
+        mem_info = '\033[4mLow memory; corrective action required!' \
+            '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
+            'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
+            'p_min_sigterm [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
-
-
                 kib_to_mib(mem_min_sigterm_kb),
                 #percent(mem_min_sigterm_kb / mem_total),
-
                 # ОКРУГЛЯТЬ НА МЕСТЕ ВЫШЕ
                 round(mem_min_sigterm_percent, 1),
-
                 kib_to_mib(swap_free),
                 percent(swap_free / (swap_total + 0.1)),
-
-
                 kib_to_mib(swap_min_sigterm_kb),
                 swap_sigterm_pc)
 
@@ -1575,8 +1612,9 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sigter' \
-            'm [{} M, {} %]'.format(
+        mem_info = '\033[4mLow memory; corrective action ' \
+            'required!\033[0m\n  MemUsedZram [{} MiB, {} ' \
+            '%] >= zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
