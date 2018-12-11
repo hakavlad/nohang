@@ -701,10 +701,10 @@ try:
     file_index = status_names.index('RssFile')
     shmem_index = status_names.index('RssShmem')
     detailed_rss = True
-    print(detailed_rss, 'detailed_rss')
+    #print(detailed_rss, 'detailed_rss')
 except ValueError:
     detailed_rss = False
-    print('It is not Linux 4.5+')
+    #print('It is not Linux 4.5+')
 
 ##########################################################################
 
@@ -715,7 +715,7 @@ except ValueError:
 # directory where the script is running
 cd = os.getcwd()
 
-print('CD:', cd)
+#print('CD:', cd)
 
 # where to look for a config if not specified via the -c/--config option
 default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')
@@ -749,7 +749,8 @@ if arg_config is None:
             config = i
             break
     if config is None:
-        print('Default configuration was not found\n', conf_err_mess)
+        print('Default configuration was not found\n',
+              conf_err_mess)
         exit()
 
 else:
@@ -757,7 +758,8 @@ else:
     if os.path.exists(arg_config):
         config = arg_config
     else:
-        print("File {} doesn't exists{}".format(arg_config, conf_err_mess))
+        print("File {} doesn't exists{}".format(
+            arg_config, conf_err_mess))
         exit()
 
 
@@ -799,8 +801,8 @@ try:
                 etc_name = a[0].strip()
                 etc_command = a[1].strip()
                 if len(etc_name) > 15:
-                    print(
-                        'Invalid config, the length of the process name must not exceed 15 characters\nExit')
+                    print('Invalid config, the length of the process ' \
+                          'name must not exceed 15 characters\nExit')
                     exit()
                 etc_dict[etc_name] = etc_command
 
@@ -1407,9 +1409,8 @@ warn_time_delta = 1000
 warn_timer = 0
 
 x = time() - start_time
-print(
-    'The duration of startup:', round(
-    x * 1000, 1), 'ms')
+print('The duration of startup:',
+    round(x * 1000, 1), 'ms')
 
 print('Monitoring started!')
 
