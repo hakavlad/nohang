@@ -417,19 +417,19 @@ def find_victim_and_send_signal(signal):
                         vm_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
                         continue
 
-                    if n is anon_index and detailed_rss:
-                        anon_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
-                        continue
+                    if detailed_rss:
 
+                        if n is anon_index:
+                            anon_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            continue
 
-                    if n is file_index and detailed_rss:
-                        file_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
-                        continue
+                        if n is file_index:
+                            file_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            continue
 
-
-                    if n is shmem_index and detailed_rss:
-                        shmem_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
-                        continue
+                        if n is shmem_index:
+                            shmem_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                            continue
 
                     if n is vm_swap_index:
                         vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
