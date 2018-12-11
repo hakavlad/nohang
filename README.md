@@ -116,7 +116,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 1. Memory levels to respond to as an OOM threat
 2. The frequency of checking the level of available memory (and CPU usage)
 3. The prevention of killing innocent victims
-4. Impact on the badness of processes via matching their names and cmdlines with regular expressions
+4. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
 5. The execution of a specific command instead of sending the SIGTERM signal
 6. GUI notifications:
    - results of preventing OOM
@@ -190,7 +190,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
-        - Display `UID`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
+        - Display `UID`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
     - Optimize limiting `oom_score_adj`: now it can works without UID=0
     - Optimize GUI warnings: find env without run `ps` and `env` (partially implemented)

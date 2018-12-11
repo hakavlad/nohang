@@ -422,6 +422,11 @@ def find_victim_and_send_signal(signal):
                         uid = line.split('\t')[1]
                         continue
 
+
+                    if n is vm_size_index:
+                        vm_size = kib_to_mib(int(line.split('\t')[1][:-4]))
+                        continue
+
                     if n is vm_rss_index:
                         vm_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
                         continue
@@ -477,12 +482,13 @@ def find_victim_and_send_signal(signal):
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
                 '\n  Badness: \033[33m{}\033[0m' \
+                '\n  VmSize:  \033[33m{}\033[0m MiB' \
                 '\n  VmRSS:   \033[33m{}\033[0m MiB' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
                 '\n  CmdLine: \033[33m{}\033[0m' \
                 '\n  Execute the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
-                    name, pid, uid, victim_badness, vm_rss, vm_swap,
+                    name, pid, uid, victim_badness, vm_size, vm_rss, vm_swap,
                     cmdline, command, exit_status,
                     round(response_time * 1000))
 
@@ -516,11 +522,12 @@ def find_victim_and_send_signal(signal):
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
                 '\n  Badness: \033[33m{}\033[0m' \
+                '\n  VmSize:  \033[33m{}\033[0m MiB' \
                 '\n  VmRSS:   \033[33m{}\033[0m MiB' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
                 '\n  CmdLine: \033[33m{}\033[0m' \
                 '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
-                    name, pid, uid, victim_badness, vm_rss, vm_swap,
+                    name, pid, uid, victim_badness, vm_size, vm_rss, vm_swap,
                     cmdline, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
@@ -704,6 +711,7 @@ status_names = []
 for s in status_list:
     status_names.append(s.split(':')[0])
 
+vm_size_index = status_names.index('VmSize')
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
 uid_index = status_names.index('Uid')
