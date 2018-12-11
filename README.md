@@ -190,7 +190,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Improve output:
         - Display `UID`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
-    - Fix limiting `oom_score_adj`: now it can works without UID=0
+    - Optimize limiting `oom_score_adj`: now it can works without UID=0
     - Fix GUI warnings: find env without run `ps` and `env` (partially implemented)
     - Add `oom-sort`
     - Add `oom-trigger` (partially implemented)
