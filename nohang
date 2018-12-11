@@ -408,12 +408,29 @@ def find_victim_and_send_signal(signal):
         try:
             with open('/proc/' + pid + '/status') as f:
                 for n, line in enumerate(f):
+
                     if n is uid_index:
                         uid = line.split('\t')[1]
                         continue
+
                     if n is vm_rss_index:
                         vm_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
                         continue
+
+                    if n is anon_index and detailed_rss:
+                        anon_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                        continue
+
+
+                    if n is file_index and detailed_rss:
+                        file_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                        continue
+
+
+                    if n is shmem_index and detailed_rss:
+                        shmem_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                        continue
+
                     if n is vm_swap_index:
                         vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
                         break
@@ -432,12 +449,31 @@ def find_victim_and_send_signal(signal):
         except ValueError:
             pass
 
+
+        if detailed_rss:
+            print('anon file shmem, MiB:', anon_rss, file_rss, shmem_rss)
+
+
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
             response_time = time() - time0
 
-            etc_info = '''  Found the victim with highest badness:\n  Name:    \033[33m{}\033[0m\n  PID:     \033[33m{}\033[0m\n  UID:     \033[33m{}\033[0m\n  Badness: \033[33m{}\033[0m\n  VmRSS:   \033[33m{}\033[0m MiB\n  VmSwap:  \033[33m{}\033[0m MiB\n  CmdLine: \033[33m{}\033[0m\n  Execute the command: \033[4m{}\033[0m\n  Exit status: {}; response time: {} ms'''.format(name, pid, uid, victim_badness, vm_rss, vm_swap, cmdline, command, exit_status, round(response_time * 1000))
+            # todo: mem_info, victim_info, exe_info, signal_info
+
+            etc_info = '  Found the victim with highest badness:' \
+                '\n  Name:    \033[33m{}\033[0m' \
+                '\n  PID:     \033[33m{}\033[0m' \
+                '\n  UID:     \033[33m{}\033[0m' \
+                '\n  Badness: \033[33m{}\033[0m' \
+                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
+                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
+                '\n  CmdLine: \033[33m{}\033[0m' \
+                '\n  Execute the command: \033[4m{}\033[0m' \
+                '\n  Exit status: {}; response time: {} ms'.format(
+                    name, pid, uid, victim_badness, vm_rss, vm_swap,
+                    cmdline, command, exit_status,
+                    round(response_time * 1000))
 
             print(mem_info)
             print(etc_info)
@@ -463,8 +499,17 @@ def find_victim_and_send_signal(signal):
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
 
-            preventing_oom_message = '  Found the process with highest badness:\n  Name:    \033[33m{}\033[0m\n  PID:     \033[33m{}\033[0m\n  UID:     \033[33m{}\033[0m\n  Badness: \033[33m{}\033[0m\n  VmRSS:   \033[33m{}\033[0m MiB\n  VmSwap:  \033[33m{}\033[0m MiB\n  CmdLine: \033[33m{}\033[0m\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
-                name, pid, uid, victim_badness, vm_rss, vm_swap, cmdline, sig_dict[signal], send_result)
+            preventing_oom_message = '  Found the process with highest badness:' \
+            '\n  Name:    \033[33m{}\033[0m' \
+            '\n  PID:     \033[33m{}\033[0m' \
+            '\n  UID:     \033[33m{}\033[0m' \
+            '\n  Badness: \033[33m{}\033[0m' \
+            '\n  VmRSS:   \033[33m{}\033[0m MiB' \
+            '\n  VmSwap:  \033[33m{}\033[0m MiB' \
+            '\n  CmdLine: \033[33m{}\033[0m' \
+            '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
+                name, pid, uid, victim_badness, vm_rss, vm_swap,
+                cmdline, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
 
@@ -619,6 +664,18 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 # find mem_total
 # find positions of SwapFree and SwapTotal in /proc/meminfo
 
@@ -650,6 +707,16 @@ for s in status_list:
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
 uid_index = status_names.index('Uid')
+
+try:
+    anon_index = status_names.index('RssAnon')
+    file_index = status_names.index('RssFile')
+    shmem_index = status_names.index('RssShmem')
+    detailed_rss = True
+    print(detailed_rss, 'detailed_rss')
+except IndexError:
+    detailed_rss = False
+    print('It is not Linux 4.5+')
 
 ##########################################################################
 
