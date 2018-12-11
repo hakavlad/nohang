@@ -813,8 +813,8 @@ try:
             etc = line.startswith('$ETC')
 
             if not a and not b and not c and not d and not etc:
-                a = line.split('=')
-                config_dict[a[0].strip()] = a[1].strip()
+                a = line.partition('=')
+                config_dict[a[0].strip()] = a[2].strip()
 
             if etc:
                 a = line[4:].split('///')
@@ -1386,9 +1386,6 @@ if print_config:
         print()
         print('avoid_re_uid:              {}'.format(avoid_re_uid))
         print('avoid_uid_factor:          {}'.format(avoid_uid_factor))
-
-
-
 
     print('\n5. The execution of a specific command instead of sending the\nSIGTERM signal\n')
     print('execute_the_command:       {}'.format(execute_the_command))

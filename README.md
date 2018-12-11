@@ -194,6 +194,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - Print in terminal with colors
     - Optimize limiting `oom_score_adj`: now it can works without UID=0
     - Optimize GUI warnings: find env without run `ps` and `env` (partially implemented)
+    - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `oom-sort`
     - Add `oom-trigger` (partially implemented)
 
