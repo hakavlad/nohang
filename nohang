@@ -113,24 +113,6 @@ def conf_parse_bool(param):
         exit()
 
 
-def func_decrease_oom_score_adj(oom_score_adj_max):
-    """
-    Stupid function, must be remaked
-    """
-    for i in os.listdir('/proc'):
-        if i.isdigit() is False:
-            continue
-        try:
-            oom_score_adj = int(rline1('/proc/' + i + '/oom_score_adj'))
-            if oom_score_adj > oom_score_adj_max:
-                write('/proc/' + i + '/oom_score_adj',
-                      str(oom_score_adj_max) + '\n')
-        except FileNotFoundError:
-            pass
-        except ProcessLookupError:
-            pass
-
-
 def rline1(path):
     """read 1st line from path."""
     with open(path) as f:
@@ -207,9 +189,9 @@ def pid_to_name(pid):
             for line in f:
                 return line[:-1].split('\t')[1]
     except FileNotFoundError:
-        return '<unknown>'
+        return ''
     except ProcessLookupError:
-        return '<unknown>'
+        return ''
 
 
 
@@ -353,23 +335,22 @@ def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
-    if decrease_oom_score_adj and root:
-        # это не оптимальное решение
-        func_decrease_oom_score_adj(oom_score_adj_max)
-
     pid_badness_list = []
 
-    if regex_matching:
+    for pid in os.listdir('/proc'):
+        # только директории, имена которых состоят только из цифр, за исключением /proc/1/
+        if pid[0].isdecimal() is False or pid == '1':
+            continue
 
-        for pid in os.listdir('/proc'):
-            # только директории, имена которых состоят только из цифр, за исключением /proc/1/
-            if pid[0].isdecimal() is False or pid == '1':
-                continue
+        try:
+            badness = int(rline1('/proc/' + pid + '/oom_score'))
 
-            try:
-                badness = int(rline1('/proc/' + pid + '/oom_score'))
+            if decrease_oom_score_adj:
+                oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
+                if badness > oom_score_adj_max:
+                    badness = badness - oom_score_adj + oom_score_adj_max
 
-
+            if regex_matching:
 
                 name = pid_to_name(pid)
                 cmdline = pid_to_cmdline(pid)
@@ -391,41 +372,22 @@ def find_victim_and_send_signal(signal):
                     print('  Name matches with prefer_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
                         prefer_regex, name, cmdline))
 
-
                 if search(avoid_re_cmdline, cmdline) is not None:
                     badness = int(badness / avoid_cmd_factor)
                     print('  Cmdline matches with avoid_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
                         avoid_re_cmdline, cmdline, name))
-
 
                 if search(prefer_re_cmdline, cmdline) is not None:
                     badness = int((badness + 1) * prefer_cmd_factor)
                     print('  Cmdline matches with prefer_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
                         prefer_re_cmdline, cmdline, name))
 
+        except FileNotFoundError:
+            badness = 0
+        except ProcessLookupError:
+            badness = 0
+        pid_badness_list.append((pid, badness))
 
-
-
-            except FileNotFoundError:
-                badness = 0
-            except ProcessLookupError:
-                badness = 0
-            pid_badness_list.append((pid, badness))
-
-
-
-    else:
-
-        for pid in os.listdir('/proc'):
-            if pid[0].isdecimal() is False:
-                continue
-            try:
-                badness = int(rline1('/proc/' + pid + '/oom_score'))
-            except FileNotFoundError:
-                badness = 0
-            except ProcessLookupError:
-                badness = 0
-            pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
     pid_tuple_list = sorted(
@@ -434,7 +396,9 @@ def find_victim_and_send_signal(signal):
     # Get maximum 'badness' value
     victim_badness = pid_tuple_list[1]
 
-    if victim_badness >= min_badness:  # Try to send signal to found victim
+    if victim_badness >= min_badness:
+
+        # Try to send signal to found victim
 
         pid = pid_tuple_list[0]
 
@@ -1499,8 +1463,9 @@ while True:
     # LOW MEMORY WARNINGS
     elif gui_low_memory_warnings:
 
-        if mem_available <= mem_min_warnings_kb and swap_free <= swap_min_warnings_kb + \
-                0.1 or mem_used_zram >= zram_max_warnings_kb:
+        if mem_available <= mem_min_warnings_kb and \
+            swap_free <= swap_min_warnings_kb + 0.1 or \
+                mem_used_zram >= zram_max_warnings_kb:
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
             warn_timer += warn_time_delta
@@ -1511,5 +1476,4 @@ while True:
 
     # SLEEP BETWEEN MEM CHECKS
     else:
-        stdout.flush()
         sleep_after_check_mem()
