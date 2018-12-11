@@ -31,9 +31,11 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Some features
 
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
-- impact on the badness of processes via matching their names and cmdlines with regular expressions
-- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim
-- GUI notifications: OOM prevention results and low memory warnings
+- impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
+- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim (or run any other command)
+- GUI notifications:
+    - OOM prevention results (displays sended signal and displays PID and name of victim)
+    - Low memory warnings (displays available memory and name of fattest process)
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
 - convenient configuration with a well commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
