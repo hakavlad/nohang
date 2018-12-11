@@ -184,7 +184,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 - In progress
     - Improve modifing badness by matching with RE pattern: 
-        - Add suppot matching `cmdline and `UID` with regular expressions
+        - Add suppot matching `cmdline` and `UID` with regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
