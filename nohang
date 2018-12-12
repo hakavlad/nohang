@@ -221,8 +221,8 @@ def send_notify_warn():
     """
     # find process with max badness
     fat_tuple = fattest()
-    pid = fat_tuple[1]
-    name = fat_tuple[0]
+    pid = fat_tuple[0]
+    name = pid_to_name(pid)
 
     if mem_used_zram > 0:
         low_mem_percent = '{}% {}% {}%'.format(
@@ -325,17 +325,14 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigterm)
 
 
-def find_victim_and_send_signal(signal):
-    """
-    Find victim with highest badness and send SIGTERM/SIGKILL
-    """
-    print()
+def fattest():
+    """Find the 'fattest' process, return pid and badness"""
 
     pid_badness_list = []
 
     for pid in os.listdir('/proc'):
         # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid == '1':
+        if pid[0].isdecimal() is False or pid is '1':
             continue
 
         # find and modify badness (if it needs)
@@ -344,73 +341,81 @@ def find_victim_and_send_signal(signal):
 
             if decrease_oom_score_adj:
                 oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
-                if badness > oom_score_adj_max:
+                if badness > oom_score_adj_max and oom_score_adj > 0:
                     badness = badness - oom_score_adj + oom_score_adj_max
 
             if regex_matching:
-
                 name = pid_to_name(pid)
-                cmdline = pid_to_cmdline(pid)
-                uid = pid_to_uid(pid)
-
-                # skip kthreads
-                if cmdline == '':
-                    continue
-
-                #print([uid], [name], [cmdline])
 
                 if search(avoid_regex, name) is not None:
+                    if pid_to_cmdline(pid) == '':
+                        # skip kthreads
+                        continue
                     badness = int(badness / avoid_factor)
-                    print('  Name matches with avoid_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
-                        avoid_regex, name, cmdline))
 
                 if search(prefer_regex, name) is not None:
+                    if pid_to_cmdline(pid) == '':
+                        # skip kthreads
+                        continue
                     badness = int((badness + 1) * prefer_factor)
-                    print('  Name matches with prefer_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
-                        prefer_regex, name, cmdline))
-
+ 
+            if re_match_cmdline:
+                cmdline = pid_to_cmdline(pid)
+                if cmdline == '':
+                    # skip kthreads
+                    continue
 
                 if search(avoid_re_cmdline, cmdline) is not None:
                     badness = int(badness / avoid_cmd_factor)
-                    print('  Cmdline matches with avoid_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        avoid_re_cmdline, cmdline, name))
 
                 if search(prefer_re_cmdline, cmdline) is not None:
                     badness = int((badness + 1) * prefer_cmd_factor)
-                    print('  Cmdline matches with prefer_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        prefer_re_cmdline, cmdline, name))
 
+            if re_match_uid:
+                uid = pid_to_uid(pid)
 
                 if search(avoid_re_uid, uid) is not None:
+                    if pid_to_cmdline(pid) == '':
+                        # skip kthreads
+                        continue
                     badness = int(badness / avoid_uid_factor)
-                    print('  UID matches with avoid_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        avoid_re_uid, uid, name))
 
                 if search(prefer_re_uid, uid) is not None:
+                    if pid_to_cmdline(pid) == '':
+                        # skip kthreads
+                        continue
                     badness = int((badness + 1) * prefer_uid_factor)
-                    print('  UID matches with prefer_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        prefer_re_uid, uid, name))
 
         except FileNotFoundError:
-            badness = 0
+            continue
         except ProcessLookupError:
-            badness = 0
+            continue
         pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
     pid_tuple_list = sorted(
         pid_badness_list, key=itemgetter(1), reverse=True)[0]
 
+    pid = pid_tuple_list[0]
+
     # Get maximum 'badness' value
     victim_badness = pid_tuple_list[1]
+
+    return pid, victim_badness
+
+
+def find_victim_and_send_signal(signal):
+    """
+    Find victim with highest badness and send SIGTERM/SIGKILL
+    """
+    print()
+
+    pid, victim_badness = fattest()
+    name = pid_to_name(pid)
 
     if victim_badness >= min_badness:
 
         # Try to send signal to found victim
-
-        pid = pid_tuple_list[0]
-
-        name = pid_to_name(pid)
 
         # Get VmRSS and VmSwap and cmdline of victim process and try to send
         # signal
@@ -467,17 +472,22 @@ def find_victim_and_send_signal(signal):
             pass
 
         if detailed_rss:
-            print('anon file shmem, MiB:', anon_rss, file_rss, shmem_rss)
-
-        if execute_the_command and signal is SIGTERM and name in etc_dict:
-            command = etc_dict[name]
-            exit_status = os.system(etc_dict[name])
-            response_time = time() - time0
-
-            # todo: mem_info, victim_info, exe_info, signal_info
-            # todo: display VmSize, oom_score, oom_score_adj
-
-            etc_info = '  Found the victim with highest badness:' \
+            victim_info = '  Found the victim with highest badness:' \
+                '\n  Name:    \033[33m{}\033[0m' \
+                '\n  PID:     \033[33m{}\033[0m' \
+                '\n  UID:     \033[33m{}\033[0m' \
+                '\n  Badness: \033[33m{}\033[0m' \
+                '\n  VmSize:  \033[33m{}\033[0m MiB' \
+                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
+                '\n  Anon:    \033[33m{}\033[0m MiB' \
+                '\n  File:    \033[33m{}\033[0m MiB' \
+                '\n  Shmem:   \033[33m{}\033[0m MiB' \
+                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
+                '\n  CmdLine: \033[33m{}\033[0m'.format(
+                    name, pid, uid, victim_badness, vm_size,
+                    vm_rss, anon_rss, file_rss, shmem_rss, vm_swap, cmdline)
+        else:
+            victim_info = '  Found the victim with highest badness:' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
@@ -485,11 +495,21 @@ def find_victim_and_send_signal(signal):
                 '\n  VmSize:  \033[33m{}\033[0m MiB' \
                 '\n  VmRSS:   \033[33m{}\033[0m MiB' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
-                '\n  CmdLine: \033[33m{}\033[0m' \
+                '\n  CmdLine: \033[33m{}\033[0m'.format(
+                    name, pid, uid, victim_badness, vm_size,
+                    vm_rss, vm_swap, cmdline)
+
+        if execute_the_command and signal is SIGTERM and name in etc_dict:
+            command = etc_dict[name]
+            exit_status = os.system(etc_dict[name])
+            response_time = time() - time0
+
+            # todo: display oom_score, oom_score_adj
+
+            etc_info = '{}' \
                 '\n  Execute the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
-                    name, pid, uid, victim_badness, vm_size, vm_rss, vm_swap,
-                    cmdline, command, exit_status,
+                    victim_info, command, exit_status,
                     round(response_time * 1000))
 
             print(mem_info)
@@ -517,18 +537,9 @@ def find_victim_and_send_signal(signal):
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
 
-            preventing_oom_message = '  Found the process with highest badness:' \
-                '\n  Name:    \033[33m{}\033[0m' \
-                '\n  PID:     \033[33m{}\033[0m' \
-                '\n  UID:     \033[33m{}\033[0m' \
-                '\n  Badness: \033[33m{}\033[0m' \
-                '\n  VmSize:  \033[33m{}\033[0m MiB' \
-                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
-                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
-                '\n  CmdLine: \033[33m{}\033[0m' \
+            preventing_oom_message = '{}' \
                 '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
-                    name, pid, uid, victim_badness, vm_size, vm_rss, vm_swap,
-                    cmdline, sig_dict[signal], send_result)
+                    victim_info, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
 
@@ -571,88 +582,6 @@ def sleep_after_check_mem():
         sleep(t)
     except KeyboardInterrupt:
         exit()
-
-
-def fattest():
-    """Find the 'fattest' process"""
-    pid_badness_list = []
-
-    for pid in os.listdir('/proc'):
-        # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid == '1':
-            continue
-
-        # find and modify badness (if it needs)
-        try:
-            badness = int(rline1('/proc/' + pid + '/oom_score'))
-
-            if decrease_oom_score_adj:
-                oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
-                if badness > oom_score_adj_max:
-                    badness = badness - oom_score_adj + oom_score_adj_max
-
-            if regex_matching:
-
-                name = pid_to_name(pid)
-                cmdline = pid_to_cmdline(pid)
-                uid = pid_to_uid(pid)
-
-                # skip kthreads
-                if cmdline == '':
-                    continue
-
-                #print([uid], [name], [cmdline])
-
-                if search(avoid_regex, name) is not None:
-                    badness = int(badness / avoid_factor)
-                    print('  Name matches with avoid_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
-                        avoid_regex, name, cmdline))
-
-                if search(prefer_regex, name) is not None:
-                    badness = int((badness + 1) * prefer_factor)
-                    print('  Name matches with prefer_regex \033[33m{}\033[0m: \033[33m{}\033[0m, CmdLine: {}'.format(
-                        prefer_regex, name, cmdline))
-
-
-                if search(avoid_re_cmdline, cmdline) is not None:
-                    badness = int(badness / avoid_cmd_factor)
-                    print('  Cmdline matches with avoid_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        avoid_re_cmdline, cmdline, name))
-
-                if search(prefer_re_cmdline, cmdline) is not None:
-                    badness = int((badness + 1) * prefer_cmd_factor)
-                    print('  Cmdline matches with prefer_re_cmdline \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        prefer_re_cmdline, cmdline, name))
-
-
-                if search(avoid_re_uid, uid) is not None:
-                    badness = int(badness / avoid_uid_factor)
-                    print('  UID matches with avoid_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        avoid_re_uid, uid, name))
-
-                if search(prefer_re_uid, uid) is not None:
-                    badness = int((badness + 1) * prefer_uid_factor)
-                    print('  UID matches with prefer_re_uid \033[33m{}\033[0m: \033[33m{}\033[0m, Name: {}'.format(
-                        prefer_re_uid, uid, name))
-
-        except FileNotFoundError:
-            badness = 0
-        except ProcessLookupError:
-            badness = 0
-        pid_badness_list.append((pid, badness))
-
-    # Make list of (pid, badness) tuples, sorted by 'badness' values
-    pid_tuple_list = sorted(
-        pid_badness_list, key=itemgetter(1), reverse=True)[0]
-
-    # Get maximum 'badness' value
-    victim_badness = pid_tuple_list[1]
-
-    pid = pid_tuple_list[0]
-
-    name = pid_to_name(pid)
-
-    return (name, pid)
 
 
 def calculate_percent(arg_key):
@@ -891,7 +820,14 @@ execute_the_command = conf_parse_bool('execute_the_command')
 
 regex_matching = conf_parse_bool('regex_matching')
 
-if regex_matching:
+re_match_cmdline = conf_parse_bool('re_match_cmdline')
+
+re_match_uid = conf_parse_bool('re_match_uid')
+
+
+
+
+if regex_matching or re_match_cmdline or re_match_uid:
     from re import search
     import sre_constants
 
