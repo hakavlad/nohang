@@ -326,7 +326,10 @@ def sleep_after_send_signal(signal):
 
 
 def fattest():
-    """Find the 'fattest' process, return pid and badness"""
+    """
+    Find the process with highest badness and its badness adjustment
+    Return pid and badness
+    """
 
     pid_badness_list = []
 
@@ -346,45 +349,30 @@ def fattest():
 
             if regex_matching:
                 name = pid_to_name(pid)
+                for re_tup in processname_re_list:
+                    if search(re_tup[1], name) is not None:
+                        if pid_to_cmdline(pid) == '':
+                            # skip kthreads
+                            continue
+                        badness += int(re_tup[0])
 
-                if search(avoid_regex, name) is not None:
-                    if pid_to_cmdline(pid) == '':
-                        # skip kthreads
-                        continue
-                    badness = int(badness / avoid_factor)
-
-                if search(prefer_regex, name) is not None:
-                    if pid_to_cmdline(pid) == '':
-                        # skip kthreads
-                        continue
-                    badness = int((badness + 1) * prefer_factor)
- 
             if re_match_cmdline:
                 cmdline = pid_to_cmdline(pid)
                 if cmdline == '':
                     # skip kthreads
                     continue
-
-                if search(avoid_re_cmdline, cmdline) is not None:
-                    badness = int(badness / avoid_cmd_factor)
-
-                if search(prefer_re_cmdline, cmdline) is not None:
-                    badness = int((badness + 1) * prefer_cmd_factor)
+                for re_tup in cmdline_re_list:
+                    if search(re_tup[1], cmdline) is not None:
+                        badness += int(re_tup[0])
 
             if re_match_uid:
                 uid = pid_to_uid(pid)
-
-                if search(avoid_re_uid, uid) is not None:
-                    if pid_to_cmdline(pid) == '':
-                        # skip kthreads
-                        continue
-                    badness = int(badness / avoid_uid_factor)
-
-                if search(prefer_re_uid, uid) is not None:
-                    if pid_to_cmdline(pid) == '':
-                        # skip kthreads
-                        continue
-                    badness = int((badness + 1) * prefer_uid_factor)
+                for re_tup in uid_re_list:
+                    if search(re_tup[1], uid) is not None:
+                        if pid_to_cmdline(pid) == '':
+                            # skip kthreads
+                            continue
+                        badness += int(re_tup[0])
 
         except FileNotFoundError:
             continue
@@ -760,8 +748,14 @@ try:
         # dictionary with config options
         config_dict = dict()
 
+        processname_re_list = []
+        cmdline_re_list = []
+        uid_re_list = []
+
+
         # dictionary with names and commands for the parameter
         # execute_the_command
+        # тут тоже список нужен, а не словарь
         etc_dict = dict()
 
         for line in f:
@@ -787,6 +781,21 @@ try:
                     exit()
                 etc_dict[etc_name] = etc_command
 
+
+            # NEED VALIDATION!
+            if line.startswith('@PROCESSNAME_RE'):
+                a = line.partition('@PROCESSNAME_RE')[2].strip(' \n').partition('///')
+                processname_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+
+            if line.startswith('@CMDLINE_RE'):
+                a = line.partition('@CMDLINE_RE')[2].strip(' \n').partition('///')
+                cmdline_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+
+            if line.startswith('@UID_RE'):
+                a = line.partition('@UID_RE')[2].strip(' \n').partition('///')
+                uid_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+
+
 except PermissionError:
     print('PermissionError', conf_err_mess)
     exit()
@@ -800,6 +809,9 @@ except IndexError:
     print('IndexError', conf_err_mess)
     exit()
 
+# print(processname_re_list)
+# print(cmdline_re_list)
+# print(uid_re_list)
 
 ##########################################################################
 
@@ -824,167 +836,9 @@ re_match_cmdline = conf_parse_bool('re_match_cmdline')
 
 re_match_uid = conf_parse_bool('re_match_uid')
 
-
-
-
 if regex_matching or re_match_cmdline or re_match_uid:
     from re import search
     import sre_constants
-
-    prefer_regex = conf_parse_string('prefer_regex')
-    if prefer_regex == '':
-        print('Invalid prefer_regex value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(prefer_regex, '')
-    except sre_constants.error:
-        print('Invalid prefer_regex value, '
-              'invalid RE pattern: {}'.format(prefer_regex))
-        exit()
-
-    avoid_regex = conf_parse_string('avoid_regex')
-    if avoid_regex == '':
-        print('Invalid avoid_regex value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(avoid_regex, '')
-    except sre_constants.error:
-        print('Invalid avoid_regex value, '
-              'invalid RE pattern: {}'.format(avoid_regex))
-        exit()
-
-    prefer_re_cmdline = conf_parse_string('prefer_re_cmdline')
-    if prefer_re_cmdline == '':
-        print('Invalid prefer_re_cmdline value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(prefer_re_cmdline, '')
-    except sre_constants.error:
-        print('Invalid prefer_re_cmdline value, '
-              'invalid RE pattern: {}'.format(prefer_re_cmdline))
-        exit()
-
-    avoid_re_cmdline = conf_parse_string('avoid_re_cmdline')
-    if avoid_re_cmdline == '':
-        print('Invalid avoid_re_cmdline value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(avoid_re_cmdline, '')
-    except sre_constants.error:
-        print('Invalid avoid_re_cmdline value, '
-              'invalid RE pattern: {}'.format(avoid_re_cmdline))
-        exit()
-
-    prefer_re_uid = conf_parse_string('prefer_re_uid')
-    if prefer_re_uid == '':
-        print('Invalid prefer_re_uid value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(prefer_re_uid, '')
-    except sre_constants.error:
-        print('Invalid prefer_re_uid value, '
-              'invalid RE pattern: {}'.format(prefer_re_uid))
-        exit()
-
-    avoid_re_uid = conf_parse_string('avoid_re_uid')
-    if avoid_re_uid == '':
-        print('Invalid avoid_re_uid value, '
-              'regex pattern must not be empty')
-        exit()
-    # RE pattern validation
-    try:
-        search(avoid_re_uid, '')
-    except sre_constants.error:
-        print('Invalid avoid_re_uid value, '
-              'invalid RE pattern: {}'.format(avoid_re_uid))
-        exit()
-
-    if 'prefer_factor' in config_dict:
-        prefer_factor = string_to_float_convert_test(config_dict['prefer_factor'])
-        if prefer_factor is None:
-            print('Invalid prefer_factor value, not float\nExit')
-            exit()
-        if prefer_factor < 1 and prefer_factor > 1000:
-            print('prefer_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('prefer_factor not in config\nExit')
-        exit()
-
-    if 'avoid_factor' in config_dict:
-        avoid_factor = string_to_float_convert_test(config_dict['avoid_factor'])
-        if avoid_factor is None:
-            print('Invalid avoid_factor value, not float\nExit')
-            exit()
-        if avoid_factor < 1 and avoid_factor > 1000:
-            print('avoid_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('avoid_factor not in config\nExit')
-        exit()
-
-    if 'prefer_cmd_factor' in config_dict:
-        prefer_cmd_factor = string_to_float_convert_test(
-            config_dict['prefer_cmd_factor'])
-        if prefer_cmd_factor is None:
-            print('Invalid prefer_cmd_factor value, not float\nExit')
-            exit()
-        if prefer_cmd_factor < 1 and prefer_cmd_factor > 1000:
-            print('prefer_cmd_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('prefer_cmd_factor not in config\nExit')
-        exit()
-
-    if 'avoid_cmd_factor' in config_dict:
-        avoid_cmd_factor = string_to_float_convert_test(
-            config_dict['avoid_cmd_factor'])
-        if avoid_cmd_factor is None:
-            print('Invalid avoid_cmd_factor value, not float\nExit')
-            exit()
-        if avoid_cmd_factor < 1 and avoid_cmd_factor > 1000:
-            print('avoid_cmd_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('avoid_cmd_factor not in config\nExit')
-        exit()
-
-    if 'prefer_uid_factor' in config_dict:
-        prefer_uid_factor = string_to_float_convert_test(
-            config_dict['prefer_uid_factor'])
-        if prefer_uid_factor is None:
-            print('Invalid prefer_uid_factor value, not float\nExit')
-            exit()
-        if prefer_uid_factor < 1 and prefer_uid_factor > 1000:
-            print('prefer_uid_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('prefer_uid_factor not in config\nExit')
-        exit()
-
-    if 'avoid_uid_factor' in config_dict:
-        avoid_uid_factor = string_to_float_convert_test(
-            config_dict['avoid_uid_factor'])
-        if avoid_uid_factor is None:
-            print('Invalid avoid_uid_factor value, not float\nExit')
-            exit()
-        if avoid_uid_factor < 1 and avoid_uid_factor > 1000:
-            print('avoid_uid_factor value out of range [1; 1000]\nExit')
-            exit()
-    else:
-        print('avoid_uid_factor not in config\nExit')
-        exit()
-
 
 mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
     'mem_min_sigterm')
