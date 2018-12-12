@@ -1315,37 +1315,35 @@ if print_config:
     print('min_badness:               {}'.format(min_badness))
 
     # False (OK) - OK не нужен когда фолс
-    print('decrease_oom_score_adj:    {} ({})'.format(
-        decrease_oom_score_adj, decrease_res
+    print('decrease_oom_score_adj:    {}'.format(
+        decrease_oom_score_adj
     ))
     if decrease_oom_score_adj:
         print('oom_score_adj_max:         {}'.format(oom_score_adj_max))
 
-    print('\n4. Impact on the badness of processes via matching their names\nwith regular expressions\n')
+    print('\n4. Impact on the badness of processes via matching their' \
+        ' names, cmdlines ir UIDs with regular expressions\n')
+
     print('regex_matching:            {}'.format(regex_matching))
     if regex_matching:
-
-        print()
         print('prefer_regex:              {}'.format(prefer_regex))
         print('prefer_factor:             {}'.format(prefer_factor))
-
-        print()
         print('avoid_regex:               {}'.format(avoid_regex))
         print('avoid_factor:              {}'.format(avoid_factor))
-
         print()
+
+    print('re_match_cmdline:          {}'.format(re_match_cmdline))
+    if re_match_cmdline:
         print('prefer_re_cmdline:         {}'.format(prefer_re_cmdline))
         print('prefer_cmd_factor:         {}'.format(prefer_cmd_factor))
-
-        print()
         print('avoid_re_cmdline:          {}'.format(avoid_re_cmdline))
         print('avoid_cmd_factor:          {}'.format(avoid_cmd_factor))
-
         print()
+
+    print('re_match_uid:              {}'.format(re_match_uid))
+    if re_match_uid:
         print('prefer_re_uid:             {}'.format(prefer_re_uid))
         print('prefer_uid_factor:         {}'.format(prefer_uid_factor))
-
-        print()
         print('avoid_re_uid:              {}'.format(avoid_re_uid))
         print('avoid_uid_factor:          {}'.format(avoid_uid_factor))
 
