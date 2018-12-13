@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """A daemon that prevents OOM in Linux systems."""
+from time import sleep, time
+start_time = time()
 import os
 from operator import itemgetter
-from time import sleep, time
 from argparse import ArgumentParser
 from sys import stdout
 from signal import SIGKILL, SIGTERM
 
-start_time = time()
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
+'''
+nm = 30
+nc = nm + 1
+'''
+
+stat_dict = dict()
 
 ##########################################################################
 
@@ -119,15 +125,15 @@ def rline1(path):
         for line in f:
             return line[:-1]
 
-
+'''
 def write(path, string):
     """Write string to path."""
     with open(path, 'w') as f:
         f.write(string)
-
+'''
 
 def kib_to_mib(num):
-    """Convert Kib values to Mib values."""
+    """Convert KiB values to MiB values."""
     return round(num / 1024.0)
 
 
@@ -137,7 +143,7 @@ def percent(num):
 
 
 def just_percent_mem(num):
-    """Pls, put description here..."""
+    """convert num to percent and justify"""
     return str(round(num * 100, 1)).rjust(4, ' ')
 
 
@@ -396,7 +402,7 @@ def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
-    print()
+    #print()
 
     pid, victim_badness = fattest()
     name = pid_to_name(pid)
@@ -500,6 +506,16 @@ def find_victim_and_send_signal(signal):
                     victim_info, command, exit_status,
                     round(response_time * 1000))
 
+
+            # update stat_dict
+            key = "Run the command '{}'".format(command)
+            if key not in stat_dict:
+                stat_dict.update({key: 1})
+            else:
+                new_value = stat_dict[key] + 1
+                stat_dict.update({key: new_value})
+
+
             print(mem_info)
             print(etc_info)
             if gui_notifications:
@@ -512,6 +528,14 @@ def find_victim_and_send_signal(signal):
                 response_time = time() - time0
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
                     round(response_time * 1000))
+
+                # update stat_dict
+                key = 'Send {} to {}'.format(sig_dict[signal], name)
+                if key not in stat_dict:
+                    stat_dict.update({key: 1})
+                else:
+                    new_value = stat_dict[key] + 1
+                    stat_dict.update({key: new_value})
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -530,6 +554,10 @@ def find_victim_and_send_signal(signal):
                     victim_info, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
+            print('Duration of work: {} sec; number of corrective actions:'.format(
+                round(time() - start_time)))
+            for key in stat_dict:
+                print('  - {}: {}'.format(key, stat_dict[key]))
 
     else:
 
@@ -1351,6 +1379,15 @@ while True:
                       just_percent_swap(swap_free / (swap_total + 0.1)),
                       human(mem_used_zram, mem_len),
                       just_percent_mem(mem_used_zram / mem_total)))
+
+    '''
+    if nc > nm:
+        nc = 0
+        print('MemAvailable, MiB:', human(mem_available, mem_len))
+    else:
+        nc += 1
+    '''
+
 
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:  # If swap_min_sigkill is absolute
