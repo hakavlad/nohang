@@ -177,6 +177,7 @@ See also `man journalctl`.
 
 - Awful documentation
 - Slowly starting, slowly looking for a victim, especially when using swapspace
+- It is written in an interpreted language and is actually a prototype
 
 ## Contribution
 

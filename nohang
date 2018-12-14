@@ -2,12 +2,15 @@
 """A daemon that prevents OOM in Linux systems."""
 from time import sleep, time
 start_time = time()
+
 import os
 from operator import itemgetter
+
+# this is most slow import
 from argparse import ArgumentParser
+
 from sys import stdout
 from signal import SIGKILL, SIGTERM
-
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
@@ -15,8 +18,6 @@ sig_dict = {SIGKILL: 'SIGKILL',
 nm = 30
 nc = nm + 1
 '''
-
-stat_dict = dict()
 
 ##########################################################################
 
@@ -770,21 +771,23 @@ print('The path to the config:', config)
 # conf_parameters_dict
 # conf_restart_dict
 
+# dictionary with config options
+config_dict = dict()
+
+processname_re_list = []
+cmdline_re_list = []
+uid_re_list = []
+
+# dictionary with names and commands for the parameter
+# execute_the_command
+# тут тоже список нужен, а не словарь
+etc_dict = dict()
+
+# will store corrective actions stat
+stat_dict = dict()
+
 try:
     with open(config) as f:
-
-        # dictionary with config options
-        config_dict = dict()
-
-        processname_re_list = []
-        cmdline_re_list = []
-        uid_re_list = []
-
-
-        # dictionary with names and commands for the parameter
-        # execute_the_command
-        # тут тоже список нужен, а не словарь
-        etc_dict = dict()
 
         for line in f:
 
@@ -822,7 +825,6 @@ try:
             if line.startswith('@UID_RE'):
                 a = line.partition('@UID_RE')[2].strip(' \n').partition('///')
                 uid_re_list.append((a[0].strip(' '), a[2].strip(' ')))
-
 
 except PermissionError:
     print('PermissionError', conf_err_mess)
@@ -1400,7 +1402,7 @@ while True:
     else:
 
         # СТОИТ ПЕЧАТАТЬ СВОП ТОЛЬКО ПРИ SwapTotal > 0
-        # нет, печатать так: SwapTotal = 0 KiB, ignore swapspace
+        # нет, печатать так: SwapTotal = 0, ignore swapspace
         swap_sigterm_pc = '-'
 
     # Limits overdrafting checks
