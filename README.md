@@ -157,7 +157,7 @@ oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
         6             0  1000  1157 wnck-applet         35 M      0 M /usr/lib/mate-panel/wnck-applet
 ```
 
-Kthreads and Pid 1 will not be displayed.
+Kthreads, zombies and Pid 1 will not be displayed.
 
 ## oom-trigger
 
@@ -176,7 +176,7 @@ See also `man journalctl`.
 ## Known problems
 
 - Awful documentation
-- regex matching need fixes
+- Slowly starting, slowly looking for a victim, especially when using swapspace
 
 ## Contribution
 
