@@ -191,7 +191,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
-        - Display `UID`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
+        - Display `UID`, `oom_score`, `oom_score_adj`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
         - Print statistics on corrective actions after each corrective action
     - Optimize limiting `oom_score_adj`: now it can works without UID=0
