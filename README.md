@@ -178,9 +178,9 @@ See also `man journalctl`.
 - Awful documentation
 - regex matching need fixes
 
-## Feedback
+## Contribution
 
-Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
+Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome. See also [CoC](https://github.com/hakavlad/nohang/blob/master/CoC.md).
 
 ## Changelog
 
