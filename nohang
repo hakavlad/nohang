@@ -24,6 +24,21 @@ nc = nm + 1
 
 # function definition section
 
+def format_time(t):
+    t = int(t)
+    if t < 60:
+        return '{} sec'.format(t)
+    elif t >= 60 and t < 3600:
+        m = t // 60
+        s = t % 60
+        return '{} min {} sec'.format(m, s)
+    else:
+        h = t // 3600
+        s0 = t - h * 3600
+        m = s0 // 60
+        s = s0 % 60
+        return '{} h {} min {} sec'.format(h, m, s)
+
 
 def root_notify_env():
     """
@@ -72,7 +87,7 @@ def string_to_float_convert_test(string):
 
 
 def string_to_int_convert_test(string):
-    """Try to interpretst string values as integers."""
+    """Try to interpret string values as integers."""
     try:
         return int(string)
     except ValueError:
@@ -466,50 +481,66 @@ def find_victim_and_send_signal(signal):
         except ValueError:
             pass
 
+        oom_score = rline1('/proc/' + pid + '/oom_score')
+        oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
+
+        len_vm = len(str(vm_size))
+
         if detailed_rss:
-            victim_info = '  Found the victim with highest badness:' \
+            victim_info = '\033[4mFound the victim with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
-                '\n  Badness: \033[33m{}\033[0m' \
+                '\n  Badness: \033[33m{}\033[0m, ' \
+                'oom_score: \033[33m{}\033[0m, ' \
+                'oom_score_adj: \033[33m{}\033[0m' \
                 '\n  VmSize:  \033[33m{}\033[0m MiB' \
-                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
-                '\n  Anon:    \033[33m{}\033[0m MiB' \
-                '\n  File:    \033[33m{}\033[0m MiB' \
-                '\n  Shmem:   \033[33m{}\033[0m MiB' \
+                '\n  VmRSS:   \033[33m{}\033[0m MiB (' \
+                'Anon: \033[33m{}\033[0m MiB, ' \
+                'File: \033[33m{}\033[0m MiB, ' \
+                'Shmem: \033[33m{}\033[0m MiB)' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
                 '\n  CmdLine: \033[33m{}\033[0m'.format(
-                    name, pid, uid, victim_badness, vm_size,
-                    vm_rss, anon_rss, file_rss, shmem_rss, vm_swap, cmdline)
+                    name, pid, uid,
+                    victim_badness, oom_score, oom_score_adj,
+                    vm_size, str(vm_rss).rjust(len_vm, ' '),
+                    anon_rss, file_rss, shmem_rss,
+                    str(vm_swap).rjust(len_vm, ' '), cmdline)
         else:
-            victim_info = '  Found the victim with highest badness:' \
+            victim_info = '\033[4mFound the victim with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
-                '\n  Badness: \033[33m{}\033[0m' \
+                '\n  Badness: \033[33m{}\033[0m, ' \
+                'oom_score: \033[33m{}\033[0m, ' \
+                'oom_score_adj: \033[33m{}\033[0m' \
                 '\n  VmSize:  \033[33m{}\033[0m MiB' \
                 '\n  VmRSS:   \033[33m{}\033[0m MiB' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
                 '\n  CmdLine: \033[33m{}\033[0m'.format(
                     name, pid, uid, victim_badness, vm_size,
-                    vm_rss, vm_swap, cmdline)
+                    str(vm_rss).rjust(len_vm, ' '),
+                    str(vm_swap).rjust(len_vm, ' '), cmdline)
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name])
+            if exit_status == 0:
+                exit_status = '\033[32m0\033[0m'
+            else:
+                exit_status = '\033[31m{}\033[0m'.format(exit_status)
+
             response_time = time() - time0
 
-            # todo: display oom_score, oom_score_adj
-
             etc_info = '{}' \
-                '\n  Execute the command: \033[4m{}\033[0m' \
+                '\n\033[4mImplement corrective action:\033[0m\n  Execute the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
                     victim_info, command, exit_status,
                     round(response_time * 1000))
 
 
             # update stat_dict
-            key = "Run the command '{}'".format(command)
+            key = "Run the command '\033[35m{}\033[0m'".format(command)
             if key not in stat_dict:
                 stat_dict.update({key: 1})
             else:
@@ -531,7 +562,7 @@ def find_victim_and_send_signal(signal):
                     round(response_time * 1000))
 
                 # update stat_dict
-                key = 'Send {} to {}'.format(sig_dict[signal], name)
+                key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(sig_dict[signal], name)
                 if key not in stat_dict:
                     stat_dict.update({key: 1})
                 else:
@@ -551,12 +582,13 @@ def find_victim_and_send_signal(signal):
                     round(response_time * 1000))
 
             preventing_oom_message = '{}' \
-                '\n  Sending \033[4m{}\033[0m to the victim; {}'.format(
+                '\n\033[4mImplement corrective action:\033[0m\n  ' \
+                'Sending \033[4m{}\033[0m to the victim; {}'.format(
                     victim_info, sig_dict[signal], send_result)
             print(mem_info)
             print(preventing_oom_message)
-            print('Duration of work: {} sec; number of corrective actions:'.format(
-                round(time() - start_time)))
+            print('\n\033[4mDuration of work: {}; number of corrective actions:\033[0m'.format(
+                format_time(time() - start_time)))
             for key in stat_dict:
                 print('  - {}: {}'.format(key, stat_dict[key]))
 
@@ -1411,10 +1443,10 @@ while True:
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and \
-            swap_free <= swap_min_sigkill_kb:
+        swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!' \
+        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -1433,7 +1465,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!' \
+        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -1445,11 +1477,11 @@ while True:
 
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and \
-            swap_free <= swap_min_sigterm_kb:
+        swap_free <= swap_min_sigterm_kb:
 
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action required!' \
+        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -1470,9 +1502,9 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '\033[4mLow memory; corrective action ' \
-            'required!\033[0m\n  MemUsedZram [{} MiB, {} ' \
-            '%] >= zram_max_sigterm [{} M, {} %]'.format(
+        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
+            '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
+                'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
