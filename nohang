@@ -298,7 +298,7 @@ def send_notify(signal, name, pid):
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 Popen(['sudo', '-u', username, 'env', display_env,
                        dbus_env, 'notify-send', '--icon=dialog-warning',
-                       '{}'.format(title), '{}'.format(body)])
+                       '{}'.format(title), '{}'.format(body)]).wait(9)
     else:
         # send notification to user that runs this nohang
         Popen(['notify-send', '--icon=dialog-warning',
