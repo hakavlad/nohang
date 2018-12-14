@@ -192,11 +192,14 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Improve output:
         - Display `UID`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
+        - Print statistics on corrective actions after each corrective action
     - Optimize limiting `oom_score_adj`: now it can works without UID=0
-    - Optimize GUI warnings: find env without run `ps` and `env` (partially implemented)
+    - Optimize GUI warnings: find env without run `ps` and `env`
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `oom-sort`
-    - Add `oom-trigger` (partially implemented)
+    - Add `oom-trigger`
+    - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CoC.md)
+    - Redesign of the config
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
