@@ -3,6 +3,8 @@
 
 Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
 
+![pic](https://i.imgur.com/Ky5hEOb.png)
+
 ## What is the problem?
 
 OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop [caches](https://en.wikipedia.org/wiki/Page_cache) and processes to be killed (via sending [SIGKILL](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGKILL)) instead of trying to terminate them correctly (via sending [SIGTERM](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGTERM) or takes other corrective action). Some applications may crash if it's impossible to allocate memory.
@@ -35,9 +37,6 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim (or run any other command)
 - GUI notifications:
     - OOM prevention results (displays sended signal and displays PID and name of victim)
-
-    ![pic](https://i.imgur.com/Ky5hEOb.png)
-
     - Low memory warnings (displays available memory and name of fattest process)
 - `zram` support (`mem_used_total` as a trigger)
 - customizable intensity of monitoring
