@@ -47,6 +47,10 @@ Nohang prevents Out Of Memory with GUI notifications: [video](https://youtu.be/C
 
 ![pic](https://i.imgur.com/7Fj8nZR.png)
 
+![pic](https://i.imgur.com/Ky5hEOb.png)
+
+
+
 ## Requirements
 
 For basic usage:
