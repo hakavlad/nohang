@@ -199,7 +199,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `oom-sort`
     - Add `oom-trigger`
-    - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CoC.md)
+    - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md)
     - Redesign of the config
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
