@@ -160,7 +160,7 @@ Interactive OOM trigger (not implemented)
 
 ## Logging
 
-If nohang is installed on a system that uses systemd, you can use the following command to view the log:
+To view the latest entries in the log (for systemd users):
 
 ```bash
 $ sudo journalctl -eu nohang
