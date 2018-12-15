@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 
-# notify_low_mem --mem '14% 12%' --name 'stress' --pid '6666'
+# nohang_notify_low_mem --mem '14% 12%' --name 'stress' --pid '6666'
 
-# should be remaked without run `ps`
+# need UID=0
 
 # output:
 # Low memory: 14% 12%
 # Fattest process: 6666, stress
 
+# need to remove this slow and fat parser
 from argparse import ArgumentParser
-from subprocess import Popen, PIPE
+
+from os import listdir
+from subprocess import Popen, TimeoutExpired
+
+wait_time = 0.1
 
 parser = ArgumentParser()
 
@@ -44,48 +49,74 @@ title = 'Low memory: {}'.format(mem)
 
 body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(pid, name)
 
-# return list of tuples with
-# username, DISPLAY and DBUS_SESSION_BUS_ADDRESS
+display_env = 'DISPLAY='
+dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
+user_env = 'USER='
+
+
+def rline1(path):
+    """read 1st line from path."""
+    with open(path) as f:
+        for line in f:
+            return line
+
+
+def re_pid_environ(pid):
+    """
+    read environ of 1 process
+    returns tuple with USER, DBUS, DISPLAY like follow:
+    ('user', 'DISPLAY=:0',
+     'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
+    returns None if these vars is not in /proc/[pid]/environ
+    """
+    try:
+        env = str(rline1('/proc/' + pid + '/environ'))
+        if display_env in env and dbus_env in env and user_env in env:
+            env_list = env.split('\x00')
+
+            # iterating over a list of process environment variables
+            for i in env_list:
+                if i.startswith(user_env):
+                    user = i
+                    continue
+
+                if i.startswith(display_env):
+                    display = i[:10]
+                    continue
+
+                if i.startswith(dbus_env):
+                    if ',guid=' in i:
+                        return None
+                    dbus = i
+                    continue
+
+                if i.startswith('HOME='):
+                    # exclude Display Manager's user
+                    if i.startswith('HOME=/var'):
+                        return None
+
+            env = user.partition('USER=')[2], display, dbus
+            return env
+
+    except FileNotFoundError:
+        pass
+    except ProcessLookupError:
+        pass
+
+
 def root_notify_env():
+    """return set(user, display, dbus)"""
+    unsorted_envs_list = []
+    # iterates over processes, find processes with suitable env
+    for pid in listdir('/proc'):
+        if pid[0].isdecimal() is False:
+            continue
+        one_env = re_pid_environ(pid)
+        unsorted_envs_list.append(one_env)
+    env = set(unsorted_envs_list)
+    env.discard(None)
+    return env
 
-    ps_output_list = Popen(['ps', 'ae'], stdout=PIPE
-        ).communicate()[0].decode().split('\n')
-
-    lines_with_displays = []
-    for line in ps_output_list:
-        if ' DISPLAY=' in line and ' DBUS_SESSION_BUS_ADDRES' \
-            'S=' in line and ' USER=' in line:
-            lines_with_displays.append(line)
-
-    # list of tuples with needments
-    deus = []
-    for i in lines_with_displays:
-        for i in i.split(' '):
-            if i.startswith('USER='):
-                
-                
-                # .partition('=') !!!
-                user = i.strip('\n').split('=')[1]
-                continue
-            if i.startswith('DISPLAY='):
-                disp_value = i.strip('\n').split('=')[1][0:2]
-                
-                
-                
-                
-                # Здесь можно не склеивать, а сразу сделать пару ключ: значение
-                disp = 'DISPLAY=' + disp_value
-                continue
-            if i.startswith('DBUS_SESSION_BUS_ADDRESS='):
-                dbus = i.strip('\n')
-        deus.append(tuple([user, disp, dbus]))
-
-    # unique list of tuples
-    vult = []
-    for user_env_tuple in set(deus):
-        vult.append(user_env_tuple)
-
-    return vult
 
 b = root_notify_env()
 
@@ -98,11 +129,14 @@ if len(b) > 0:
         dbus_tuple = dbus_env.partition('=')
         display_key, display_value = display_tuple[0], display_tuple[2]
         dbus_key, dbus_value = dbus_tuple[0], dbus_tuple[2]
-        Popen(['sudo', '-u', username,
-            'notify-send', '--icon=dialog-warning',
-            '{}'.format(title), '{}'.format(body)
-            ], env={
-                display_key: display_value, dbus_key: dbus_value
-                }).wait(9)
+        try:
+            Popen(['sudo', '-u', username,
+                'notify-send', '--icon=dialog-warning',
+                '{}'.format(title), '{}'.format(body)
+                ], env={
+                    display_key: display_value, dbus_key: dbus_value
+                    }).wait(wait_time)
+        except TimeoutExpired:
+            print('TimeoutExpired: notify ' + username)
 else:
     print('Low memory warnings: nobody logged in with GUI. Nothing to do.')

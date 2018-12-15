@@ -14,10 +14,18 @@ from signal import SIGKILL, SIGTERM
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
+
 '''
 nm = 30
 nc = nm + 1
 '''
+
+self_uid = os.geteuid()
+self_pid = str(os.getpid())
+
+wait_time = 0.1
+cache_time = 30
+cache_path = '/dev/shm/nohang_env_cache'
 
 ##########################################################################
 
@@ -40,42 +48,64 @@ def format_time(t):
         return '{} h {} min {} sec'.format(h, m, s)
 
 
+def re_pid_environ(pid):
+    """
+    read environ of 1 process
+    returns tuple with USER, DBUS, DISPLAY like follow:
+    ('user', 'DISPLAY=:0',
+     'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
+    returns None if these vars is not in /proc/[pid]/environ
+    """
+    display_env = 'DISPLAY='
+    dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
+    user_env = 'USER='
+    try:
+        env = str(rline1('/proc/' + pid + '/environ'))
+        if display_env in env and dbus_env in env and user_env in env:
+            env_list = env.split('\x00')
+
+            # iterating over a list of process environment variables
+            for i in env_list:
+                if i.startswith(user_env):
+                    user = i
+                    continue
+
+                if i.startswith(display_env):
+                    display = i[:10]
+                    continue
+
+                if i.startswith(dbus_env):
+                    if ',guid=' in i:
+                        return None
+                    dbus = i
+                    continue
+
+                if i.startswith('HOME='):
+                    # exclude Display Manager's user
+                    if i.startswith('HOME=/var'):
+                        return None
+
+            env = user.partition('USER=')[2], display, dbus
+            return env
+
+    except FileNotFoundError:
+        pass
+    except ProcessLookupError:
+        pass
+
+
 def root_notify_env():
-    """
-    Get environment for notification sending from root.
-
-    Returns list [tuple username, tuple DISPLAY, tuple DBUS_SESSION_BUS_ADDRES]
-    """
-    ps_output_list = Popen(['ps', 'ae'], stdout=PIPE
-                           ).communicate()[0].decode().split('\n')
-
-    lines_with_displays = []
-    for line in ps_output_list:
-        if ' DISPLAY=' in line and ' DBUS_SESSION_BUS_ADDRES' \
-                'S=' in line and ' USER=' in line:
-            lines_with_displays.append(line)
-
-    # list of tuples with needments
-    deus = []
-    for i in lines_with_displays:
-        for i in i.split(' '):
-            if i.startswith('USER='):
-                user = i.strip('\n').split('=')[1]
-                continue
-            if i.startswith('DISPLAY='):
-                disp_value = i.strip('\n').split('=')[1][0:2]
-                disp = 'DISPLAY=' + disp_value
-                continue
-            if i.startswith('DBUS_SESSION_BUS_ADDRESS='):
-                dbus = i.strip('\n')
-        deus.append(tuple([user, disp, dbus]))
-
-    # unique list of tuples
-    vult = []
-    for user_env_tuple in set(deus):
-        vult.append(user_env_tuple)
-
-    return vult
+    """return set(user, display, dbus)"""
+    unsorted_envs_list = []
+    # iterates over processes, find processes with suitable env
+    for pid in os.listdir('/proc'):
+        if pid[0].isdecimal() is False:
+            continue
+        one_env = re_pid_environ(pid)
+        unsorted_envs_list.append(one_env)
+    env = set(unsorted_envs_list)
+    env.discard(None)
+    return env
 
 
 def string_to_float_convert_test(string):
@@ -141,12 +171,12 @@ def rline1(path):
         for line in f:
             return line[:-1]
 
-'''
+
 def write(path, string):
     """Write string to path."""
     with open(path, 'w') as f:
         f.write(string)
-'''
+
 
 def kib_to_mib(num):
     """Convert KiB values to MiB values."""
@@ -264,16 +294,26 @@ def send_notify_warn():
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
+        
+        
+        # теперь можно напрямую уведомлять из кэша если он не устарел
+        
+        
         Popen([
             '/usr/bin/nohang_notify_low_mem',
             '--mem', low_mem_percent,
             '--pid', pid,
             '--name', name
         ])
+        
+        
     else:  # Or by regular user
         # send notification to user that runs this nohang
-        Popen(['notify-send', '--icon=dialog-warning',
-               '{}'.format(title), '{}'.format(body)])
+        try:
+            Popen(['notify-send', '--icon=dialog-warning',
+                '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+        except TimeoutExpired:
+            print('TimeoutExpired: ' + 'notify low mem')
 
 
 def send_notify(signal, name, pid):
@@ -296,14 +336,19 @@ def send_notify(signal, name, pid):
         if len(b) > 0:
             for i in b:
                 username, display_env, dbus_env = i[0], i[1], i[2]
-                Popen(['sudo', '-u', username, 'env', display_env,
-                       dbus_env, 'notify-send', '--icon=dialog-warning',
-                       '{}'.format(title), '{}'.format(body)]).wait(9)
+                try:
+                    Popen(['sudo', '-u', username, 'env', display_env,
+                        dbus_env, 'notify-send', '--icon=dialog-warning',
+                        '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                except TimeoutExpired:
+                    print('TimeoutExpired: ' + 'notify send signal')
     else:
         # send notification to user that runs this nohang
-        Popen(['notify-send', '--icon=dialog-warning',
-               '{}'.format(title), '{}'.format(body)])
-
+        try:
+            Popen(['notify-send', '--icon=dialog-warning',
+                '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+        except TimeoutExpired:
+            print('BAAAR')
 
 def send_notify_etc(pid, name, command):
     """
@@ -322,9 +367,12 @@ def send_notify_etc(pid, name, command):
         if len(b) > 0:
             for i in b:
                 username, display_env, dbus_env = i[0], i[1], i[2]
-                Popen(['sudo', '-u', username, 'env', display_env,
-                       dbus_env, 'notify-send', '--icon=dialog-warning',
-                       '{}'.format(title), '{}'.format(body)])
+                try:
+                    Popen(['sudo', '-u', username, 'env', display_env,
+                        dbus_env, 'notify-send', '--icon=dialog-warning',
+                        '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                except TimeoutExpired:
+                    print('TimeoutExpired: notify run command')
     else:
         # send notification to user that runs this nohang
         Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'
@@ -357,7 +405,7 @@ def fattest():
 
     for pid in os.listdir('/proc'):
         # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid is '1':
+        if pid[0].isdecimal() is False or pid is '1' or pid is self_pid:
             continue
 
         # find and modify badness (if it needs)
@@ -1183,8 +1231,7 @@ else:
     mla_res = ''
 
 
-self_uid = os.geteuid()
-self_pid = os.getpid()
+
 
 
 if self_uid == 0:
@@ -1314,7 +1361,7 @@ if print_config:
 mem_len = len(str(round(mem_total / 1024.0)))
 
 if gui_notifications or gui_low_memory_warnings:
-    from subprocess import Popen, PIPE
+    from subprocess import Popen, TimeoutExpired
     notify_sig_dict = {SIGKILL: 'Killing',
                        SIGTERM: 'Terminating'}
 
@@ -1332,7 +1379,80 @@ print('The duration of startup:',
 
 print('Monitoring started!')
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+def save_env_cache():
+    z = '{}\n'.format(int(time()))
+    a = root_notify_env()
+    #print(a)
+    for i in a:
+        z = z + '{}\x00{}\x00{}\n'.format(i[0], i[1], i[2])
+    write(cache_path, z)
+    os.chmod(cache_path, 0000)
+    return a
+
+
+def read_env_cache():
+    x, y = [], []
+    try:
+        with open(cache_path) as f:
+            for n, line in enumerate(f):
+                if n is 0:
+                    t = line[:-1]
+                    y.append(t)
+                    continue
+                if n > 0:
+                    x.append(line[:-1].split('\x00'))
+    except FileNotFoundError:
+        return None
+    y.append(x)
+    return y
+
+
+def root_env_cache():
+    cache = read_env_cache()
+    if cache is None:
+        print('cache not found, get new env and cache it')
+        return save_env_cache()
+    delta_t = time() - int(cache[0])
+    if delta_t > cache_time:
+        print('cache time: {}, delta: {}, ' \
+            'get new env and cache it'.format(
+                cache_time, round(delta_t)))
+        save_env_cache()
+        return root_notify_env()
+    else:
+        print('cache time: {}, delta: {}, ' \
+            'get cached env'.format(
+                cache_time, round(delta_t)))
+        return cache[1]
+
+
+t1 = time()
+# root_env_cache()
+t2 = time()
+# print(t2 - t1)
+
+
+
+
+
+
+
 stdout.flush()
+
+#exit()
 
 ##########################################################################
 
