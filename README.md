@@ -50,7 +50,7 @@ For basic usage:
 
 To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
-- `sudo` and `procps` if nohang is started as root
+- `sudo` if nohang is with UID=0
 
 ## Memory and CPU usage
 

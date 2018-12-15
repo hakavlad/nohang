@@ -23,7 +23,7 @@ nc = nm + 1
 self_uid = os.geteuid()
 self_pid = str(os.getpid())
 
-wait_time = 0.1
+wait_time = 2
 cache_time = 30
 cache_path = '/dev/shm/nohang_env_cache'
 
@@ -348,7 +348,7 @@ def send_notify(signal, name, pid):
             Popen(['notify-send', '--icon=dialog-warning',
                 '{}'.format(title), '{}'.format(body)]).wait(wait_time)
         except TimeoutExpired:
-            print('BAAAR')
+            print('TimeoutExpired: ' + 'notify send signal')
 
 def send_notify_etc(pid, name, command):
     """

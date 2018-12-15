@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 from os import listdir
 from subprocess import Popen, TimeoutExpired
 
-wait_time = 0.1
+wait_time = 2
 
 parser = ArgumentParser()
 
