@@ -50,7 +50,7 @@ For basic usage:
 
 To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
-- `sudo` if nohang is with UID=0
+- `sudo` if nohang started with UID=0
 
 ## Memory and CPU usage
 
