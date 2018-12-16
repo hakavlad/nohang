@@ -19,15 +19,15 @@ def parse_arguments():
         '--num',
         '-n',
         help="""max number of lines; default: 99999""",
-        default=None,
-        type=str
+        default=99999,
+        type=int
     )
     parser.add_argument(
         '--len',
         '-l',
         help="""max cmdline length; default: 99999""",
-        default=None,
-        type=str
+        default=99999,
+        type=int
     )
     parser.add_argument(
         '--refresh',
@@ -145,7 +145,7 @@ class ProcessInfo:
             self.name.ljust(15),
             human_readable(self.vm_rss),
             human_readable(self.vm_swap),
-            self.cmdline[:int(display_cmdline)]
+            self.cmdline[:display_cmdline]
         )
 
 
@@ -158,15 +158,8 @@ class Application:
 
     def __init__(self):
         args = parse_arguments()
-
         self.num_lines = args.num
-        if self.num_lines is None:
-            self.num_lines = 99999
-
         self.display_cmdline = args.len
-        if self.display_cmdline is None:
-            self.display_cmdline = 99999
-
         self.refresh_interval = args.refresh
 
     def print_stats(self):
@@ -184,7 +177,7 @@ class Application:
                 oom_list.append(proc_info)
         oom_list.sort(key=lambda p: p.oom_score, reverse=True)
 
-        if self.display_cmdline == '0':
+        if self.display_cmdline == 0:
             print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap')
             print('--------- ------------- ----- ----- --------------- -------- --------')
         else:
@@ -192,7 +185,7 @@ class Application:
             print('--------- ------------- ----- ----- --------------- -------- -------- -------')
 
         # iterate through list sorted by oom_score and print name, pid, etc
-        for proc_info in oom_list[:int(self.num_lines)]:
+        for proc_info in oom_list[:self.num_lines]:
             if proc_info.read_status():
                 print(
                     proc_info.format_output(
