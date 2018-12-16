@@ -3,120 +3,189 @@
 sort processes by oom_score
 """
 
-# нужна еще валидация cli ввода
+# @TODO: user input validation
 
-from operator import itemgetter
 from os import listdir
 from argparse import ArgumentParser
 
-parser = ArgumentParser()
 
-parser.add_argument(
-    '--num',
-    '-n',
-    help="""max number of lines; default: 99999""",
-    default=None,
-    type=str
-)
+def parse_arguments():
+    """
+    parse CLI args
+    """
+    parser = ArgumentParser()
+    parser.add_argument(
+        '--num',
+        '-n',
+        help="""max number of lines; default: 99999""",
+        default=None,
+        type=str
+    )
+    parser.add_argument(
+        '--len',
+        '-l',
+        help="""max cmdline length; default: 99999""",
+        default=None,
+        type=str
+    )
+    return parser.parse_args()
 
-parser.add_argument(
-    '--len',
-    '-l',
-    help="""max cmdline length; default: 99999""",
-    default=None,
-    type=str
-)
 
-args = parser.parse_args()
-
-display_cmdline = args.len
-num_lines = args.num
-if num_lines == None:
-    num_lines = 99999
-
-if display_cmdline == None:
-    display_cmdline = 99999
-
-def human(num):
+def human_readable(num):
     '''KiB to MiB'''
     return str(round(num / 1024.0)).rjust(6, ' ')
 
-with open('/proc/self/status') as file:
-    status_list = file.readlines()
 
-# список имен из /proc/*/status для дальнейшего поиска позиций VmRSS and VmSwap
-status_names = []
-for s in status_list:
-    status_names.append(s.split(':')[0])
+class TableIndexes:  # pylint: disable=too-few-public-methods
+    """
+    table headers from /proc/*/status for further
+    searching positions of VmRSS and VmSwap in each process output
+    """
 
-vm_rss_index = status_names.index('VmRSS')
-vm_swap_index = status_names.index('VmSwap')
-uid_index = status_names.index('Uid')
+    def __init__(self):
+        with open('/proc/self/status') as status_file:
+            status_list = status_file.readlines()
 
-oom_list = []
-for pid in listdir('/proc'):
-    # пропускаем элементы, состоящие не из цифр и PID 1
-    if pid.isdigit() is not True or pid == '1':
-        continue
-    try:
-        with open('/proc/' + pid + '/cmdline') as file:
-            try:
-                cmdline = file.readlines()[0].replace('\x00', ' ')
-            except IndexError:
-                continue
-        with open('/proc/' + pid + '/oom_score') as file:
-            oom_score = int(file.readlines()[0][:-1])
-        with open('/proc/' + pid + '/oom_score_adj') as file:
-            oom_score_adj = int(file.readlines()[0][:-1])
-    except FileNotFoundError:
-        continue
-    except ProcessLookupError:
-        continue
+        status_names = []
+        for line in status_list:
+            status_names.append(line.split(':')[0])
 
-    oom_list.append((pid, oom_score, oom_score_adj, cmdline))
+        self.vm_rss = status_names.index('VmRSS')
+        self.vm_swap = status_names.index('VmSwap')
+        self.uid = status_names.index('Uid')
 
-# list sorted by oom_score
-oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
 
-if display_cmdline == '0':
-    print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap')
-    print('--------- ------------- ----- ----- --------------- -------- --------')
-else:
-    print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap   cmdline')
-    print('--------- ------------- ----- ----- --------------- -------- -------- -------')
+INDEX = TableIndexes()
 
-# итерируемся по сортированному списку oom_score, печатая name, pid etc
-for i in oom_list_sorted[:int(num_lines)]:
-    pid = i[0]
-    oom_score = i[1]
-    oom_score_adj = i[2]
-    cmdline = i[3].strip()
 
-    try:
-        # читать часть файла не дальше VmSwap - когда-нибудь
-        with open('/proc/' + pid + '/status') as file:
-            status_list = file.readlines()
+class ProcessInfo:
 
-        vm_rss = int(status_list[vm_rss_index].split(':')[1].split(' ')[-2])
-        vm_swap = int(status_list[vm_swap_index].split(':')[1].split(' ')[-2])
-        name = status_list[0][:-1].split('\t')[1]
-        uid = status_list[uid_index].split('\t')[1]
+    pid = None
+    cmdline = None
+    oom_score = None
+    oom_score_adj = None
 
-    except FileNotFoundError:
-        continue
+    name = None
+    uid = None
+    vm_rss = None
+    vm_swap = None
 
-    except ProcessLookupError:
-        continue
+    @classmethod
+    def from_pid(cls, pid):
+        """
+        create ProcessInfo instance reading process info from /proc/{pid}/
+        """
+        info = cls()
+        info.pid = pid
+        try:
+            with open('/proc/' + pid + '/cmdline') as file:
+                try:
+                    info.cmdline = file.readlines()[0].replace('\x00', ' ')
+                except IndexError:
+                    return None
+            with open('/proc/' + pid + '/oom_score') as file:
+                info.oom_score = int(file.readlines()[0][:-1])
+            with open('/proc/' + pid + '/oom_score_adj') as file:
+                info.oom_score_adj = int(file.readlines()[0][:-1])
+        except FileNotFoundError:
+            return None
+        except ProcessLookupError:
+            return None
+        return info
 
-    print(
-        '{} {} {} {} {} {} M {} M {}'.format(
-            str(oom_score).rjust(9),
-            str(oom_score_adj).rjust(13),
-            uid.rjust(5),
-            str(pid).rjust(5),
-            name.ljust(15),
-            human(vm_rss),
-            human(vm_swap),
-            cmdline[:int(display_cmdline)]
+    def read_status(self):
+        """
+        return True if process have info in /proc/{pid}/status
+        """
+        try:
+            # @TODO: stop reading file after VmSwap value retrieved
+            with open('/proc/' + self.pid + '/status') as file:
+                status_list = file.readlines()
+            self.vm_rss = int(
+                status_list[INDEX.vm_rss].split(':')[1].split(' ')[-2]
+            )
+            self.vm_swap = int(
+                status_list[INDEX.vm_swap].split(':')[1].split(' ')[-2]
+            )
+            self.name = status_list[0][:-1].split('\t')[1]
+            self.uid = status_list[INDEX.uid].split('\t')[1]
+        except FileNotFoundError:
+            return False
+        except ProcessLookupError:
+            return False
+        return True
+
+    def format_output(self, display_cmdline):
+        """
+        format output for printing
+        """
+        return '{} {} {} {} {} {} M {} M {}'.format(
+            str(self.oom_score).rjust(9),
+            str(self.oom_score_adj).rjust(13),
+            self.uid.rjust(5),
+            str(self.pid).rjust(5),
+            self.name.ljust(15),
+            human_readable(self.vm_rss),
+            human_readable(self.vm_swap),
+            self.cmdline[:int(display_cmdline)]
         )
-    )
+
+
+class Application:
+    """
+    oom-sort application
+    """
+
+    oom_list = None
+
+    def __init__(self):
+        args = parse_arguments()
+
+        self.num_lines = args.num
+        if self.num_lines is None:
+            self.num_lines = 99999
+
+        self.display_cmdline = args.len
+        if self.display_cmdline is None:
+            self.display_cmdline = 99999
+
+    def print_stats(self):
+        """
+        print processes stats sorted by OOM score
+        """
+
+        oom_list = []
+        for pid in listdir('/proc'):
+            # skip non-numeric entries and PID 1
+            if pid.isdigit() is not True or pid == '1':
+                continue
+            proc_info = ProcessInfo.from_pid(pid)
+            if proc_info:
+                oom_list.append(proc_info)
+        oom_list.sort(key=lambda p: p.oom_score, reverse=True)
+
+        if self.display_cmdline == '0':
+            print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap')
+            print('--------- ------------- ----- ----- --------------- -------- --------')
+        else:
+            print('oom_score oom_score_adj   UID   PID Name             VmRSS   VmSwap   cmdline')
+            print('--------- ------------- ----- ----- --------------- -------- -------- -------')
+
+        # iterate through list sorted by oom_score and print name, pid, etc
+        for proc_info in oom_list[:int(self.num_lines)]:
+            if proc_info.read_status():
+                print(
+                    proc_info.format_output(
+                        display_cmdline=self.display_cmdline
+                    )
+                )
+
+    def main(self):
+        """
+        application entrypoint
+        """
+        self.print_stats()
+
+
+if __name__ == "__main__":
+    Application().main()
