@@ -7,6 +7,7 @@ sort processes by oom_score
 
 from os import listdir
 from argparse import ArgumentParser
+from time import sleep
 
 
 def parse_arguments():
@@ -28,12 +29,29 @@ def parse_arguments():
         default=None,
         type=str
     )
+    parser.add_argument(
+        '--refresh',
+        '-r',
+        help='refresh interval (0 to disable); default: 0. '
+        'Use it with --num/-n to also limit the output length',
+        default=0,
+        type=int
+    )
     return parser.parse_args()
 
 
 def human_readable(num):
-    '''KiB to MiB'''
+    """
+    KiB to MiB
+    """
     return str(round(num / 1024.0)).rjust(6, ' ')
+
+
+def clear_screen():
+    """
+    print ANSI sequence to clear the screen
+    """
+    print('\033c')
 
 
 class TableIndexes:  # pylint: disable=too-few-public-methods
@@ -149,6 +167,8 @@ class Application:
         if self.display_cmdline is None:
             self.display_cmdline = 99999
 
+        self.refresh_interval = args.refresh
+
     def print_stats(self):
         """
         print processes stats sorted by OOM score
@@ -180,11 +200,29 @@ class Application:
                     )
                 )
 
+    def oom_top(self):
+        """
+        show `top`-like refreshing stats
+        """
+        while True:
+            try:
+                clear_screen()
+                print("Refreshing each {} seconds, press <Ctrl+C> to interrupt:".format(
+                    self.refresh_interval
+                ))
+                self.print_stats()
+                sleep(self.refresh_interval)
+            except KeyboardInterrupt:
+                break
+
     def main(self):
         """
         application entrypoint
         """
-        self.print_stats()
+        if not self.refresh_interval:
+            self.print_stats()
+        else:
+            self.oom_top()
 
 
 if __name__ == "__main__":
