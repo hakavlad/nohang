@@ -45,8 +45,8 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Requirements
 
 For basic usage:
-- `Linux` 3.14+
-- `Python` 3.4+
+- `Linux` 3.14+ (since `MemAvailable` appeared in `/proc/meminfo`)
+- `Python` 3.3+ (not tested with previous)
 
 To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
@@ -59,7 +59,8 @@ To show GUI notifications:
 
 ## Download, install, uninstall
 
-**Please use the latest [release version](https://github.com/hakavlad/nohang/releases).** Current version may be more unstable.
+**Please use the latest [release version](https://github.com/hakavlad/nohang/releases).**
+Current version may be more unstable.
 
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
