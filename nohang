@@ -15,11 +15,14 @@ from signal import SIGKILL, SIGTERM
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
 
+'''
+nm = 30
+nc = nm + 1
+'''
 
 self_uid = os.geteuid()
 self_pid = str(os.getpid())
 
-# not implemented
 wait_time = 2
 cache_time = 30
 cache_path = '/dev/shm/nohang_env_cache'
@@ -28,6 +31,37 @@ cache_path = '/dev/shm/nohang_env_cache'
 
 
 # function definition section
+
+
+
+'''
+def psi_mem_some_avg10():
+    # return float(rline1('/home/user/Downloads/1').split(' ')[1].split('=')[1])
+    # return rline1('/proc/pressure/memory')
+    return float(rline1('/proc/pressure/memory').split(' ')[1].split('=')[1])
+
+'''
+# os.path.exists('/proc/pressure/memory')
+
+
+
+def psi_mem_some_avg10():
+    if os.path.exists('/proc/pressure/memory'):
+        return float(rline1(
+            '/proc/pressure/memory').split(' ')[1].split('=')[1])
+
+
+sigterm_psi = 60
+sigkill_psi = 80
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1513,16 +1547,32 @@ stdout.flush()
 
 
 
+psi_support = os.path.exists('/proc/pressure/memory')
+
+
+
+
+
+
+
+
+
+
 ##########################################################################
+
+
 
 
 while True:
 
-    t1 = time()
+    if psi_support:
+        print(psi_mem_some_avg10())
+        if psi_mem_some_avg10() >= sigkill_psi:
+            find_victim_and_send_signal(SIGKILL)
+        if psi_mem_some_avg10() >= sigterm_psi:
+            find_victim_and_send_signal(SIGTERM)
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
-
-    t2 = time()
 
     # if swap_min_sigkill is set in percent
     if swap_kill_is_percent:
@@ -1534,11 +1584,11 @@ while True:
     if swap_warn_is_percent:
         swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
 
-    t3 = time()
+
 
     mem_used_zram = check_zram()
 
-    t4 = time()
+
 
     if print_mem_check_results:
 
@@ -1568,13 +1618,17 @@ while True:
                       human(mem_used_zram, mem_len),
                       just_percent_mem(mem_used_zram / mem_total)))
 
-    t5 = time()
+
+
+
 
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:  # If swap_min_sigkill is absolute
         swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
     else:
         swap_sigkill_pc = '-'
+
+
 
     if swap_total > swap_min_sigterm_kb:
         swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 0.1))
@@ -1583,7 +1637,10 @@ while True:
         # печатать так: SwapTotal = 0, ignore swapspace
         swap_sigterm_pc = '-'
 
-    t6 = time()
+
+
+
+    # далее пошло ветвление
 
 
     # MEM SWAP KILL
@@ -1672,38 +1729,24 @@ while True:
 
         sleep_after_check_mem()
 
-
-
-
-
-
-
     # SLEEP BETWEEN MEM CHECKS
     else:
         sleep_after_check_mem()
-        #break
-
-t7 = time()
 
 
-d = (t7 - t1) * 1000000
-print(d, 'total')
-
-d = (t2 - t1) * 1000000
-print(d, 'mem+swap')
-
-d = (t4 - t3) * 1000000
-print(d, 'zram')
 
 
-t22 = time()
-e = check_mem()
-t33 = time()
-d = (t33 - t22) * 1000000
-print(d, 'mem')
 
-d = (t5 - t4) * 1000000
-print(d, 'print meminfo')
+
+
+
+
+
+
+
+
+
+
 
 
 
