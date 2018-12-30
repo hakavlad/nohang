@@ -1565,12 +1565,21 @@ psi_support = os.path.exists('/proc/pressure/memory')
 
 while True:
 
+
     if psi_support:
-        print(psi_mem_some_avg10())
-        if psi_mem_some_avg10() >= sigkill_psi:
+
+        avg10 = psi_mem_some_avg10()
+
+        if avg10 >= sigkill_psi:
+            time0 = time()
+            mem_info = 'avg10 > sigkill_avg10'
             find_victim_and_send_signal(SIGKILL)
-        if psi_mem_some_avg10() >= sigterm_psi:
+        elif avg10 >= sigterm_psi:
+            time0 = time()
+            mem_info = 'avg10 > sigterm_avg10'
             find_victim_and_send_signal(SIGTERM)
+        else:
+            print('PSI memory avg10:', avg10)
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
@@ -1732,20 +1741,6 @@ while True:
     # SLEEP BETWEEN MEM CHECKS
     else:
         sleep_after_check_mem()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
