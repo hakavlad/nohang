@@ -9,7 +9,7 @@ from operator import itemgetter
 # this is most slow import
 from argparse import ArgumentParser
 
-from sys import stdout
+from sys import stdout, stderr
 from signal import SIGKILL, SIGTERM
 
 sig_dict = {SIGKILL: 'SIGKILL',
@@ -33,38 +33,10 @@ cache_path = '/dev/shm/nohang_env_cache'
 # function definition section
 
 
-
-'''
-def psi_mem_some_avg10():
-    # return float(rline1('/home/user/Downloads/1').split(' ')[1].split('=')[1])
-    # return rline1('/proc/pressure/memory')
-    return float(rline1('/proc/pressure/memory').split(' ')[1].split('=')[1])
-
-'''
-# os.path.exists('/proc/pressure/memory')
-
-
-
-def psi_mem_some_avg10():
+def psi_mem_some_avg_total():
     if os.path.exists('/proc/pressure/memory'):
         return float(rline1(
-            '/proc/pressure/memory').split(' ')[1].split('=')[1])
-
-
-sigterm_psi = 60
-sigkill_psi = 80
-
-
-
-
-
-
-
-
-
-
-
-
+            '/proc/pressure/memory').rpartition('=')[2]
 
 
 def check_mem():
@@ -619,7 +591,7 @@ def find_victim_and_send_signal(signal):
         except ValueError:
             pass
 
-        oom_score = rline1('/proc/' + pid + '/oom_score')
+        oom_score = rline1('/proc/' + pid + '/oom_score') # тут может быть FileNotFoundError!
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         len_vm = len(str(vm_size))
@@ -765,7 +737,7 @@ def sleep_after_check_mem():
                 round(t_mem, 2),
                 round(t_swap, 2),
                 round(t_zram, 2)))
-        stdout.flush()
+        stderr.flush()
         sleep(t)
     except KeyboardInterrupt:
         exit()
@@ -1560,7 +1532,14 @@ psi_support = os.path.exists('/proc/pressure/memory')
 
 ##########################################################################
 
+# ввести через конфиг!
+avg_min_time = 3
+sigterm_psi = 60
+sigkill_psi = 80
 
+
+ta0 = time()
+a0 = avg_total()
 
 
 while True:
@@ -1568,18 +1547,26 @@ while True:
 
     if psi_support:
 
-        avg10 = psi_mem_some_avg10()
+        ta1= time()
+        a1 = avg_total()
+        avg = (a1 - a0) / (ta1 - ta0) / 100
+        a0 = a1
 
-        if avg10 >= sigkill_psi:
+        print('PSI mem avg:', round(avg, 2))
+
+
+
+
+        if avg >= sigkill_psi:
             time0 = time()
-            mem_info = 'avg10 > sigkill_avg10'
+            mem_info = 'avg > sigkill_avg'
             find_victim_and_send_signal(SIGKILL)
-        elif avg10 >= sigterm_psi:
+        elif avg >= sigterm_psi:
             time0 = time()
-            mem_info = 'avg10 > sigterm_avg10'
+            mem_info = 'avg ({}) > sigterm_avg ({})'.format(avg, sigterm_avg)
             find_victim_and_send_signal(SIGTERM)
         else:
-            print('PSI memory avg10:', avg10)
+            pass
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
