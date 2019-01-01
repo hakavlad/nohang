@@ -35,8 +35,7 @@ cache_path = '/dev/shm/nohang_env_cache'
 
 def psi_mem_some_avg_total():
     if os.path.exists('/proc/pressure/memory'):
-        return float(rline1(
-            '/proc/pressure/memory').rpartition('=')[2]
+        return float(rline1('/proc/pressure/memory').rpartition('=')[2])
 
 
 def check_mem():
@@ -1537,9 +1536,9 @@ avg_min_time = 3
 sigterm_psi = 60
 sigkill_psi = 80
 
-
-ta0 = time()
-a0 = avg_total()
+if psi_support:
+    ta0 = time()
+    a0 = psi_mem_some_avg_total()
 
 
 while True:
@@ -1548,7 +1547,7 @@ while True:
     if psi_support:
 
         ta1= time()
-        a1 = avg_total()
+        a1 = psi_mem_some_avg_total()
         avg = (a1 - a0) / (ta1 - ta0) / 100
         a0 = a1
 
