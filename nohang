@@ -27,8 +27,9 @@ wait_time = 2
 cache_time = 30
 cache_path = '/dev/shm/nohang_env_cache'
 
+psi_support = os.path.exists('/memory')
 
-psi_support = os.path.exists('/proc/pressure/memory')
+
 
 
 
@@ -38,13 +39,9 @@ psi_support = os.path.exists('/proc/pressure/memory')
 
 # function definition section
 
-
 def psi_mem_some_avg_total():
     if psi_support:
-        return float(rline1('/proc/pressure/memory').rpartition('=')[2])
-
-
-
+        return float(rline1('/memory').rpartition('=')[2])
 
 
 
@@ -1535,22 +1532,18 @@ stdout.flush()
 
 
 
-
+# ввести через конфиг!
+sigterm_psi = 60
+sigkill_psi = 80
+avg_min_time = 3
 
 
 ##########################################################################
 
-# ввести через конфиг!
-avg_min_time = 3
-sigterm_psi = 60
-sigkill_psi = 80
 
 
-#print(psi_support)
-
-if psi_support:
-    ta0 = time()
-    a0 = psi_mem_some_avg_total()
+ta0 = time()
+a0 = psi_mem_some_avg_total()
 
 
 while True:
@@ -1559,36 +1552,14 @@ while True:
     if psi_support:
 
         ta1= time()
-        dt = ta1 - ta0
-        #print(dt)
-        if dt < avg_min_time:
-            pass
+        a1 = psi_mem_some_avg_total()
+        avg = (a1 - a0) / (ta1 - ta0) / 100
+        a0 = a1
 
-            #a0 = a1 + (psi_mem_some_avg_total() - a0)
-
-        else:
-            
-            
-            
-            
-            
-            a1 = psi_mem_some_avg_total()
-            avg = (a1 - a0) / (ta1 - ta0) / 100
-            a0 = a1
-            print('PSI mem avg:', round(avg, 2))
-            if avg >= sigkill_psi:
-                time0 = time()
-                mem_info = 'avg > sigkill_avg'
-                find_victim_and_send_signal(SIGKILL)
-            elif avg >= sigterm_psi:
-                time0 = time()
-                mem_info = 'avg ({}) > sigterm_avg ({})'.format(avg, sigterm_avg)
-                find_victim_and_send_signal(SIGTERM)
-            else:
-                pass
+        print('PSI mem avg:', round(avg, 2))
 
 
-            ta0 = ta1
+
 
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
