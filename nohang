@@ -1558,7 +1558,7 @@ while True:
         if dt >= avg_min_time:
 
             a1 = psi_mem_some_avg_total()
-            avg = (a1 - a0) / (ta1 - ta0) / 100
+            avg = (a1 - a0) / (ta1 - ta0) / 10000
 
             print('PSI mem avg:', round(avg, 2))
             ta0 = ta1
