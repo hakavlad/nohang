@@ -33,9 +33,6 @@ psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
 
 
-
-
-
 ##########################################################################
 
 
@@ -45,6 +42,9 @@ def psi_mem_some_avg_total():
     if psi_support:
         return float(rline1(psi_path).rpartition('=')[2])
 
+
+def psi_mem_some_avg10():
+    return float(rline1(psi_path).split(' ')[1].split('=')[1])
 
 
 def check_mem():
@@ -1542,22 +1542,50 @@ stdout.flush()
 
 # ввести через конфиг!
 sigterm_psi = 60
-sigkill_psi = 95
-avg_min_time = 4
-psi_min_sleep_time_after_action = 20
+sigkill_psi = 90
+# avg_min_time = 4
+psi_min_sleep_time_after_action = 30
 
 
 ##########################################################################
 
 
 if psi_support:
-    ta0 = time()
-    a0 = psi_mem_some_avg_total()
+    # ta0 = time()
+    # a0 = psi_mem_some_avg_total()
     kill_psi_t0 = time()
     term_psi_t0 = time()
 
+
+
+
+
 while True:
 
+
+
+
+
+    if psi_support:
+
+        avg10 = psi_mem_some_avg10()
+
+        if avg10 >= sigkill_psi:
+            time0 = time()
+            mem_info = 'avg ({}) > sigkill_psi ({})'.format(round(avg, 2), sigkill_psi)
+            find_victim_and_send_signal(SIGKILL)
+            kill_psi_t0 = time()
+        elif avg10 >= sigterm_psi:
+            time0 = time()
+            mem_info = 'avg ({}) > sigterm_psi ({})'.format(round(avg, 2), sigterm_psi)
+            find_victim_and_send_signal(SIGTERM)
+            term_psi_t0 = time()
+        else:
+            print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
+
+
+
+    '''
     if psi_support:
 
         ta1= time()
@@ -1586,7 +1614,7 @@ while True:
                 term_psi_t0 = time()
             else:
                 print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
-
+    '''
 
 
 
