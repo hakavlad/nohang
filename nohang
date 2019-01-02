@@ -1016,6 +1016,12 @@ gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
 execute_the_command = conf_parse_bool('execute_the_command')
 
+
+ignore_psi = conf_parse_bool('ignore_psi')
+
+
+
+
 regex_matching = conf_parse_bool('regex_matching')
 
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
@@ -1614,19 +1620,23 @@ psi_min_sleep_time_after_action = psi_avg10_sleep_time
 ##########################################################################
 
 
-if psi_support:
+if psi_support and not ignore_psi:
     # ta0 = time()
     # a0 = psi_mem_some_avg_total()
     kill_psi_t0 = time()
     term_psi_t0 = time()
 
 
+avg_value = ''
+
+
 while True:
 
-
-    if psi_support:
-        print(rline1(psi_path))
+    if psi_support and not ignore_psi:
+        #print(rline1(psi_path))
         avg10 = psi_mem_some_avg10()
+        if print_mem_check_results:
+            avg_value = 'PSI mem some avg10: {} | '.format(str(avg10).rjust(6))
 
         if avg10 >= sigkill_psi and time() - kill_psi_t0 >= psi_min_sleep_time_after_action:
             time0 = time()
@@ -1639,8 +1649,8 @@ while True:
             find_victim_and_send_signal(SIGTERM)
             term_psi_t0 = time()
         else:
-            print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
-
+            #print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
+            pass
 
 
     '''
@@ -1701,26 +1711,29 @@ while True:
 
         # Output avialable mem sizes
         if swap_total == 0 and mem_used_zram == 0:
-            print('MemAvail: {} M, {} %'.format(
+            print('{}MemAvail: {} M, {} %'.format(
                 human(mem_available, mem_len),
-                just_percent_mem(mem_available / mem_total)))
+                just_percent_mem(mem_available / mem_total)),
+                avg_value)
 
         elif swap_total > 0 and mem_used_zram == 0:
-            print('MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
+            print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
                 human(mem_available, mem_len),
                 just_percent_mem(mem_available / mem_total),
                 human(swap_free, swap_len),
-                just_percent_swap(swap_free / (swap_total + 0.1))))
+                just_percent_swap(swap_free / (swap_total + 0.1))),
+                avg_value)
 
         else:
-            print('MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
+            print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
                   'UsedZram: {} M, {} %'.format(
                       human(mem_available, mem_len),
                       just_percent_mem(mem_available / mem_total),
                       human(swap_free, swap_len),
                       just_percent_swap(swap_free / (swap_total + 0.1)),
                       human(mem_used_zram, mem_len),
-                      just_percent_mem(mem_used_zram / mem_total)))
+                      just_percent_mem(mem_used_zram / mem_total)),
+                      avg_value)
 
 
 
