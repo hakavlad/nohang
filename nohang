@@ -738,6 +738,12 @@ def sleep_after_check_mem():
     else:
         t = t_mem_zram
 
+
+    max_sleep_time = 1
+    if t > max_sleep_time:
+        t = 1
+
+
     try:
         if print_sleep_periods:
             print('sleep', round(t, 2),
@@ -1538,7 +1544,7 @@ stdout.flush()
 sigterm_psi = 60
 sigkill_psi = 95
 avg_min_time = 4
-psi_min_sleep_time_after_action = 16
+psi_min_sleep_time_after_action = 20
 
 
 ##########################################################################
@@ -1674,6 +1680,8 @@ while True:
                 swap_sigkill_pc)
 
         find_victim_and_send_signal(SIGKILL)
+        kill_psi_t0 = time()
+        term_psi_t0 = time()
 
     # ZRAM KILL
     elif mem_used_zram >= zram_max_sigkill_kb:
@@ -1688,6 +1696,8 @@ while True:
                 percent(zram_max_sigkill_kb / mem_total))
 
         find_victim_and_send_signal(SIGKILL)
+        kill_psi_t0 = time()
+        term_psi_t0 = time()
 
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and \
@@ -1711,6 +1721,8 @@ while True:
                 swap_sigterm_pc)
 
         find_victim_and_send_signal(SIGTERM)
+        kill_psi_t0 = time()
+        term_psi_t0 = time()
 
     # ZRAM TERM
     elif mem_used_zram >= zram_max_sigterm_kb:
@@ -1725,6 +1737,8 @@ while True:
                 percent(zram_max_sigterm_kb / mem_total))
 
         find_victim_and_send_signal(SIGTERM)
+        kill_psi_t0 = time()
+        term_psi_t0 = time()
 
     # LOW MEMORY WARNINGS
     elif gui_low_memory_warnings:
