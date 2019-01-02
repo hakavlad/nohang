@@ -1564,12 +1564,12 @@ while True:
         print(rline1(psi_path))
         avg10 = psi_mem_some_avg10()
 
-        if avg10 >= sigkill_psi:
+        if avg10 >= sigkill_psi and time() - kill_psi_t0 >= psi_min_sleep_time_after_action:
             time0 = time()
             mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
             find_victim_and_send_signal(SIGKILL)
             kill_psi_t0 = time()
-        elif avg10 >= sigterm_psi:
+        elif avg10 >= sigterm_psi and time() - term_psi_t0 >= psi_min_sleep_time_after_action:
             time0 = time()
             mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
             find_victim_and_send_signal(SIGTERM)
