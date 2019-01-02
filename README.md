@@ -39,13 +39,15 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
     - OOM prevention results (displays sended signal and displays PID and name of victim)
     - Low memory warnings (displays available memory and name of fattest process)
 - `zram` support (`mem_used_total` as a trigger)
+- `PSI` support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
 - customizable intensity of monitoring
-- convenient configuration with a well commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
+- convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
 
 For basic usage:
 - `Linux` 3.14+ (since `MemAvailable` appeared in `/proc/meminfo`)
+- `Linux` 4.20+ if you want to use `PSI`
 - `Python` 3.3+ (not tested with previous)
 
 To show GUI notifications:
@@ -193,7 +195,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Optimize limiting `oom_score_adj`: now it can works without UID=0
     - Optimize GUI warnings: find env without run `ps` and `env`
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
-    - Add PSI support (using `/proc/pressure/memory`, need Linux 4.20+)
+    - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`
     - Add `oom-trigger`
     - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md)
