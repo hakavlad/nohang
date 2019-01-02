@@ -1536,8 +1536,9 @@ stdout.flush()
 
 # ввести через конфиг!
 sigterm_psi = 60
-sigkill_psi = 80
-avg_min_time = 3
+sigkill_psi = 90
+avg_min_time = 4
+psi_min_sleep_time_after_action = 16
 
 
 ##########################################################################
@@ -1546,7 +1547,8 @@ avg_min_time = 3
 if psi_support:
     ta0 = time()
     a0 = psi_mem_some_avg_total()
-
+    kill_psi_t0 = time()
+    term_psi_t0 = time()
 
 while True:
 
@@ -1560,19 +1562,22 @@ while True:
             a1 = psi_mem_some_avg_total()
             avg = (a1 - a0) / (ta1 - ta0) / 10000
 
-            print('PSI mem avg:', round(avg, 2))
+            print(rline1(psi_path))
+            print('PSI mem some avg: {}, PSI avg time: {}'.format(round(avg, 2), round(dt, 1)))
             ta0 = ta1
             a0 = a1
 
 
-            if avg >= sigkill_psi:
+            if avg >= sigkill_psi and time() - kill_psi_t0 >= psi_min_sleep_time_after_action:
                 time0 = time()
-                mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg, sigkill_psi)
+                mem_info = 'avg ({}) > sigkill_psi ({})'.format(round(avg, 2), sigkill_psi)
                 find_victim_and_send_signal(SIGKILL)
-            elif avg >= sigterm_psi:
+                kill_psi_t0 = time()
+            elif avg >= sigterm_psi and time() - term_psi_t0 >= psi_min_sleep_time_after_action:
                 time0 = time()
-                mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg, sigterm_psi)
+                mem_info = 'avg ({}) > sigterm_psi ({})'.format(round(avg, 2), sigterm_psi)
                 find_victim_and_send_signal(SIGTERM)
+                term_psi_t0 = time()
             else:
                 print('PSI is OK')
 
