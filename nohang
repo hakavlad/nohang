@@ -9,7 +9,7 @@ from operator import itemgetter
 # this is most slow import
 from argparse import ArgumentParser
 
-from sys import stdout, stderr
+from sys import stdout
 from signal import SIGKILL, SIGTERM
 
 sig_dict = {SIGKILL: 'SIGKILL',
@@ -751,7 +751,7 @@ def sleep_after_check_mem():
                 round(t_mem, 2),
                 round(t_swap, 2),
                 round(t_zram, 2)))
-        stderr.flush()
+        stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
         exit()
@@ -1712,30 +1712,28 @@ while True:
         # Output avialable mem sizes
         if swap_total == 0 and mem_used_zram == 0:
             print('{}MemAvail: {} M, {} %'.format(
+                avg_value,
                 human(mem_available, mem_len),
-                just_percent_mem(mem_available / mem_total),
-                avg_value))
+                just_percent_mem(mem_available / mem_total)))
 
         elif swap_total > 0 and mem_used_zram == 0:
             print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
+                avg_value,
                 human(mem_available, mem_len),
                 just_percent_mem(mem_available / mem_total),
                 human(swap_free, swap_len),
-                just_percent_swap(swap_free / (swap_total + 0.1)),
-                avg_value))
+                just_percent_swap(swap_free / (swap_total + 0.1))))
 
         else:
             print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
                   'UsedZram: {} M, {} %'.format(
+                      avg_value,
                       human(mem_available, mem_len),
                       just_percent_mem(mem_available / mem_total),
                       human(swap_free, swap_len),
                       just_percent_swap(swap_free / (swap_total + 0.1)),
                       human(mem_used_zram, mem_len),
-                      just_percent_mem(mem_used_zram / mem_total),
-                      avg_value))
-
-
+                      just_percent_mem(mem_used_zram / mem_total)))
 
 
 
