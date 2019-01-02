@@ -1713,16 +1713,16 @@ while True:
         if swap_total == 0 and mem_used_zram == 0:
             print('{}MemAvail: {} M, {} %'.format(
                 human(mem_available, mem_len),
-                just_percent_mem(mem_available / mem_total)),
-                avg_value)
+                just_percent_mem(mem_available / mem_total),
+                avg_value))
 
         elif swap_total > 0 and mem_used_zram == 0:
             print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %'.format(
                 human(mem_available, mem_len),
                 just_percent_mem(mem_available / mem_total),
                 human(swap_free, swap_len),
-                just_percent_swap(swap_free / (swap_total + 0.1))),
-                avg_value)
+                just_percent_swap(swap_free / (swap_total + 0.1)),
+                avg_value))
 
         else:
             print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
@@ -1732,8 +1732,8 @@ while True:
                       human(swap_free, swap_len),
                       just_percent_swap(swap_free / (swap_total + 0.1)),
                       human(mem_used_zram, mem_len),
-                      just_percent_mem(mem_used_zram / mem_total)),
-                      avg_value)
+                      just_percent_mem(mem_used_zram / mem_total),
+                      avg_value))
 
 
 
