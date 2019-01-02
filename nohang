@@ -1557,27 +1557,21 @@ if psi_support:
     term_psi_t0 = time()
 
 
-
-
-
 while True:
 
 
-
-
-
     if psi_support:
-
+        print(rline1(psi_path))
         avg10 = psi_mem_some_avg10()
 
         if avg10 >= sigkill_psi:
             time0 = time()
-            mem_info = 'avg ({}) > sigkill_psi ({})'.format(round(avg, 2), sigkill_psi)
+            mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
             find_victim_and_send_signal(SIGKILL)
             kill_psi_t0 = time()
         elif avg10 >= sigterm_psi:
             time0 = time()
-            mem_info = 'avg ({}) > sigterm_psi ({})'.format(round(avg, 2), sigterm_psi)
+            mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
             find_victim_and_send_signal(SIGTERM)
             term_psi_t0 = time()
         else:
