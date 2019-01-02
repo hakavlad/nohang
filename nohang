@@ -1623,8 +1623,8 @@ psi_min_sleep_time_after_action = psi_avg10_sleep_time
 if psi_support and not ignore_psi:
     # ta0 = time()
     # a0 = psi_mem_some_avg_total()
-    kill_psi_t0 = time()
-    term_psi_t0 = time()
+    kill_psi_t0 = time() + psi_avg10_sleep_time
+    term_psi_t0 = time() + psi_avg10_sleep_time
 
 
 avg_value = ''
@@ -1633,8 +1633,9 @@ avg_value = ''
 while True:
 
     if psi_support and not ignore_psi:
-        #print(rline1(psi_path))
+
         avg10 = psi_mem_some_avg10()
+
         if print_mem_check_results:
             avg_value = 'PSI mem some avg10: {} | '.format(str(avg10).rjust(6))
 
