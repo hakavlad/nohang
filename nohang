@@ -1157,6 +1157,10 @@ else:
     exit()
 
 
+
+
+
+
 if 'min_delay_after_sigkill' in config_dict:
     min_delay_after_sigkill = string_to_float_convert_test(
         config_dict['min_delay_after_sigkill'])
@@ -1164,11 +1168,72 @@ if 'min_delay_after_sigkill' in config_dict:
         print('Invalid min_delay_after_sigkill value, not float\nExit')
         exit()
     if min_delay_after_sigkill < 0:
-        print('min_delay_after_sigkill must be positiv\nExit')
+        print('min_delay_after_sigkill must be positive\nExit')
         exit()
 else:
     print('min_delay_after_sigkill not in config\nExit')
     exit()
+
+
+
+
+
+
+
+
+if 'psi_avg10_sleep_time' in config_dict:
+    psi_avg10_sleep_time = string_to_float_convert_test(
+        config_dict['psi_avg10_sleep_time'])
+    if psi_avg10_sleep_time is None:
+        print('Invalid psi_avg10_sleep_time value, not float\nExit')
+        exit()
+    if psi_avg10_sleep_time < 0:
+        print('psi_avg10_sleep_time must be positive\nExit')
+        exit()
+else:
+    print('psi_avg10_sleep_time not in config\nExit')
+    exit()
+
+
+
+
+
+if 'sigkill_psi_avg10' in config_dict:
+    sigkill_psi_avg10 = string_to_float_convert_test(
+        config_dict['sigkill_psi_avg10'])
+    if sigkill_psi_avg10 is None:
+        print('Invalid sigkill_psi_avg10 value, not float\nExit')
+        exit()
+    if sigkill_psi_avg10 < 0 or sigkill_psi_avg10 > 100:
+        print('sigkill_psi_avg10 must be in the range [0; 100]\nExit')
+        exit()
+else:
+    print('sigkill_psi_avg10 not in config\nExit')
+    exit()
+
+
+
+
+if 'sigterm_psi_avg10' in config_dict:
+    sigterm_psi_avg10 = string_to_float_convert_test(
+        config_dict['sigterm_psi_avg10'])
+    if sigterm_psi_avg10 is None:
+        print('Invalid sigterm_psi_avg10 value, not float\nExit')
+        exit()
+    if sigterm_psi_avg10 < 0 or sigterm_psi_avg10 > 100:
+        print('sigterm_psi_avg10 must be in the range [0; 100]\nExit')
+        exit()
+else:
+    print('sigterm_psi_avg10 not in config\nExit')
+    exit()
+
+
+
+
+
+
+
+
 
 
 if 'min_badness' in config_dict:
@@ -1540,11 +1605,10 @@ stdout.flush()
 
 
 
-# ввести через конфиг!
-sigterm_psi = 60
-sigkill_psi = 90
+sigterm_psi = sigterm_psi_avg10
+sigkill_psi = sigkill_psi_avg10
 # avg_min_time = 4
-psi_min_sleep_time_after_action = 30
+psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
 ##########################################################################
