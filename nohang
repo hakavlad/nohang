@@ -27,8 +27,10 @@ wait_time = 2
 cache_time = 30
 cache_path = '/dev/shm/nohang_env_cache'
 
-psi_support = os.path.exists('/memory')
 
+psi_path = '/proc/pressure/memory'
+
+psi_support = os.path.exists(psi_path)
 
 
 
@@ -41,7 +43,7 @@ psi_support = os.path.exists('/memory')
 
 def psi_mem_some_avg_total():
     if psi_support:
-        return float(rline1('/memory').rpartition('=')[2])
+        return float(rline1(psi_path).rpartition('=')[2])
 
 
 
@@ -1541,23 +1543,38 @@ avg_min_time = 3
 ##########################################################################
 
 
-
-ta0 = time()
-a0 = psi_mem_some_avg_total()
+if psi_support:
+    ta0 = time()
+    a0 = psi_mem_some_avg_total()
 
 
 while True:
 
-
     if psi_support:
 
         ta1= time()
-        a1 = psi_mem_some_avg_total()
-        avg = (a1 - a0) / (ta1 - ta0) / 100
-        a0 = a1
+        dt = ta1 - ta0
 
-        print('PSI mem avg:', round(avg, 2))
+        if dt >= avg_min_time:
 
+            a1 = psi_mem_some_avg_total()
+            avg = (a1 - a0) / (ta1 - ta0) / 100
+
+            print('PSI mem avg:', round(avg, 2))
+            ta0 = ta1
+            a0 = a1
+
+
+            if avg >= sigkill_psi:
+                time0 = time()
+                mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg, sigkill_psi)
+                find_victim_and_send_signal(SIGKILL)
+            elif avg >= sigterm_psi:
+                time0 = time()
+                mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg, sigterm_psi)
+                find_victim_and_send_signal(SIGTERM)
+            else:
+                print('PSI is OK')
 
 
 
