@@ -1536,7 +1536,7 @@ stdout.flush()
 
 # ввести через конфиг!
 sigterm_psi = 60
-sigkill_psi = 90
+sigkill_psi = 95
 avg_min_time = 4
 psi_min_sleep_time_after_action = 16
 
@@ -1579,7 +1579,7 @@ while True:
                 find_victim_and_send_signal(SIGTERM)
                 term_psi_t0 = time()
             else:
-                print('PSI is OK')
+                print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
 
 
 
