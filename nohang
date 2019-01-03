@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """A daemon that prevents OOM in Linux systems."""
 from time import sleep, time
-start_time = time()
 
 import os
 from operator import itemgetter
@@ -11,6 +10,8 @@ from argparse import ArgumentParser
 
 from sys import stdout
 from signal import SIGKILL, SIGTERM
+
+start_time = time()
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
@@ -92,14 +93,6 @@ def check_zram():
     # found experimentally
 
     return (mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR) / 1024.0
-
-
-
-
-
-
-
-
 
 
 def format_time(t):
@@ -364,24 +357,21 @@ def send_notify_warn():
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
-        
-        
+
         # теперь можно напрямую уведомлять из кэша если он не устарел
-        
-        
+
         Popen([
             '/usr/bin/nohang_notify_low_mem',
             '--mem', low_mem_percent,
             '--pid', pid,
             '--name', name
         ])
-        
-        
+
     else:  # Or by regular user
         # send notification to user that runs this nohang
         try:
             Popen(['notify-send', '--icon=dialog-warning',
-                '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                   '{}'.format(title), '{}'.format(body)]).wait(wait_time)
         except TimeoutExpired:
             print('TimeoutExpired: ' + 'notify low mem')
 
@@ -408,17 +398,18 @@ def send_notify(signal, name, pid):
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 try:
                     Popen(['sudo', '-u', username, 'env', display_env,
-                        dbus_env, 'notify-send', '--icon=dialog-warning',
-                        '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                           dbus_env, 'notify-send', '--icon=dialog-warning',
+                           '{}'.format(title), '{}'.format(body)]).wait(wait_time)
                 except TimeoutExpired:
                     print('TimeoutExpired: ' + 'notify send signal')
     else:
         # send notification to user that runs this nohang
         try:
             Popen(['notify-send', '--icon=dialog-warning',
-                '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                   '{}'.format(title), '{}'.format(body)]).wait(wait_time)
         except TimeoutExpired:
             print('TimeoutExpired: ' + 'notify send signal')
+
 
 def send_notify_etc(pid, name, command):
     """
@@ -439,8 +430,8 @@ def send_notify_etc(pid, name, command):
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 try:
                     Popen(['sudo', '-u', username, 'env', display_env,
-                        dbus_env, 'notify-send', '--icon=dialog-warning',
-                        '{}'.format(title), '{}'.format(body)]).wait(wait_time)
+                           dbus_env, 'notify-send', '--icon=dialog-warning',
+                           '{}'.format(title), '{}'.format(body)]).wait(wait_time)
                 except TimeoutExpired:
                     print('TimeoutExpired: notify run command')
     else:
@@ -536,7 +527,7 @@ def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
-    #print()
+    # print()
 
     pid, victim_badness = fattest()
     name = pid_to_name(pid)
@@ -554,7 +545,6 @@ def find_victim_and_send_signal(signal):
                     if n is uid_index:
                         uid = line.split('\t')[1]
                         continue
-
 
                     if n is vm_size_index:
                         vm_size = kib_to_mib(int(line.split('\t')[1][:-4]))
@@ -599,7 +589,8 @@ def find_victim_and_send_signal(signal):
         except ValueError:
             pass
 
-        oom_score = rline1('/proc/' + pid + '/oom_score') # тут может быть FileNotFoundError!
+        # тут может быть FileNotFoundError!
+        oom_score = rline1('/proc/' + pid + '/oom_score')
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         len_vm = len(str(vm_size))
@@ -656,7 +647,6 @@ def find_victim_and_send_signal(signal):
                     victim_info, command, exit_status,
                     round(response_time * 1000))
 
-
             # update stat_dict
             key = "Run the command '\033[35m{}\033[0m'".format(command)
             if key not in stat_dict:
@@ -664,7 +654,6 @@ def find_victim_and_send_signal(signal):
             else:
                 new_value = stat_dict[key] + 1
                 stat_dict.update({key: new_value})
-
 
             print(mem_info)
             print(etc_info)
@@ -680,7 +669,8 @@ def find_victim_and_send_signal(signal):
                     round(response_time * 1000))
 
                 # update stat_dict
-                key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(sig_dict[signal], name)
+                key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(
+                    sig_dict[signal], name)
                 if key not in stat_dict:
                     stat_dict.update({key: 1})
                 else:
@@ -738,11 +728,9 @@ def sleep_after_check_mem():
     else:
         t = t_mem_zram
 
-
     max_sleep_time = 1
     if t > max_sleep_time:
         t = 1
-
 
     try:
         if print_sleep_periods:
@@ -855,10 +843,10 @@ try:
     file_index = status_names.index('RssFile')
     shmem_index = status_names.index('RssShmem')
     detailed_rss = True
-    #print(detailed_rss, 'detailed_rss')
+    # print(detailed_rss, 'detailed_rss')
 except ValueError:
     detailed_rss = False
-    #print('It is not Linux 4.5+')
+    # print('It is not Linux 4.5+')
 
 ##########################################################################
 
@@ -869,7 +857,7 @@ except ValueError:
 # directory where the script is running
 cd = os.getcwd()
 
-#print('CD:', cd)
+# print('CD:', cd)
 
 # where to look for a config if not specified via the -c/--config option
 default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')
@@ -968,14 +956,15 @@ try:
                     exit()
                 etc_dict[etc_name] = etc_command
 
-
             # NEED VALIDATION!
             if line.startswith('@PROCESSNAME_RE'):
-                a = line.partition('@PROCESSNAME_RE')[2].strip(' \n').partition('///')
+                a = line.partition('@PROCESSNAME_RE')[
+                    2].strip(' \n').partition('///')
                 processname_re_list.append((a[0].strip(' '), a[2].strip(' ')))
 
             if line.startswith('@CMDLINE_RE'):
-                a = line.partition('@CMDLINE_RE')[2].strip(' \n').partition('///')
+                a = line.partition('@CMDLINE_RE')[2].strip(
+                    ' \n').partition('///')
                 cmdline_re_list.append((a[0].strip(' '), a[2].strip(' ')))
 
             if line.startswith('@UID_RE'):
@@ -1018,8 +1007,6 @@ execute_the_command = conf_parse_bool('execute_the_command')
 
 
 ignore_psi = conf_parse_bool('ignore_psi')
-
-
 
 
 regex_matching = conf_parse_bool('regex_matching')
@@ -1163,10 +1150,6 @@ else:
     exit()
 
 
-
-
-
-
 if 'min_delay_after_sigkill' in config_dict:
     min_delay_after_sigkill = string_to_float_convert_test(
         config_dict['min_delay_after_sigkill'])
@@ -1179,12 +1162,6 @@ if 'min_delay_after_sigkill' in config_dict:
 else:
     print('min_delay_after_sigkill not in config\nExit')
     exit()
-
-
-
-
-
-
 
 
 if 'psi_avg10_sleep_time' in config_dict:
@@ -1201,9 +1178,6 @@ else:
     exit()
 
 
-
-
-
 if 'sigkill_psi_avg10' in config_dict:
     sigkill_psi_avg10 = string_to_float_convert_test(
         config_dict['sigkill_psi_avg10'])
@@ -1218,8 +1192,6 @@ else:
     exit()
 
 
-
-
 if 'sigterm_psi_avg10' in config_dict:
     sigterm_psi_avg10 = string_to_float_convert_test(
         config_dict['sigterm_psi_avg10'])
@@ -1232,14 +1204,6 @@ if 'sigterm_psi_avg10' in config_dict:
 else:
     print('sigterm_psi_avg10 not in config\nExit')
     exit()
-
-
-
-
-
-
-
-
 
 
 if 'min_badness' in config_dict:
@@ -1378,9 +1342,6 @@ else:
     mla_res = ''
 
 
-
-
-
 if self_uid == 0:
     root = True
     decrease_res = 'OK'
@@ -1431,8 +1392,8 @@ if print_config:
     if decrease_oom_score_adj:
         print('oom_score_adj_max:         {}'.format(oom_score_adj_max))
 
-    print('\n4. Impact on the badness of processes via matching their' \
-        ' names, cmdlines ir UIDs with regular expressions\n')
+    print('\n4. Impact on the badness of processes via matching their'
+          ' names, cmdlines ir UIDs with regular expressions\n')
 
     print('regex_matching:            {}'.format(regex_matching))
     if regex_matching:
@@ -1527,22 +1488,10 @@ print('The duration of startup:',
 print('Monitoring started!')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 def save_env_cache():
     z = '{}\n'.format(int(time()))
     a = root_notify_env()
-    #print(a)
+    # print(a)
     for i in a:
         z = z + '{}\x00{}\x00{}\n'.format(i[0], i[1], i[2])
     write(cache_path, z)
@@ -1574,15 +1523,15 @@ def root_env_cache():
         return save_env_cache()
     delta_t = time() - int(cache[0])
     if delta_t > cache_time:
-        print('cache time: {}, delta: {}, ' \
-            'get new env and cache it'.format(
-                cache_time, round(delta_t)))
+        print('cache time: {}, delta: {}, '
+              'get new env and cache it'.format(
+                  cache_time, round(delta_t)))
         save_env_cache()
         return root_notify_env()
     else:
-        print('cache time: {}, delta: {}, ' \
-            'get cached env'.format(
-                cache_time, round(delta_t)))
+        print('cache time: {}, delta: {}, '
+              'get cached env'.format(
+                  cache_time, round(delta_t)))
         return cache[1]
 
 
@@ -1592,23 +1541,9 @@ t2 = time()
 # print(t2 - t1)
 
 
-
-
-
-
-
 stdout.flush()
 
-#exit()
-
-
-
-
-
-
-
-
-
+# exit()
 
 
 sigterm_psi = sigterm_psi_avg10
@@ -1650,9 +1585,8 @@ while True:
             find_victim_and_send_signal(SIGTERM)
             term_psi_t0 = time()
         else:
-            #print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
+            # print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
             pass
-
 
     '''
     if psi_support:
@@ -1685,8 +1619,6 @@ while True:
                 print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
     '''
 
-
-
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
     # if swap_min_sigkill is set in percent
@@ -1699,11 +1631,7 @@ while True:
     if swap_warn_is_percent:
         swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
 
-
-
     mem_used_zram = check_zram()
-
-
 
     if print_mem_check_results:
 
@@ -1736,15 +1664,11 @@ while True:
                       human(mem_used_zram, mem_len),
                       just_percent_mem(mem_used_zram / mem_total)))
 
-
-
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:  # If swap_min_sigkill is absolute
         swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
     else:
         swap_sigkill_pc = '-'
-
-
 
     if swap_total > swap_min_sigterm_kb:
         swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 0.1))
@@ -1753,15 +1677,11 @@ while True:
         # печатать так: SwapTotal = 0, ignore swapspace
         swap_sigterm_pc = '-'
 
-
-
-
     # далее пошло ветвление
-
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and \
-        swap_free <= swap_min_sigkill_kb:
+            swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
         mem_info = '\n\033[4mMemory status that requires corrective actions:' \
@@ -1799,7 +1719,7 @@ while True:
 
     # MEM SWAP TERM
     elif mem_available <= mem_min_sigterm_kb and \
-        swap_free <= swap_min_sigterm_kb:
+            swap_free <= swap_min_sigterm_kb:
 
         time0 = time()
 
@@ -1810,7 +1730,7 @@ while True:
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(mem_min_sigterm_kb),
-                #percent(mem_min_sigterm_kb / mem_total),
+                # percent(mem_min_sigterm_kb / mem_total),
                 # ОКРУГЛЯТЬ НА МЕСТЕ ВЫШЕ
                 round(mem_min_sigterm_percent, 1),
                 kib_to_mib(swap_free),
@@ -1828,7 +1748,7 @@ while True:
 
         mem_info = '\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
-                'zram_max_sigterm [{} M, {} %]'.format(
+            'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
@@ -1856,7 +1776,3 @@ while True:
     # SLEEP BETWEEN MEM CHECKS
     else:
         sleep_after_check_mem()
-
-
-
-
