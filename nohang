@@ -11,6 +11,8 @@ from argparse import ArgumentParser
 from sys import stdout
 from signal import SIGKILL, SIGTERM
 
+import logging
+
 start_time = time()
 
 sig_dict = {SIGKILL: 'SIGKILL',
@@ -33,6 +35,16 @@ psi_path = '/proc/pressure/memory'
 
 psi_support = os.path.exists(psi_path)
 
+# Log configuration
+# TODO make it configurable from a config file?
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="\n[%(asctime)s] %(levelname)s\n%(message)s",
+)
+
+logger = logging.getLogger('nohang')
+logger.setLevel(logging.DEBUG)
 
 ##########################################################################
 
@@ -596,7 +608,7 @@ def find_victim_and_send_signal(signal):
         len_vm = len(str(vm_size))
 
         if detailed_rss:
-            victim_info = '\033[4mFound the victim with highest badness:\033[0m' \
+            victim_info = '\033[4mFound a victim with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
@@ -616,7 +628,7 @@ def find_victim_and_send_signal(signal):
                     anon_rss, file_rss, shmem_rss,
                     str(vm_swap).rjust(len_vm, ' '), cmdline)
         else:
-            victim_info = '\033[4mFound the victim with highest badness:\033[0m' \
+            victim_info = '\033[4mFound a victim with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
@@ -655,8 +667,9 @@ def find_victim_and_send_signal(signal):
                 new_value = stat_dict[key] + 1
                 stat_dict.update({key: new_value})
 
-            print(mem_info)
-            print(etc_info)
+            logger.info(mem_info)
+            logger.info(etc_info)
+
             if gui_notifications:
                 send_notify_etc(pid, name, command)
 
@@ -690,15 +703,20 @@ def find_victim_and_send_signal(signal):
                     round(response_time * 1000))
 
             preventing_oom_message = '{}' \
-                '\n\033[4mImplement corrective action:\033[0m\n  ' \
+                '\n\033[4mImplement a corrective action:\033[0m\n  ' \
                 'Sending \033[4m{}\033[0m to the victim; {}'.format(
                     victim_info, sig_dict[signal], send_result)
-            print(mem_info)
-            print(preventing_oom_message)
-            print('\n\033[4mDuration of work: {}; number of corrective actions:\033[0m'.format(
-                format_time(time() - start_time)))
+
+            logger.info(mem_info)
+            logger.info(preventing_oom_message)
+
+            stats_msg = '\033[4mUptime: {}; corrective actions:\033[0m'.format(
+                format_time(time() - start_time))
+
             for key in stat_dict:
-                print('  - {}: {}'.format(key, stat_dict[key]))
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+
+            logger.info(stats_msg)
 
     else:
 
@@ -1482,7 +1500,7 @@ warn_time_delta = 1000
 warn_timer = 0
 
 x = time() - start_time
-print('The duration of startup:',
+print('Startup time:',
       round(x * 1000, 1), 'ms')
 
 print('Monitoring started!')
@@ -1684,7 +1702,7 @@ while True:
             swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -1705,7 +1723,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -1723,7 +1741,7 @@ while True:
 
         time0 = time()
 
-        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -1746,7 +1764,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
