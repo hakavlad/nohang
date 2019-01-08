@@ -1,5 +1,7 @@
-## Code of Conduct
+Go Fuck Yourself
+=============
 
-This code of conduct outlines our expectations for participants within the [nohang](https://github.com/hakavlad/nohang) community. Anyone who violates this code of conduct may be banned from the community.
+Offended? Go away. We don't need people who are offended because of a stranger on the internet.
+Not offended? You're welcome to contribute.
 
-- The first rule of [nohang](https://github.com/hakavlad/nohang) community is: **you do not discuss this CoC**.
+&copy; Copyright 2015 WTFCoC Consortium Committee.
