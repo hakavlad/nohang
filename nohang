@@ -571,22 +571,21 @@ def find_victim_and_send_signal(signal):
                         break
 
             with open('/proc/' + pid + '/cmdline') as file:
-                try:
-                    cmdline = file.readlines()[0].replace('\x00', ' ')
-                except IndexError:
-                    cmdline = ''
+                cmdline = file.readlines()[0].replace('\x00', ' ')
+
+            oom_score = rline1('/proc/' + pid + '/oom_score')
+            oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
+
         except FileNotFoundError:
-            pass
+            oom_score = 'unknown'
+            oom_score_adj = 'unknown'
         except ProcessLookupError:
             pass
         except IndexError:
-            pass
+            cmdline = ''
         except ValueError:
             pass
 
-        # тут может быть FileNotFoundError!
-        oom_score = rline1('/proc/' + pid + '/oom_score')
-        oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         len_vm = len(str(vm_size))
 
