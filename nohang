@@ -34,6 +34,41 @@ psi_support = os.path.exists(psi_path)
 
 # function definition section
 
+
+
+
+def update_stat_dict(key):
+    if key not in stat_dict:
+        stat_dict.update({key: 1})
+    else:
+        new_value = stat_dict[key] + 1
+        stat_dict.update({key: new_value})
+
+
+
+def update_stat_dict_and_print(key):
+    if key not in stat_dict:
+        stat_dict.update({key: 1})
+    else:
+        new_value = stat_dict[key] + 1
+        stat_dict.update({key: new_value})
+    stats_msg = '\033[4mUptime: {}; corrective actions:\033[0m'.format(
+        format_time(time() - start_time))
+    for i in stat_dict:
+        stats_msg += '\n  - {}: {}'.format(i, stat_dict[i])
+
+
+
+
+
+
+
+
+
+
+
+
+
 def psi_mem_some_avg_total():
     if psi_support:
         return float(rline1(psi_path).rpartition('=')[2])
@@ -578,64 +613,20 @@ def find_victim_and_send_signal(signal):
 
         except FileNotFoundError:
             print('The victim died in the search process')
-
-            # update stat_dict
-            key = 'The victim died in the search process'
-            if key not in stat_dict:
-                stat_dict.update({key: 1})
-            else:
-                new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value}
-            for key in stat_dict:
-                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
-            print(stats_msg)
+            update_stat_dict_and_print('The victim died in the search process')
             return None
-
         except ProcessLookupError:
             print('The victim died in the search process')
-
-            # update stat_dict
-            key = 'The victim died in the search process'
-            if key not in stat_dict:
-                stat_dict.update({key: 1})
-            else:
-                new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value}
-            for key in stat_dict:
-                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
-            print(stats_msg)
+            update_stat_dict_and_print('The victim died in the search process')
             return None
-
         except IndexError:
             print('The victim died in the search process')
-
-            # update stat_dict
-            key = 'The victim died in the search process'
-            if key not in stat_dict:
-                stat_dict.update({key: 1})
-            else:
-                new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value}
-            for key in stat_dict:
-                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
-            print(stats_msg)
+            update_stat_dict_and_print('The victim died in the search process')
             return None
-
         except ValueError:
             print('The victim died in the search process')
-
-            # update stat_dict
-            key = 'The victim died in the search process'
-            if key not in stat_dict:
-                stat_dict.update({key: 1})
-            else:
-                new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value}
-            for key in stat_dict:
-                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
-            print(stats_msg)
+            update_stat_dict_and_print('The victim died in the search process')
             return None
-
         len_vm = len(str(vm_size))
 
         if detailed_rss:
@@ -709,14 +700,9 @@ def find_victim_and_send_signal(signal):
 
             # update stat_dict
             key = "Run the command '\033[35m{}\033[0m'".format(command)
-            if key not in stat_dict:
-                stat_dict.update({key: 1})
-            else:
-                new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value})
+            print(key)
+            update_stat_dict_and_print(key)
 
-            for key in stat_dict:
-                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
 
 
             print(mem_info)
@@ -733,14 +719,16 @@ def find_victim_and_send_signal(signal):
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
                     round(response_time * 1000))
 
+
+
                 # update stat_dict
                 key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(
                     sig_dict[signal], name)
-                if key not in stat_dict:
-                    stat_dict.update({key: 1})
-                else:
-                    new_value = stat_dict[key] + 1
-                    stat_dict.update({key: new_value})
+
+                update_stat_dict_and_print(key)
+
+
+
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -752,11 +740,7 @@ def find_victim_and_send_signal(signal):
 
                 # update stat_dict
                 key = 'The victim died in the search process'
-                if key not in stat_dict:
-                    stat_dict.update({key: 1})
-                else:
-                    new_value = stat_dict[key] + 1
-                    stat_dict.update({key: new_value})
+                update_stat_dict_and_print(key)
 
             except ProcessLookupError:
                 response_time = time() - time0
@@ -766,11 +750,7 @@ def find_victim_and_send_signal(signal):
 
                 # update stat_dict
                 key = 'The victim died in the search process'
-                if key not in stat_dict:
-                    stat_dict.update({key: 1})
-                else:
-                    new_value = stat_dict[key] + 1
-                    stat_dict.update({key: new_value})
+                update_stat_dict_and_print(key)
 
             preventing_oom_message = '{}' \
                 '\n\033[4mImplement a corrective action:\033[0m\n  ' \
@@ -802,11 +782,7 @@ def find_victim_and_send_signal(signal):
 
         # update stat_dict
         key = 'victim badness < min_badness'
-        if key not in stat_dict:
-            stat_dict.update({key: 1})
-        else:
-            new_value = stat_dict[key] + 1
-            stat_dict.update({key: new_value})
+        update_stat_dict_and_print(key)
 
 
         stats_msg = '\033[4mUptime: {}; corrective actions:\033[0m'.format(
