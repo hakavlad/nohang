@@ -47,16 +47,18 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 For basic usage:
 - `Linux` 3.14+ (since `MemAvailable` appeared in `/proc/meminfo`)
-- `Linux` 4.20+ if you want to use `PSI`
 - `Python` 3.3+ (not tested with previous)
 
 To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
 - `sudo` if nohang started with UID=0
 
+To use `PSI` (pressure stall information):
+- `Linux` 4.20+
+
 ## Memory and CPU usage
 
-- VmRSS is 10 — 14 MiB depending on the settings (about 10 MiB by default)
+- VmRSS is 10 — 11 MiB depending on the settings
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by the user via the config)
 
 ## Download, install, uninstall
@@ -119,8 +121,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 6. GUI notifications:
    - results of preventing OOM
    - low memory warnings
-7. Preventing the slowing down of the program
-8. Output verbosity
+7. Output verbosity
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 

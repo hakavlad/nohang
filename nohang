@@ -16,8 +16,11 @@ from signal import SIGKILL, SIGTERM
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
 
-self_uid = os.geteuid()
 self_pid = str(os.getpid())
+
+self_uid = os.geteuid()
+if self_uid == 0:
+    root = True
 
 wait_time = 2
 cache_time = 30
