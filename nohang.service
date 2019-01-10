@@ -7,7 +7,15 @@ Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 ExecStart=/usr/sbin/nohang
 Restart=always
 RestartSec=1
-
+IOSchedulingClass=1
+IOSchedulingPriority=0
+Nice=-20
+CPUSchedulingPolicy=rr
+CPUSchedulingPriority=99
+CPUSchedulingResetOnFork=true
+ProtectSystem=strict
+MemoryMax=100M
+TasksMax=100
 
 [Install]
 WantedBy=multi-user.target
