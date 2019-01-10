@@ -766,6 +766,26 @@ def find_victim_and_send_signal(signal):
 
         print(victim_badness_is_too_small)
 
+
+        # update stat_dict
+        key = 'victim badness < min_badness'
+        if key not in stat_dict:
+            stat_dict.update({key: 1})
+        else:
+            new_value = stat_dict[key] + 1
+            stat_dict.update({key: new_value})
+
+
+        stats_msg = '\033[4mUptime: {}; corrective actions:\033[0m'.format(
+            format_time(time() - start_time))
+
+        for key in stat_dict:
+            stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+
+        print(stats_msg)
+
+
+
     sleep_after_send_signal(signal)
 
 
