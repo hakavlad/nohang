@@ -200,6 +200,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add `oom-trigger`
     - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md)
     - Redesign of the config
+    - Remove self-defense options from config, use systemd unit scheduling instead
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release

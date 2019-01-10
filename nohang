@@ -2,6 +2,8 @@
 """A daemon that prevents OOM in Linux systems."""
 from time import sleep, time
 
+start_time = time()
+
 import os
 from operator import itemgetter
 
@@ -11,17 +13,8 @@ from argparse import ArgumentParser
 from sys import stdout
 from signal import SIGKILL, SIGTERM
 
-import logging
-
-start_time = time()
-
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
-
-'''
-nm = 30
-nc = nm + 1
-'''
 
 self_uid = os.geteuid()
 self_pid = str(os.getpid())
@@ -30,21 +23,8 @@ wait_time = 2
 cache_time = 30
 cache_path = '/dev/shm/nohang_env_cache'
 
-
 psi_path = '/proc/pressure/memory'
-
 psi_support = os.path.exists(psi_path)
-
-# Log configuration
-# TODO make it configurable from a config file?
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="\n[%(asctime)s] %(levelname)s\n%(message)s",
-)
-
-logger = logging.getLogger('nohang')
-logger.setLevel(logging.DEBUG)
 
 ##########################################################################
 
@@ -667,8 +647,8 @@ def find_victim_and_send_signal(signal):
                 new_value = stat_dict[key] + 1
                 stat_dict.update({key: new_value})
 
-            logger.info(mem_info)
-            logger.info(etc_info)
+            print(mem_info)
+            print(etc_info)
 
             if gui_notifications:
                 send_notify_etc(pid, name, command)
@@ -707,8 +687,8 @@ def find_victim_and_send_signal(signal):
                 'Sending \033[4m{}\033[0m to the victim; {}'.format(
                     victim_info, sig_dict[signal], send_result)
 
-            logger.info(mem_info)
-            logger.info(preventing_oom_message)
+            print(mem_info)
+            print(preventing_oom_message)
 
             stats_msg = '\033[4mUptime: {}; corrective actions:\033[0m'.format(
                 format_time(time() - start_time))
@@ -716,7 +696,7 @@ def find_victim_and_send_signal(signal):
             for key in stat_dict:
                 stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
 
-            logger.info(stats_msg)
+            print(stats_msg)
 
     else:
 
@@ -1016,8 +996,6 @@ except IndexError:
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
-realtime_ionice = conf_parse_bool('realtime_ionice')
-mlockall = conf_parse_bool('mlockall')
 gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
@@ -1052,51 +1030,6 @@ mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent = calculate_p
 zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent(
     'zram_max_warnings')
 
-
-if 'realtime_ionice_classdata' in config_dict:
-    realtime_ionice_classdata = string_to_int_convert_test(
-        config_dict['realtime_ionice_classdata'])
-    if realtime_ionice_classdata is None:
-        print('Invalid value of the "realtime_ionice_classdata" parameter.')
-        print('Valid values are integers from the range [0; 7].')
-        print('Exit')
-        exit()
-    if realtime_ionice_classdata < 0 or realtime_ionice_classdata > 7:
-        print('Invalid value of the "realtime_ionice_classdata" parameter.')
-        print('Valid values are integers from the range [0; 7].')
-        print('Exit')
-        exit()
-else:
-    print('All the necessary parameters must be in the config')
-    print('There is no "realtime_ionice_classdata" parameter in the config')
-    exit()
-
-
-if 'niceness' in config_dict:
-    niceness = string_to_int_convert_test(config_dict['niceness'])
-    if niceness is None:
-        print('Invalid niceness value, not integer\nExit')
-        exit()
-    if niceness < -20 or niceness > 19:
-        print('niceness out of range [-20; 19]\nExit')
-        exit()
-else:
-    print('niceness not in config\nExit')
-    exit()
-
-
-if 'oom_score_adj' in config_dict:
-    oom_score_adj = string_to_int_convert_test(
-        config_dict['oom_score_adj'])
-    if oom_score_adj is None:
-        print('Invalid oom_score_adj value, not integer\nExit')
-        exit()
-    if oom_score_adj < -1000 or oom_score_adj > 1000:
-        print('oom_score_adj out of range [-1000; 1000]\nExit')
-        exit()
-else:
-    print('oom_score_adj not in config\nExit')
-    exit()
 
 
 if 'rate_mem' in config_dict:
@@ -1325,56 +1258,6 @@ else:
 
 ##########################################################################
 
-#  self-defense
-
-
-# возожно стоит убрать поддержку mlockall и ionice
-
-# Increase priority
-try:
-    os.nice(niceness)
-    niceness_result = 'OK'
-except PermissionError:
-    niceness_result = 'Fail'
-    pass
-
-# Deny self-killing
-try:
-    with open('/proc/self/oom_score_adj', 'w') as file:
-        file.write('{}\n'.format(oom_score_adj))
-    oom_score_adj_result = 'OK'
-except PermissionError:
-    oom_score_adj_result = 'Fail'
-except OSError:
-    oom_score_adj_result = 'Fail'
-
-# Deny process swapping
-if mlockall:
-    from ctypes import CDLL
-    result = CDLL('libc.so.6', use_errno=True).mlockall(3)
-    if result is 0:
-        mla_res = 'OK'
-    else:
-        mla_res = 'Fail'
-else:
-    mla_res = ''
-
-
-if self_uid == 0:
-    root = True
-    decrease_res = 'OK'
-else:
-    root = False
-    decrease_res = 'Impossible'
-
-
-if root and realtime_ionice:
-    os.system('ionice -c 1 -n {} -p {}'.format(
-        realtime_ionice_classdata, self_pid))
-
-
-##########################################################################
-
 if print_config:
 
     print(
@@ -1458,23 +1341,7 @@ if print_config:
         print('zram_max_warnings:         {} MiB, {} %'.format(
             round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
 
-    print(
-        '\n7. Preventing the slowing down of the program'
-        '\n[displaying these options need fix]\n')
-    print('mlockall:                  {} ({})'.format(mlockall, mla_res))
-    print('niceness:                  {} ({})'.format(
-        niceness, niceness_result
-    ))
-    print('oom_score_adj:             {} ({})'.format(
-        oom_score_adj, oom_score_adj_result
-    ))
-
-    print('realtime_ionice:           {} ({})'.format(realtime_ionice, ''))
-
-    if realtime_ionice:
-        print('realtime_ionice_classdata: {}'.format(realtime_ionice_classdata))
-
-    print('\n8. Output verbosity\n')
+    print('\n7. Output verbosity\n')
     print('print_config:              {}'.format(print_config))
     print('print_mem_check_results:   {}'.format(print_mem_check_results))
     print('print_sleep_periods:       {}\n'.format(print_sleep_periods))
@@ -1582,7 +1449,6 @@ if psi_support and not ignore_psi:
 
 avg_value = ''
 
-
 while True:
 
     if psi_support and not ignore_psi:
@@ -1605,37 +1471,6 @@ while True:
         else:
             # print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
             pass
-
-    '''
-    if psi_support:
-
-        ta1= time()
-        dt = ta1 - ta0
-
-        if dt >= avg_min_time:
-
-            a1 = psi_mem_some_avg_total()
-            avg = (a1 - a0) / (ta1 - ta0) / 10000
-
-            print(rline1(psi_path))
-            print('PSI mem some avg: {}, PSI avg time: {}'.format(round(avg, 2), round(dt, 1)))
-            ta0 = ta1
-            a0 = a1
-
-
-            if avg >= sigkill_psi and time() - kill_psi_t0 >= psi_min_sleep_time_after_action:
-                time0 = time()
-                mem_info = 'avg ({}) > sigkill_psi ({})'.format(round(avg, 2), sigkill_psi)
-                find_victim_and_send_signal(SIGKILL)
-                kill_psi_t0 = time()
-            elif avg >= sigterm_psi and time() - term_psi_t0 >= psi_min_sleep_time_after_action:
-                time0 = time()
-                mem_info = 'avg ({}) > sigterm_psi ({})'.format(round(avg, 2), sigterm_psi)
-                find_victim_and_send_signal(SIGTERM)
-                term_psi_t0 = time()
-            else:
-                print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
-    '''
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
