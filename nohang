@@ -578,51 +578,62 @@ def find_victim_and_send_signal(signal):
 
         except FileNotFoundError:
             print('The victim died in the search process')
-            
+
             # update stat_dict
             key = 'The victim died in the search process'
             if key not in stat_dict:
                 stat_dict.update({key: 1})
             else:
                 new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value})
-            
+                stat_dict.update({key: new_value}
+            for key in stat_dict:
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+            print(stats_msg)
             return None
+
         except ProcessLookupError:
             print('The victim died in the search process')
-            
+
             # update stat_dict
             key = 'The victim died in the search process'
             if key not in stat_dict:
                 stat_dict.update({key: 1})
             else:
                 new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value})
-            
+                stat_dict.update({key: new_value}
+            for key in stat_dict:
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+            print(stats_msg)
             return None
+
         except IndexError:
             print('The victim died in the search process')
-            
+
             # update stat_dict
             key = 'The victim died in the search process'
             if key not in stat_dict:
                 stat_dict.update({key: 1})
             else:
                 new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value})
-            
+                stat_dict.update({key: new_value}
+            for key in stat_dict:
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+            print(stats_msg)
             return None
+
         except ValueError:
             print('The victim died in the search process')
-            
+
             # update stat_dict
             key = 'The victim died in the search process'
             if key not in stat_dict:
                 stat_dict.update({key: 1})
             else:
                 new_value = stat_dict[key] + 1
-                stat_dict.update({key: new_value})
-            
+                stat_dict.update({key: new_value}
+            for key in stat_dict:
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+            print(stats_msg)
             return None
 
         len_vm = len(str(vm_size))
@@ -704,6 +715,10 @@ def find_victim_and_send_signal(signal):
                 new_value = stat_dict[key] + 1
                 stat_dict.update({key: new_value})
 
+            for key in stat_dict:
+                stats_msg += '\n  - {}: {}'.format(key, stat_dict[key])
+
+
             print(mem_info)
             print(etc_info)
 
@@ -734,7 +749,7 @@ def find_victim_and_send_signal(signal):
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                
+
                 # update stat_dict
                 key = 'The victim died in the search process'
                 if key not in stat_dict:
@@ -742,7 +757,7 @@ def find_victim_and_send_signal(signal):
                 else:
                     new_value = stat_dict[key] + 1
                     stat_dict.update({key: new_value})
-                
+
             except ProcessLookupError:
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
@@ -756,10 +771,6 @@ def find_victim_and_send_signal(signal):
                 else:
                     new_value = stat_dict[key] + 1
                     stat_dict.update({key: new_value})
-
-
-
-
 
             preventing_oom_message = '{}' \
                 '\n\033[4mImplement a corrective action:\033[0m\n  ' \
