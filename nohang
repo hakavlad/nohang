@@ -577,23 +577,53 @@ def find_victim_and_send_signal(signal):
             oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         except FileNotFoundError:
-            print('Process not found')
+            print('The victim died in the search process')
+            
+            # update stat_dict
+            key = 'The victim died in the search process'
+            if key not in stat_dict:
+                stat_dict.update({key: 1})
+            else:
+                new_value = stat_dict[key] + 1
+                stat_dict.update({key: new_value})
+            
             return None
-            oom_score = 'unknown'
-            oom_score_adj = 'unknown'
         except ProcessLookupError:
-            print('Process not found')
+            print('The victim died in the search process')
+            
+            # update stat_dict
+            key = 'The victim died in the search process'
+            if key not in stat_dict:
+                stat_dict.update({key: 1})
+            else:
+                new_value = stat_dict[key] + 1
+                stat_dict.update({key: new_value})
+            
             return None
-            pass
         except IndexError:
-            print('Process not found')
+            print('The victim died in the search process')
+            
+            # update stat_dict
+            key = 'The victim died in the search process'
+            if key not in stat_dict:
+                stat_dict.update({key: 1})
+            else:
+                new_value = stat_dict[key] + 1
+                stat_dict.update({key: new_value})
+            
             return None
-            cmdline = ''
         except ValueError:
-            print('Process not found')
+            print('The victim died in the search process')
+            
+            # update stat_dict
+            key = 'The victim died in the search process'
+            if key not in stat_dict:
+                stat_dict.update({key: 1})
+            else:
+                new_value = stat_dict[key] + 1
+                stat_dict.update({key: new_value})
+            
             return None
-            pass
-
 
         len_vm = len(str(vm_size))
 
