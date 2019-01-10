@@ -1623,7 +1623,7 @@ while True:
             swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -1644,7 +1644,7 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -1662,7 +1662,7 @@ while True:
 
         time0 = time()
 
-        mem_info = '\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -1685,7 +1685,7 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
