@@ -577,13 +577,21 @@ def find_victim_and_send_signal(signal):
             oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         except FileNotFoundError:
+            print('Process not found')
+            return None
             oom_score = 'unknown'
             oom_score_adj = 'unknown'
         except ProcessLookupError:
+            print('Process not found')
+            return None
             pass
         except IndexError:
+            print('Process not found')
+            return None
             cmdline = ''
         except ValueError:
+            print('Process not found')
+            return None
             pass
 
 
