@@ -771,7 +771,7 @@ def find_victim_and_send_signal(signal):
     else:
 
         response_time = time() - time0
-        victim_badness_is_too_small = '  victim badness {} < min_b' \
+        victim_badness_is_too_small = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\nvictim badness {} < min_b' \
             'adness {}; nothing to do; response time: {} ms'.format(
                 victim_badness,
                 min_badness,
