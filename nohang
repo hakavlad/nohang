@@ -146,8 +146,8 @@ def re_pid_environ(pid):
                     continue
 
                 if i.startswith(dbus_env):
-                    if ',guid=' in i:
-                        return None
+                    #if ',guid=' in i:
+                    #    return None
                     dbus = i
                     continue
 
@@ -160,9 +160,9 @@ def re_pid_environ(pid):
             return env
 
     except FileNotFoundError:
-        pass
+        return None
     except ProcessLookupError:
-        pass
+        return None
 
 
 def root_notify_env():
@@ -176,6 +176,8 @@ def root_notify_env():
         unsorted_envs_list.append(one_env)
     env = set(unsorted_envs_list)
     env.discard(None)
+    for i in env:
+        print(i)
     return env
 
 
