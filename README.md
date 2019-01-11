@@ -118,7 +118,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 2. The frequency of checking the level of available memory (and CPU usage)
 3. The prevention of killing innocent victims
 4. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
-5. The execution of a specific command instead of sending the SIGTERM signal
+5. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
 6. GUI notifications:
    - results of preventing OOM
    - low memory warnings
