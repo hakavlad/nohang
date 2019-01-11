@@ -26,7 +26,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Solution
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and lightweight OOM preventer written in C.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a very lightweight OOM preventer written in C.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook.
 - Use of nohang.
 
