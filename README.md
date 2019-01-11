@@ -33,6 +33,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Some features
 
 - `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
+- the ability to send any signal instead of SIGTERM for processes with certain names
 - impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
 - possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim (or run any other command)
 - GUI notifications:
