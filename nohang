@@ -612,18 +612,22 @@ def find_victim_and_send_signal(signal):
             oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
         except FileNotFoundError:
+            print(mem_info)
             print('The victim died in the search process')
             update_stat_dict_and_print('The victim died in the search process')
             return None
         except ProcessLookupError:
+            print(mem_info)
             print('The victim died in the search process')
             update_stat_dict_and_print('The victim died in the search process')
             return None
         except IndexError:
+            print(mem_info)
             print('The victim died in the search process')
             update_stat_dict_and_print('The victim died in the search process')
             return None
         except ValueError:
+            print(mem_info)
             print('The victim died in the search process')
             update_stat_dict_and_print('The victim died in the search process')
             return None
