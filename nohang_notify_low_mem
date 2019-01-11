@@ -111,7 +111,7 @@ def root_notify_env():
     """return set(user, display, dbus)"""
     unsorted_envs_list = []
     # iterates over processes, find processes with suitable env
-    for pid in os.listdir('/proc'):
+    for pid in listdir('/proc'):
         if pid[0].isdecimal() is False:
             continue
         one_env = re_pid_environ(pid)
