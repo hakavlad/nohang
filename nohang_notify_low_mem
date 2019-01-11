@@ -69,6 +69,9 @@ def re_pid_environ(pid):
      'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
     returns None if these vars is not in /proc/[pid]/environ
     """
+    display_env = 'DISPLAY='
+    dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
+    user_env = 'USER='
     try:
         env = str(rline1('/proc/' + pid + '/environ'))
         if display_env in env and dbus_env in env and user_env in env:
@@ -85,8 +88,8 @@ def re_pid_environ(pid):
                     continue
 
                 if i.startswith(dbus_env):
-                    if ',guid=' in i:
-                        return None
+                    #if ',guid=' in i:
+                    #    return None
                     dbus = i
                     continue
 
@@ -99,23 +102,36 @@ def re_pid_environ(pid):
             return env
 
     except FileNotFoundError:
-        pass
+        return None
     except ProcessLookupError:
-        pass
+        return None
 
 
 def root_notify_env():
     """return set(user, display, dbus)"""
     unsorted_envs_list = []
     # iterates over processes, find processes with suitable env
-    for pid in listdir('/proc'):
+    for pid in os.listdir('/proc'):
         if pid[0].isdecimal() is False:
             continue
         one_env = re_pid_environ(pid)
         unsorted_envs_list.append(one_env)
     env = set(unsorted_envs_list)
     env.discard(None)
-    return env
+
+    new_env = []
+    end = []
+    for i in env:
+        #print(i)
+        key = i[0] + i[1]
+        #print(key)
+        if key not in end:
+            end.append(key)
+            new_env.append(i)
+        else:
+            continue
+    #print(new_env)
+    return new_env
 
 
 b = root_notify_env()

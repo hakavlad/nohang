@@ -180,7 +180,7 @@ def root_notify_env():
     new_env = []
     end = []
     for i in env:
-        print(i)
+        #print(i)
         key = i[0] + i[1]
         #print(key)
         if key not in end:
@@ -188,7 +188,7 @@ def root_notify_env():
             new_env.append(i)
         else:
             continue
-    print(new_env)
+    #print(new_env)
     return new_env
 
 
