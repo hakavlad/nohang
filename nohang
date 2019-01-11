@@ -182,7 +182,7 @@ def root_notify_env():
     for i in env:
         print(i)
         key = i[0] + i[1]
-        print(key)
+        #print(key)
         if key not in end:
             end.append(key)
             new_env.append(i)
@@ -419,7 +419,7 @@ def send_notify(signal, name, pid):
                 username, display_env, dbus_env = i[0], i[1], i[2]
                 #if '1000' in dbus_env:
                 #    continue
-                print(username, display_env, dbus_env)
+                #print(username, display_env, dbus_env)
                 try:
                     Popen(['sudo', '-u', username, 'env', display_env,
                            dbus_env, 'notify-send', '--icon=dialog-warning',
