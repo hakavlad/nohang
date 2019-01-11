@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 from os import listdir
 from subprocess import Popen, TimeoutExpired
 
-wait_time = 2
+wait_time = 10
 
 parser = ArgumentParser()
 
@@ -145,14 +145,18 @@ if len(b) > 0:
         dbus_tuple = dbus_env.partition('=')
         display_key, display_value = display_tuple[0], display_tuple[2]
         dbus_key, dbus_value = dbus_tuple[0], dbus_tuple[2]
-        try:
-            Popen(['sudo', '-u', username,
-                'notify-send', '--icon=dialog-warning',
-                '{}'.format(title), '{}'.format(body)
-                ], env={
-                    display_key: display_value, dbus_key: dbus_value
-                    }).wait(wait_time)
-        except TimeoutExpired:
-            print('TimeoutExpired: notify ' + username)
+
+        with Popen(['sudo', '-u', username,
+            'notify-send', '--icon=dialog-warning',
+            '{}'.format(title), '{}'.format(body)
+            ], env={
+            display_key: display_value,
+            dbus_key: dbus_value
+            }) as proc:
+                try:
+                    proc.wait(timeout=wait_time)
+                except TimeoutExpired:
+                    proc.kill()
+                    print('TimeoutExpired: notify' + username)
 else:
     print('Low memory warnings: nobody logged in with GUI. Nothing to do.')
