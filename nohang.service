@@ -15,7 +15,10 @@ CPUSchedulingPriority=99
 CPUSchedulingResetOnFork=true
 ProtectSystem=strict
 MemoryMax=100M
+MemorySwapMax=0
 TasksMax=100
+OOMScoreAdjust=-20
+Slice=nohang.slice
 
 [Install]
 WantedBy=multi-user.target

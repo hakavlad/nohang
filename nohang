@@ -1319,8 +1319,7 @@ else:
 
 if print_config:
 
-    print(
-        '\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
+    print('\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
 
     print('mem_min_sigterm:           {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
@@ -1355,28 +1354,7 @@ if print_config:
     print('\n4. Impact on the badness of processes via matching their'
           ' names, cmdlines ir UIDs with regular expressions\n')
 
-    print('regex_matching:            {}'.format(regex_matching))
-    if regex_matching:
-        print('prefer_regex:              {}'.format(prefer_regex))
-        print('prefer_factor:             {}'.format(prefer_factor))
-        print('avoid_regex:               {}'.format(avoid_regex))
-        print('avoid_factor:              {}'.format(avoid_factor))
-        print()
-
-    print('re_match_cmdline:          {}'.format(re_match_cmdline))
-    if re_match_cmdline:
-        print('prefer_re_cmdline:         {}'.format(prefer_re_cmdline))
-        print('prefer_cmd_factor:         {}'.format(prefer_cmd_factor))
-        print('avoid_re_cmdline:          {}'.format(avoid_re_cmdline))
-        print('avoid_cmd_factor:          {}'.format(avoid_cmd_factor))
-        print()
-
-    print('re_match_uid:              {}'.format(re_match_uid))
-    if re_match_uid:
-        print('prefer_re_uid:             {}'.format(prefer_re_uid))
-        print('prefer_uid_factor:         {}'.format(prefer_uid_factor))
-        print('avoid_re_uid:              {}'.format(avoid_re_uid))
-        print('avoid_uid_factor:          {}'.format(avoid_uid_factor))
+    print('(todo)')
 
     print('\n5. The execution of a specific command instead of sending the\nSIGTERM signal\n')
     print('execute_the_command:       {}'.format(execute_the_command))
