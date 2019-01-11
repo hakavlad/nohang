@@ -682,7 +682,7 @@ def find_victim_and_send_signal(signal):
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
-            exit_status = os.system(etc_dict[name])
+            exit_status = os.system(etc_dict[name].replace('$PID', pid))
             if exit_status == 0:
                 exit_status = '\033[32m0\033[0m'
             else:
@@ -693,11 +693,11 @@ def find_victim_and_send_signal(signal):
             etc_info = '{}' \
                 '\n\033[4mImplement corrective action:\033[0m\n  Execute the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
-                    victim_info, command, exit_status,
+                    victim_info, command.replace('$PID', pid), exit_status,
                     round(response_time * 1000))
 
             # update stat_dict
-            key = "Run the command '\033[35m{}\033[0m'".format(command)
+            key = "Run the command '\033[35m{}\033[0m'".format(command.replace('$PID', pid))
             print(key)
             update_stat_dict_and_print(key)
 
@@ -705,7 +705,7 @@ def find_victim_and_send_signal(signal):
             print(etc_info)
 
             if gui_notifications:
-                send_notify_etc(pid, name, command)
+                send_notify_etc(pid, name, command.replace('$PID', pid))
 
         else:
 
