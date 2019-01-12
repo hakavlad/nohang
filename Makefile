@@ -9,7 +9,7 @@ install:
 	install -m0755 ./nohang $(DESTDIR)/$(PREFIX)/usr/sbin/nohang
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/bin
-	install -m0755 ./nohang_notify_low_mem $(DESTDIR)/$(PREFIX)/usr/bin/nohang_notify_low_mem
+	install -m0755 ./nohang_notify_helper $(DESTDIR)/$(PREFIX)/usr/bin/nohang_notify_helper
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/bin
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
@@ -31,7 +31,7 @@ uninstall:
 	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
 	systemctl disable nohang.service || true
 	rm -fv $(PREFIX)/usr/sbin/nohang
-	rm -fv $(PREFIX)/usr/bin/nohang_notify_low_mem
+	rm -fv $(PREFIX)/usr/bin/nohang_notify_helper
 	rm -fv $(PREFIX)/usr/bin/oom-sort
 	rm -fv $(PREFIX)/usr/bin/oom-trigger
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
