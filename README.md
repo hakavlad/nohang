@@ -176,7 +176,7 @@ See also `man journalctl`.
 ## Known problems
 
 - Awful documentation
-- Slowly starting, slowly looking for a victim, especially when using swapspace
+- Slowly starting, slowly looking for a victim, especially when using swapspace (although this should be enough for more than 95% of all cases, IMHO)
 - It is written in an interpreted language and is actually a prototype
 
 ## Contribution
@@ -194,8 +194,11 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - Display `UID`, `oom_score`, `oom_score_adj`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
         - Print statistics on corrective actions after each corrective action
-    - Optimize limiting `oom_score_adj`: now it can works without UID=0
-    - Optimize GUI warnings: find env without run `ps` and `env`
+    - Improve poll rate algorithm
+    - Improve limiting `oom_score_adj`: now it can works without UID=0
+    - Improve GUI warnings:
+        - Find env without run `ps` and `env`
+        - Handle all timeouts when notify-send starts
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`

@@ -21,10 +21,15 @@ self_pid = str(os.getpid())
 self_uid = os.geteuid()
 if self_uid == 0:
     root = True
+else:
+    root = False
 
-wait_time = 2
-cache_time = 30
-cache_path = '/dev/shm/nohang_env_cache'
+wait_time = 14
+
+max_sleep_time = 2
+min_sleep_time = 0.1
+
+notify_helper_path = '/usr/bin/nohang_notify_helper'
 
 psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
@@ -117,79 +122,6 @@ def format_time(t):
         m = s0 // 60
         s = s0 % 60
         return '{} h {} min {} sec'.format(h, m, s)
-
-
-def re_pid_environ(pid):
-    """
-    read environ of 1 process
-    returns tuple with USER, DBUS, DISPLAY like follow:
-    ('user', 'DISPLAY=:0',
-     'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
-    returns None if these vars is not in /proc/[pid]/environ
-    """
-    display_env = 'DISPLAY='
-    dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
-    user_env = 'USER='
-    try:
-        env = str(rline1('/proc/' + pid + '/environ'))
-        if display_env in env and dbus_env in env and user_env in env:
-            env_list = env.split('\x00')
-
-            # iterating over a list of process environment variables
-            for i in env_list:
-                if i.startswith(user_env):
-                    user = i
-                    continue
-
-                if i.startswith(display_env):
-                    display = i[:10]
-                    continue
-
-                if i.startswith(dbus_env):
-                    #if ',guid=' in i:
-                    #    return None
-                    dbus = i
-                    continue
-
-                if i.startswith('HOME='):
-                    # exclude Display Manager's user
-                    if i.startswith('HOME=/var'):
-                        return None
-
-            env = user.partition('USER=')[2], display, dbus
-            return env
-
-    except FileNotFoundError:
-        return None
-    except ProcessLookupError:
-        return None
-
-
-def root_notify_env():
-    """return set(user, display, dbus)"""
-    unsorted_envs_list = []
-    # iterates over processes, find processes with suitable env
-    for pid in os.listdir('/proc'):
-        if pid[0].isdecimal() is False:
-            continue
-        one_env = re_pid_environ(pid)
-        unsorted_envs_list.append(one_env)
-    env = set(unsorted_envs_list)
-    env.discard(None)
-
-    new_env = []
-    end = []
-    for i in env:
-        #print(i)
-        key = i[0] + i[1]
-        #print(key)
-        if key not in end:
-            end.append(key)
-            new_env.append(i)
-        else:
-            continue
-    #print(new_env)
-    return new_env
 
 
 def string_to_float_convert_test(string):
@@ -351,9 +283,28 @@ def pid_to_uid(pid):
                 return line.split('\t')[1]
 
 
+def notify_send_wait(title, body):
+    with Popen(['notify-send', '--icon=dialog-warning', title, body]) as proc:
+        try:
+            proc.wait(timeout=wait_time)
+        except TimeoutExpired:
+            proc.kill()
+            print('TimeoutExpired: notify-send {} {}'.format(title, body))
+
+
+def notify_helper(title, body):
+    with Popen([notify_helper_path, title, body]) as proc:
+        try:
+            proc.wait(timeout=wait_time)
+        except TimeoutExpired:
+            proc.kill()
+            print('TimeoutExpired: nohang_notify_helper {} {}'.format(title, body))
+
+
 def send_notify_warn():
     """
     Look for process with maximum 'badness' and warn user with notification.
+    (implement Low memory warnings)
     """
     # find process with max badness
     fat_tuple = fattest()
@@ -378,23 +329,10 @@ def send_notify_warn():
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
-
-        # теперь можно напрямую уведомлять из кэша если он не устарел
-
-        Popen([
-            '/usr/bin/nohang_notify_low_mem',
-            '--mem', low_mem_percent,
-            '--pid', pid,
-            '--name', name
-        ])
-
+        notify_helper(title, body)
     else:  # Or by regular user
         # send notification to user that runs this nohang
-        try:
-            Popen(['notify-send', '--icon=dialog-warning',
-                   '{}'.format(title), '{}'.format(body)]).wait(wait_time)
-        except TimeoutExpired:
-            print('TimeoutExpired: ' + 'notify low mem')
+        notify_send_wait(title, body)
 
 
 def send_notify(signal, name, pid):
@@ -413,26 +351,10 @@ def send_notify(signal, name, pid):
             '&', '*'))
     if root:
         # send notification to all active users with notify-send
-        b = root_notify_env()
-        if len(b) > 0:
-            for i in b:
-                username, display_env, dbus_env = i[0], i[1], i[2]
-                #if '1000' in dbus_env:
-                #    continue
-                #print(username, display_env, dbus_env)
-                try:
-                    Popen(['sudo', '-u', username, 'env', display_env,
-                           dbus_env, 'notify-send', '--icon=dialog-warning',
-                           '{}'.format(title), '{}'.format(body)]).wait(wait_time)
-                except TimeoutExpired:
-                    print('TimeoutExpired: ' + 'notify send signal')
+        notify_helper(title, body)
     else:
         # send notification to user that runs this nohang
-        try:
-            Popen(['notify-send', '--icon=dialog-warning',
-                   '{}'.format(title), '{}'.format(body)]).wait(wait_time)
-        except TimeoutExpired:
-            print('TimeoutExpired: ' + 'notify send signal')
+        notify_send_wait(title, body)
 
 
 def send_notify_etc(pid, name, command):
@@ -448,20 +370,10 @@ def send_notify_etc(pid, name, command):
         pid, name.replace('&', '*'), command.replace('&', '*'))
     if root:
         # send notification to all active users with notify-send
-        b = root_notify_env()
-        if len(b) > 0:
-            for i in b:
-                username, display_env, dbus_env = i[0], i[1], i[2]
-                try:
-                    Popen(['sudo', '-u', username, 'env', display_env,
-                           dbus_env, 'notify-send', '--icon=dialog-warning',
-                           '{}'.format(title), '{}'.format(body)]).wait(wait_time)
-                except TimeoutExpired:
-                    print('TimeoutExpired: notify run command')
+        notify_send_wait(title, body)
     else:
         # send notification to user that runs this nohang
-        Popen(['notify-send', '--icon=dialog-warning', '{}'.format(title), '{}'
-               .format(body)])
+        notify_send_wait(title, body)
 
 
 def sleep_after_send_signal(signal):
@@ -789,9 +701,20 @@ def find_victim_and_send_signal(signal):
 
 def sleep_after_check_mem():
     """Specify sleep times depends on rates and avialable memory."""
-    t_mem = mem_available / rate_mem
-    t_swap = swap_free / rate_swap
-    t_zram = (mem_total - mem_used_zram) / rate_zram
+
+    if mem_min_sigkill_kb < mem_min_sigterm_kb:
+        mem_point = mem_available - mem_min_sigterm_kb
+    else:
+        mem_point = mem_available - mem_min_sigkill_kb
+
+    if swap_min_sigkill_kb < swap_min_sigterm_kb:
+        swap_point = swap_free - swap_min_sigterm_kb
+    else:
+        swap_point = swap_free - swap_min_sigkill_kb
+
+    t_mem = mem_point / rate_mem
+    t_swap = swap_point / rate_swap
+    t_zram = (mem_total * 0.9 - mem_used_zram) / rate_zram
 
     t_mem_swap = t_mem + t_swap
     t_mem_zram = t_mem + t_zram
@@ -801,17 +724,20 @@ def sleep_after_check_mem():
     else:
         t = t_mem_zram
 
-    max_sleep_time = 1
     if t > max_sleep_time:
-        t = 1
+        t = max_sleep_time
+    elif t < min_sleep_time:
+        t = min_sleep_time
+    else:
+        pass
 
     try:
         if print_sleep_periods:
-            print('sleep', round(t, 2),
-                  '  (t_mem={}, t_swap={}, t_zram={})'.format(
-                round(t_mem, 2),
-                round(t_swap, 2),
-                round(t_zram, 2)))
+            print('sleep', round(t, 2))
+                #  '  (t_mem={}, t_swap={}, t_zram={})'.format(
+                #round(t_mem, 2),
+                #round(t_swap, 2),
+                #round(t_zram, 2)))
         stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
@@ -1425,68 +1351,10 @@ print('Startup time:',
 
 print('Monitoring started!')
 
-
-def save_env_cache():
-    z = '{}\n'.format(int(time()))
-    a = root_notify_env()
-    # print(a)
-    for i in a:
-        z = z + '{}\x00{}\x00{}\n'.format(i[0], i[1], i[2])
-    write(cache_path, z)
-    os.chmod(cache_path, 0000)
-    return a
-
-
-def read_env_cache():
-    x, y = [], []
-    try:
-        with open(cache_path) as f:
-            for n, line in enumerate(f):
-                if n is 0:
-                    t = line[:-1]
-                    y.append(t)
-                    continue
-                if n > 0:
-                    x.append(line[:-1].split('\x00'))
-    except FileNotFoundError:
-        return None
-    y.append(x)
-    return y
-
-
-def root_env_cache():
-    cache = read_env_cache()
-    if cache is None:
-        print('cache not found, get new env and cache it')
-        return save_env_cache()
-    delta_t = time() - int(cache[0])
-    if delta_t > cache_time:
-        print('cache time: {}, delta: {}, '
-              'get new env and cache it'.format(
-                  cache_time, round(delta_t)))
-        save_env_cache()
-        return root_notify_env()
-    else:
-        print('cache time: {}, delta: {}, '
-              'get cached env'.format(
-                  cache_time, round(delta_t)))
-        return cache[1]
-
-
-t1 = time()
-# root_env_cache()
-t2 = time()
-# print(t2 - t1)
-
-
 stdout.flush()
-
-# exit()
-
 
 sigterm_psi = sigterm_psi_avg10
 sigkill_psi = sigkill_psi_avg10
-# avg_min_time = 4
 psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
@@ -1494,11 +1362,8 @@ psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
 if psi_support and not ignore_psi:
-    # ta0 = time()
-    # a0 = psi_mem_some_avg_total()
     kill_psi_t0 = time() + psi_avg10_sleep_time
     term_psi_t0 = time() + psi_avg10_sleep_time
-
 
 avg_value = ''
 

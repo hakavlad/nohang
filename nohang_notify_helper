@@ -1,53 +1,17 @@
 #!/usr/bin/env python3
+#
+# Usage:
+#   ./nohang_notify_helper "title" "body"
 
-# nohang_notify_low_mem --mem '14% 12%' --name 'stress' --pid '6666'
-
-# need UID=0
-
-# output:
-# Low memory: 14% 12%
-# Fattest process: 6666, stress
-
-# need to remove this slow and fat parser
-from argparse import ArgumentParser
-
+from sys import argv
 from os import listdir
 from subprocess import Popen, TimeoutExpired
 
-wait_time = 10
+if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
+    print('Usage: ./nohang_notify_helper "title" "body"')
+    exit(1)
 
-parser = ArgumentParser()
-
-parser.add_argument(
-    '--mem',
-    help="""available memory percent (15%, for example)""",
-    default=None,
-    type=str
-)
-
-parser.add_argument(
-    '--pid',
-    help="""pid""",
-    default=None,
-    type=str
-)
-
-parser.add_argument(
-    '--name',
-    help="""process name""",
-    default=None,
-    type=str
-)
-
-args = parser.parse_args()
-
-pid = args.pid
-name = args.name
-mem = args.mem
-
-title = 'Low memory: {}'.format(mem)
-
-body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(pid, name)
+wait_time = 12
 
 display_env = 'DISPLAY='
 dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
@@ -69,9 +33,6 @@ def re_pid_environ(pid):
      'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
     returns None if these vars is not in /proc/[pid]/environ
     """
-    display_env = 'DISPLAY='
-    dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
-    user_env = 'USER='
     try:
         env = str(rline1('/proc/' + pid + '/environ'))
         if display_env in env and dbus_env in env and user_env in env:
@@ -88,8 +49,6 @@ def re_pid_environ(pid):
                     continue
 
                 if i.startswith(dbus_env):
-                    #if ',guid=' in i:
-                    #    return None
                     dbus = i
                     continue
 
@@ -119,27 +78,27 @@ def root_notify_env():
     env = set(unsorted_envs_list)
     env.discard(None)
 
+    # deduplicate dbus
     new_env = []
     end = []
     for i in env:
-        #print(i)
         key = i[0] + i[1]
-        #print(key)
         if key not in end:
             end.append(key)
             new_env.append(i)
         else:
             continue
-    #print(new_env)
+
     return new_env
 
 
-b = root_notify_env()
+list_with_envs = root_notify_env()
+
 
 # if somebody logged in with GUI
-if len(b) > 0:
+if len(list_with_envs) > 0:
     # iterating over logged-in users
-    for i in b:
+    for i in list_with_envs:
         username, display_env, dbus_env = i[0], i[1], i[2]
         display_tuple = display_env.partition('=')
         dbus_tuple = dbus_env.partition('=')
@@ -147,16 +106,16 @@ if len(b) > 0:
         dbus_key, dbus_value = dbus_tuple[0], dbus_tuple[2]
 
         with Popen(['sudo', '-u', username,
-            'notify-send', '--icon=dialog-warning',
-            '{}'.format(title), '{}'.format(body)
-            ], env={
+                    'notify-send', '--icon=dialog-warning',
+                     argv[1], argv[2]
+                     ], env={
             display_key: display_value,
             dbus_key: dbus_value
-            }) as proc:
-                try:
-                    proc.wait(timeout=wait_time)
-                except TimeoutExpired:
-                    proc.kill()
-                    print('TimeoutExpired: notify' + username)
+        }) as proc:
+            try:
+                proc.wait(timeout=wait_time)
+            except TimeoutExpired:
+                proc.kill()
+                print('TimeoutExpired: notify' + username)
 else:
-    print('Low memory warnings: nobody logged in with GUI. Nothing to do.')
+    print('Nobody logged-in with GUI. Nothing to do.')
