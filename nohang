@@ -11,7 +11,7 @@ from operator import itemgetter
 from argparse import ArgumentParser
 
 from sys import stdout
-from signal import SIGKILL, SIGTERM
+from signal import SIGKILL, SIGTERM, SIGSTOP, SIGCONT
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
@@ -26,18 +26,38 @@ else:
 
 wait_time = 14
 
-max_sleep_time = 2
-min_sleep_time = 0.1
+max_sleep_time = 1
+min_sleep_time = 0.05
 
 notify_helper_path = '/usr/bin/nohang_notify_helper'
 
 psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
 
+debug = False
+
+
+stop_cont = True
+
+SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+
+
 ##########################################################################
 
 
 # function definition section
+
+
+def uptime():
+    return float(rline1('/proc/uptime').split(' ')[0])
+
+
+def pid_to_starttime(pid):
+    return float(rline1('/proc/' + pid + '/stat').rpartition(')')[2].split(' ')[20]) / float(SC_CLK_TCK)
+
+
+def pid_to_state(pid):
+    return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
 
 def update_stat_dict_and_print(key):
@@ -261,6 +281,22 @@ def pid_to_name(pid):
     except ProcessLookupError:
         return ''
 
+'''
+# return process name
+def pid_to_rss(pid):
+    """
+
+    """
+    try:
+        with open('/proc/' + pid + '/statm') as f:
+            for line in f:
+                return line.split(' ')[1]
+    except FileNotFoundError:
+        return 0
+    except ProcessLookupError:
+        return 0
+'''
+
 
 def pid_to_cmdline(pid):
     """
@@ -277,10 +313,11 @@ def pid_to_cmdline(pid):
 
 
 def pid_to_uid(pid):
+    '''return euid'''
     with open('/proc/' + pid + '/status') as f:
         for n, line in enumerate(f):
             if n is uid_index:
-                return line.split('\t')[1]
+                return line.split('\t')[2]
 
 
 def notify_send_wait(title, body):
@@ -392,6 +429,109 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigterm)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+def stop():
+    print()
+    print('Stop running processes...')
+    t1 = time()
+    t2 = time()
+    stopped_list = []
+    for pid in os.listdir('/proc')[::-1]:
+        # only directories whose names consist only of numbers, except /proc/1/
+        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
+            continue
+        try:
+            # print(pid)
+            if pid_to_state(pid) == 'R':
+                if pid_to_cmdline(pid) != '' and pid_to_name(pid) != 'Xorg':
+                    stopped_list.append(pid)
+                    print('Send SIGSTOP to {}, {}, {}...'.format(
+                        pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
+                    os.kill(int(pid), SIGSTOP)
+                    t2 = time()
+        except FileNotFoundError:
+            continue
+        except ProcessLookupError:
+            continue
+    print('Stop time:', t2 - t1)
+    return stopped_list
+
+
+
+def cont(stopped_list):
+    print()
+    print('Continue stopped processes...')
+    t1 = time()
+    if len(stopped_list) > 0:
+        for pid in stopped_list:
+            print('Send SIGCONT to', [pid], pid_to_name(pid))
+            try:
+                os.kill(int(pid), SIGCONT)
+            except FileNotFoundError:
+                continue
+            except ProcessLookupError:
+                continue
+    t2 = time()
+    print('All cont time: ', t2 - t1)
+
+
+
+def print_states():
+    print()
+    t1 = time()
+    print('non-S states:')
+    for pid in os.listdir('/proc'):
+        # only directories whose names consist only of numbers, except /proc/1/
+        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
+            continue
+        try:
+            s = pid_to_state(pid)
+            if s == 'S':
+                continue
+            else:
+                print('State: {}, [{}], {}, {}...'.format(
+                    s, pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
+        except FileNotFoundError:
+            continue
+        except ProcessLookupError:
+            continue
+    t2 = time()
+    print('print state time:', t2 - t1)
+    print()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def fattest():
     """
     Find the process with highest badness and its badness adjustment
@@ -402,7 +542,7 @@ def fattest():
 
     for pid in os.listdir('/proc'):
         # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid is '1' or pid is self_pid:
+        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
             continue
 
         # find and modify badness (if it needs)
@@ -448,8 +588,37 @@ def fattest():
         pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
-    pid_tuple_list = sorted(
-        pid_badness_list, key=itemgetter(1), reverse=True)[0]
+    pid_tuple_list = sorted(pid_badness_list, key=itemgetter(1), reverse=True)[0]
+
+
+    # badness oom_score oom_score_adj RSS UID NAME (cmdline)
+    if debug:
+        x = sorted(pid_badness_list, key=itemgetter(1), reverse=True)
+        for i in x:
+            try:
+                print('PID: {} | badness: {} | name: {} | eUID: {} | cmdline: {}'.format(
+                    i[0].rjust(5),
+                    str(i[1]).rjust(5),
+                    pid_to_name(i[0]).ljust(15),
+                    pid_to_uid(i[0]).rjust(6),
+                    pid_to_cmdline(i[0])[:50]
+                    ))
+                print(pid_to_state(i[0]))
+                
+                k = 0.5
+                uptime_ratio = 1 - pid_to_starttime(i[0]) / uptime()
+                uptime_ratio2 = uptime_ratio ** k
+                print(uptime_ratio, uptime_ratio2, i[1], i[1] * uptime_ratio2)
+                
+                #print(pid_to_starttime('1'))
+                #print(uptime())
+                
+            except FileNotFoundError:
+                print('(FileNotFoundError)')
+                continue
+            except ProcessLookupError:
+                print('(ProcessLookupError)')
+                continue
 
     pid = pid_tuple_list[0]
 
@@ -464,6 +633,9 @@ def find_victim_and_send_signal(signal):
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
     # print()
+    if stop_cont:
+        print_states()
+        stopped_list = stop()
 
     pid, victim_badness = fattest()
     name = pid_to_name(pid)
@@ -594,6 +766,8 @@ def find_victim_and_send_signal(signal):
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
+            if stop_cont:
+                os.kill(int(pid), SIGCONT)
             exit_status = os.system(etc_dict[name].replace('$PID', pid))
             if exit_status == 0:
                 exit_status = '\033[32m0\033[0m'
@@ -622,6 +796,8 @@ def find_victim_and_send_signal(signal):
         else:
 
             try:
+                if stop_cont:
+                    os.kill(int(pid), SIGCONT)
                 os.kill(int(pid), signal)
                 response_time = time() - time0
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
@@ -696,11 +872,18 @@ def find_victim_and_send_signal(signal):
 
         print(stats_msg)
 
+    if stop_cont:
+        print_states()
+        cont(stopped_list)
+        print_states()
+
     sleep_after_send_signal(signal)
 
 
 def sleep_after_check_mem():
     """Specify sleep times depends on rates and avialable memory."""
+
+    # It's magic!
 
     if mem_min_sigkill_kb < mem_min_sigterm_kb:
         mem_point = mem_available - mem_min_sigterm_kb
@@ -1359,6 +1542,23 @@ psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
 ##########################################################################
+
+
+
+
+
+
+# stopped_list = stop()
+
+
+# cont(stopped_list)
+
+
+
+
+
+
+
 
 
 if psi_support and not ignore_psi:
