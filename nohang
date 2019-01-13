@@ -768,7 +768,7 @@ def find_victim_and_send_signal(signal):
             command = etc_dict[name]
             if stop_cont:
                 os.kill(int(pid), SIGCONT)
-            exit_status = os.system(etc_dict[name].replace('$PID', pid)).replace('$NAME', pid_to_name(pid)))
+            exit_status = os.system(etc_dict[name].replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
             if exit_status == 0:
                 exit_status = '\033[32m0\033[0m'
             else:
