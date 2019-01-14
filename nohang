@@ -2,7 +2,7 @@
 """A daemon that prevents OOM in Linux systems."""
 from time import sleep, time
 
-# start_time = time()
+start_time = time()
 
 import os
 from operator import itemgetter
