@@ -60,11 +60,11 @@ To use `PSI` (pressure stall information):
 ## Memory and CPU usage
 
 - VmRSS is about 10 MiB
-- CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by the user via the config)
+- CPU usage depends on the level of available memory and monitoring intensity
 
 ## Download, install, uninstall
 
-Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may unstable.
+Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be unstable.
 
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
