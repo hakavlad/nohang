@@ -27,7 +27,7 @@ else:
 wait_time = 14
 
 max_sleep_time = 1
-min_sleep_time = 0.05
+min_sleep_time = 0.02
 
 notify_helper_path = '/usr/bin/nohang_notify_helper'
 
@@ -38,8 +38,10 @@ debug = False
 
 
 stop_cont = True
+print_states_debug = False
 
-SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+
+# SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
 
 
 ##########################################################################
@@ -488,27 +490,28 @@ def cont(stopped_list):
 
 
 def print_states():
-    print()
-    t1 = time()
-    print('non-S states:')
-    for pid in os.listdir('/proc'):
-        # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
-            continue
-        try:
-            s = pid_to_state(pid)
-            if s == 'S':
+    if print_states_debug:
+        print()
+        t1 = time()
+        print('non-S states:')
+        for pid in os.listdir('/proc'):
+            # only directories whose names consist only of numbers, except /proc/1/
+            if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
                 continue
-            else:
-                print('State: {}, [{}], {}, {}...'.format(
-                    s, pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
-        except FileNotFoundError:
-            continue
-        except ProcessLookupError:
-            continue
-    t2 = time()
-    print('print state time:', t2 - t1)
-    print()
+            try:
+                s = pid_to_state(pid)
+                if s == 'S':
+                    continue
+                else:
+                    print('State: {}, [{}], {}, {}...'.format(
+                        s, pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
+            except FileNotFoundError:
+                continue
+            except ProcessLookupError:
+                continue
+        t2 = time()
+        print('print state time:', t2 - t1)
+        print()
 
 
 
