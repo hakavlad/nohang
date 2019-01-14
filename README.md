@@ -59,25 +59,17 @@ To use `PSI` (pressure stall information):
 
 ## Memory and CPU usage
 
-- VmRSS is 10 — 11 MiB depending on the settings
+- VmRSS is about 10 MiB
 - CPU usage depends on the level of available memory (the frequency of memory status checks increases as the amount of available memory decreases) and monitoring intensity (can be changed by the user via the config)
 
 ## Download, install, uninstall
 
-**Please use the latest [release version](https://github.com/hakavlad/nohang/releases).**
-Current version may be more unstable.
+Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may unstable.
 
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
 ```
-
-Run without installing (low memory warnings may not work; note that processes with UID != your UID will not receive signals if nohang is started as a regular user):
-
-```
-$ ./nohang
-```
-
 
 To install:
 ```bash
@@ -96,19 +88,6 @@ $ sudo make uninstall
 
 For Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers).
 
-
-## Command line options
-
-```
-./nohang -h
-usage: nohang [-h] [-c CONFIG]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -c CONFIG, --config CONFIG
-                        path to the config file, default values:
-                        ./nohang.conf, /etc/nohang/nohang.conf
-```
 
 ## How to configure nohang
 
@@ -205,6 +184,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add `oom-trigger`
     - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md)
     - Redesign of the config
+    - Remove CLI options
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
 
