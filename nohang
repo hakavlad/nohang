@@ -1,22 +1,12 @@
 #!/usr/bin/env python3
 """A daemon that prevents OOM in Linux systems."""
+import os
 from time import sleep, time
+from operator import itemgetter
+from sys import stdout
+from signal import SIGKILL, SIGTERM
 
 start_time = time()
-
-import os
-from operator import itemgetter
-
-
-'''
-# this is most slow import
-from argparse import ArgumentParser
-'''
-
-
-
-from sys import stdout
-from signal import SIGKILL, SIGTERM, SIGSTOP, SIGCONT
 
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
@@ -39,32 +29,10 @@ notify_helper_path = '/usr/bin/nohang_notify_helper'
 psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
 
-debug = False
-
-
-stop_cont = False
-print_states_debug = False
-
-
-# SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
-
-
 ##########################################################################
 
 
 # function definition section
-
-
-def uptime():
-    return float(rline1('/proc/uptime').split(' ')[0])
-
-
-def pid_to_starttime(pid):
-    return float(rline1('/proc/' + pid + '/stat').rpartition(')')[2].split(' ')[20]) / float(SC_CLK_TCK)
-
-
-def pid_to_state(pid):
-    return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
 
 def update_stat_dict_and_print(key):
@@ -73,8 +41,10 @@ def update_stat_dict_and_print(key):
     else:
         new_value = stat_dict[key] + 1
         stat_dict.update({key: new_value})
-    stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; corrective actions:\033[0m'.format(
-        format_time(time() - start_time))
+    stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUp' \
+                'time: {}; corrective actions:\033[0m'.format(
+                    format_time(time() - start_time))
     for i in stat_dict:
         stats_msg += '\n- {}: {}'.format(i, stat_dict[i])
 
@@ -167,7 +137,6 @@ def string_to_int_convert_test(string):
         return None
 
 
-# extracting the parameter from the config dictionary, str return
 def conf_parse_string(param):
     """
     Get string parameters from the config dict.
@@ -183,7 +152,6 @@ def conf_parse_string(param):
         exit()
 
 
-# extracting the parameter from the config dictionary, bool return
 def conf_parse_bool(param):
     """
     Get bool parameters from the config_dict.
@@ -245,7 +213,6 @@ def human(num, lenth):
     return str(round(num / 1024)).rjust(lenth, ' ')
 
 
-# return str with amount of bytes
 def zram_stat(zram_id):
     """
     Get zram state.
@@ -271,7 +238,6 @@ def zram_stat(zram_id):
     return disksize, mem_used_total  # BYTES, str
 
 
-# return process name
 def pid_to_name(pid):
     """
     Get process name by pid.
@@ -287,22 +253,6 @@ def pid_to_name(pid):
         return ''
     except ProcessLookupError:
         return ''
-
-'''
-# return process name
-def pid_to_rss(pid):
-    """
-
-    """
-    try:
-        with open('/proc/' + pid + '/statm') as f:
-            for line in f:
-                return line.split(' ')[1]
-    except FileNotFoundError:
-        return 0
-    except ProcessLookupError:
-        return 0
-'''
 
 
 def pid_to_cmdline(pid):
@@ -342,7 +292,9 @@ def notify_helper(title, body):
             proc.wait(timeout=wait_time)
         except TimeoutExpired:
             proc.kill()
-            print('TimeoutExpired: nohang_notify_helper {} {}'.format(title, body))
+            print(
+                'TimeoutExpired: nohang_notify_helper {} {}'.format(
+                    title, body))
 
 
 def send_notify_warn():
@@ -436,110 +388,6 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigterm)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-def stop():
-    print()
-    print('Stop running processes...')
-    t1 = time()
-    t2 = time()
-    stopped_list = []
-    for pid in os.listdir('/proc')[::-1]:
-        # only directories whose names consist only of numbers, except /proc/1/
-        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
-            continue
-        try:
-            # print(pid)
-            if pid_to_state(pid) == 'R':
-                if pid_to_cmdline(pid) != '' and pid_to_name(pid) != 'Xorg':
-                    stopped_list.append(pid)
-                    print('Send SIGSTOP to {}, {}, {}...'.format(
-                        pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
-                    os.kill(int(pid), SIGSTOP)
-                    t2 = time()
-        except FileNotFoundError:
-            continue
-        except ProcessLookupError:
-            continue
-    print('Stop time:', t2 - t1)
-    return stopped_list
-
-
-
-def cont(stopped_list):
-    print()
-    print('Continue stopped processes...')
-    t1 = time()
-    if len(stopped_list) > 0:
-        for pid in stopped_list:
-            print('Send SIGCONT to', [pid], pid_to_name(pid))
-            try:
-                os.kill(int(pid), SIGCONT)
-            except FileNotFoundError:
-                continue
-            except ProcessLookupError:
-                continue
-    t2 = time()
-    print('All cont time: ', t2 - t1)
-
-
-
-def print_states():
-    if print_states_debug:
-        print()
-        t1 = time()
-        print('non-S states:')
-        for pid in os.listdir('/proc'):
-            # only directories whose names consist only of numbers, except /proc/1/
-            if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
-                continue
-            try:
-                s = pid_to_state(pid)
-                if s == 'S':
-                    continue
-                else:
-                    print('State: {}, [{}], {}, {}...'.format(
-                        s, pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
-            except FileNotFoundError:
-                continue
-            except ProcessLookupError:
-                continue
-        t2 = time()
-        print('print state time:', t2 - t1)
-        print()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def fattest():
     """
     Find the process with highest badness and its badness adjustment
@@ -596,37 +444,10 @@ def fattest():
         pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
-    pid_tuple_list = sorted(pid_badness_list, key=itemgetter(1), reverse=True)[0]
-
-
-    # badness oom_score oom_score_adj RSS UID NAME (cmdline)
-    if debug:
-        x = sorted(pid_badness_list, key=itemgetter(1), reverse=True)
-        for i in x:
-            try:
-                print('PID: {} | badness: {} | name: {} | eUID: {} | cmdline: {}'.format(
-                    i[0].rjust(5),
-                    str(i[1]).rjust(5),
-                    pid_to_name(i[0]).ljust(15),
-                    pid_to_uid(i[0]).rjust(6),
-                    pid_to_cmdline(i[0])[:50]
-                    ))
-                print(pid_to_state(i[0]))
-                
-                k = 0.5
-                uptime_ratio = 1 - pid_to_starttime(i[0]) / uptime()
-                uptime_ratio2 = uptime_ratio ** k
-                print(uptime_ratio, uptime_ratio2, i[1], i[1] * uptime_ratio2)
-                
-                #print(pid_to_starttime('1'))
-                #print(uptime())
-                
-            except FileNotFoundError:
-                print('(FileNotFoundError)')
-                continue
-            except ProcessLookupError:
-                print('(ProcessLookupError)')
-                continue
+    pid_tuple_list = sorted(
+        pid_badness_list,
+        key=itemgetter(1),
+        reverse=True)[0]
 
     pid = pid_tuple_list[0]
 
@@ -640,10 +461,6 @@ def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
-    # print()
-    if stop_cont:
-        print_states()
-        stopped_list = stop()
 
     pid, victim_badness = fattest()
     name = pid_to_name(pid)
@@ -746,8 +563,7 @@ def find_victim_and_send_signal(signal):
                     file_rss,
                     shmem_rss,
                     str(vm_swap).rjust(len_vm),
-                    cmdline
-                    )
+                    cmdline)
         else:
             victim_info = '\033[4mFound a victim with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
@@ -769,14 +585,12 @@ def find_victim_and_send_signal(signal):
                     vm_size,
                     str(vm_rss).rjust(len_vm),
                     str(vm_swap).rjust(len_vm),
-                    cmdline
-                    )
+                    cmdline)
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
-            if stop_cont:
-                os.kill(int(pid), SIGCONT)
-            exit_status = os.system(etc_dict[name].replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
+            exit_status = os.system(etc_dict[name].replace(
+                '$PID', pid).replace('$NAME', pid_to_name(pid)))
             if exit_status == 0:
                 exit_status = '\033[32m0\033[0m'
             else:
@@ -787,11 +601,13 @@ def find_victim_and_send_signal(signal):
             etc_info = '{}' \
                 '\n\033[4mImplement corrective action:\033[0m\n  Execute the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
-                    victim_info, command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
+                    victim_info, command.replace(
+                        '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
                     round(response_time * 1000))
 
             # update stat_dict
-            key = "Run the command '\033[35m{}\033[0m'".format(command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
+            key = "Run the command '\033[35m{}\033[0m'".format(
+                command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
             print(key)
             update_stat_dict_and_print(key)
 
@@ -799,13 +615,12 @@ def find_victim_and_send_signal(signal):
             print(etc_info)
 
             if gui_notifications:
-                send_notify_etc(pid, name, command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
+                send_notify_etc(pid, name, command.replace(
+                    '$PID', pid).replace('$NAME', pid_to_name(pid)))
 
         else:
 
             try:
-                if stop_cont:
-                    os.kill(int(pid), SIGCONT)
                 os.kill(int(pid), signal)
                 response_time = time() - time0
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
@@ -816,7 +631,6 @@ def find_victim_and_send_signal(signal):
                     sig_dict[signal], name)
 
                 update_stat_dict_and_print(key)
-
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -847,8 +661,10 @@ def find_victim_and_send_signal(signal):
             print(mem_info)
             print(preventing_oom_message)
 
-            stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; corrective actions:\033[0m'.format(
-                format_time(time() - start_time))
+            stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'\
+                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; c' \
+                'orrective actions:\033[0m'.format(
+                    format_time(time() - start_time))
 
             for key in stat_dict:
                 stats_msg += '\n- {}: {}'.format(key, stat_dict[key])
@@ -867,31 +683,25 @@ def find_victim_and_send_signal(signal):
 
         print(victim_badness_is_too_small)
 
-
         # update stat_dict
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-        stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; corrective actions:\033[0m'.format(
-            format_time(time() - start_time))
+        stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+            '~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; correcti' \
+            've actions:\033[0m'.format(
+                format_time(time() - start_time))
 
         for key in stat_dict:
             stats_msg += '\n- {}: {}'.format(key, stat_dict[key])
 
         print(stats_msg)
 
-    if stop_cont:
-        print_states()
-        cont(stopped_list)
-        print_states()
-
     sleep_after_send_signal(signal)
 
 
 def sleep_after_check_mem():
     """Specify sleep times depends on rates and avialable memory."""
-
-    # It's magic!
 
     if mem_min_sigkill_kb < mem_min_sigterm_kb:
         mem_point = mem_available - mem_min_sigterm_kb
@@ -925,10 +735,10 @@ def sleep_after_check_mem():
     try:
         if print_sleep_periods:
             print('sleep', round(t, 2))
-                #  '  (t_mem={}, t_swap={}, t_zram={})'.format(
-                #round(t_mem, 2),
-                #round(t_swap, 2),
-                #round(t_zram, 2)))
+            #  '  (t_mem={}, t_swap={}, t_zram={})'.format(
+            # round(t_mem, 2),
+            # round(t_swap, 2),
+            # round(t_zram, 2)))
         stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
@@ -1043,56 +853,8 @@ except ValueError:
 '''
 # Configurations
 
-
-# directory where the script is running
 cd = os.getcwd()
 
-# print('CD:', cd)
-
-# where to look for a config if not specified via the -c/--config option
-default_configs = (cd + '/nohang.conf', '/etc/nohang/nohang.conf')
-
-# universal message if config is invalid
-conf_err_mess = '\nSet up the path to the valid conf' \
-    'ig file with -c/--config option!\nExit'
-
-
-# Cmd argparse
-parser = ArgumentParser()
-parser.add_argument(
-    '-c',
-    '--config',
-    help="""path to the config file, default values:
-    ./nohang.conf, /etc/nohang/nohang.conf""",
-    default=None,
-    type=str
-)
-
-args = parser.parse_args()
-
-arg_config = args.config
-
-
-if arg_config is None:
-
-    config = None
-    for i in default_configs:
-        if os.path.exists(i):
-            config = i
-            break
-    if config is None:
-        print('Default configuration was not found\n',
-              conf_err_mess)
-        exit()
-
-else:
-
-    if os.path.exists(arg_config):
-        config = arg_config
-    else:
-        print("File {} doesn't exists{}".format(
-            arg_config, conf_err_mess))
-        exit()
 '''
 
 config = '/etc/nohang/nohang.conf'
@@ -1198,7 +960,6 @@ execute_the_command = conf_parse_bool('execute_the_command')
 
 ignore_psi = conf_parse_bool('ignore_psi')
 
-
 regex_matching = conf_parse_bool('regex_matching')
 
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
@@ -1223,7 +984,6 @@ mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent = calculate_p
     'mem_min_warnings')
 zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent(
     'zram_max_warnings')
-
 
 
 if 'rate_mem' in config_dict:
@@ -1454,7 +1214,8 @@ else:
 
 if print_config:
 
-    print('\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
+    print(
+        '\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
 
     print('mem_min_sigterm:           {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
@@ -1538,10 +1299,6 @@ warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
 
-# x = time() - start_time
-# print('Startup time:',
-#       round(x * 1000, 1), 'ms')
-
 print('Monitoring started!')
 
 stdout.flush()
@@ -1552,24 +1309,6 @@ psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
 ##########################################################################
-
-
-
-
-
-
-# stopped_list = stop()
-
-
-# cont(stopped_list)
-
-
-
-
-
-
-
-
 
 if psi_support and not ignore_psi:
     kill_psi_t0 = time() + psi_avg10_sleep_time
@@ -1597,7 +1336,6 @@ while True:
             find_victim_and_send_signal(SIGTERM)
             term_psi_t0 = time()
         else:
-            # print('PSI is OK  or  psi_min_sleep_time_after_action did not pass')
             pass
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
@@ -1665,7 +1403,9 @@ while True:
             swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that r' \
+            'equires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -1686,7 +1426,9 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory statu' \
+            's that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -1704,7 +1446,9 @@ while True:
 
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+            '~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status tha' \
+            't requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -1727,7 +1471,9 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that requires corrective actions:' \
+        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
+            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that r' \
+            'equires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
