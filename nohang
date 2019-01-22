@@ -24,7 +24,7 @@ wait_time = 14
 max_sleep_time = 2
 min_sleep_time = 0.1
 
-notify_helper_path = '/usr/bin/nohang_notify_helper'
+notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
