@@ -51,6 +51,7 @@ For basic usage:
 - `Python` 3.3+ (not tested with previous)
 
 To show GUI notifications:
+- [notification server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (most of desktop environments use their own implementations)
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
 - `sudo` if nohang started with UID=0
 
