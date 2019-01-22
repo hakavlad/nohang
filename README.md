@@ -160,7 +160,7 @@ See also `man journalctl`.
 
 ## Contribution
 
-Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome. See also [CoC](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md).
+Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
 
 ## Changelog
 
