@@ -183,7 +183,6 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`
     - Add `oom-trigger`
-    - Adoption of the [code of conduct](https://github.com/hakavlad/nohang/blob/master/CODE_OF_CONDUCT.md)
     - Redesign of the config
     - Remove CLI options
     - Remove self-defense options from config, use systemd unit scheduling instead
