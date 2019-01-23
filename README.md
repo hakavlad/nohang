@@ -177,7 +177,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Improve poll rate algorithm
     - Improve limiting `oom_score_adj`: now it can works without UID=0
     - Improve GUI warnings:
-        - Find env without run `ps` and `env`
+        - Find env without run `ps`
         - Handle all timeouts when notify-send starts
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
