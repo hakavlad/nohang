@@ -188,6 +188,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Remove CLI options
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
+    - Handle UnicodeDecodeError if victim name consists of many unicode characters
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
