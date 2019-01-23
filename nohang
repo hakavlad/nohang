@@ -14,6 +14,7 @@ sig_dict = {SIGKILL: 'SIGKILL',
 self_pid = str(os.getpid())
 
 self_uid = os.geteuid()
+
 if self_uid == 0:
     root = True
 else:
@@ -22,14 +23,18 @@ else:
 wait_time = 12
 
 max_sleep_time = 2
+
 min_sleep_time = 0.1
 
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 psi_path = '/proc/pressure/memory'
+
 psi_support = os.path.exists(psi_path)
 
-HR = '~' * 70
+HR = '~' * 79
+
+print_total_stat = True
 
 ##########################################################################
 
@@ -38,17 +43,26 @@ HR = '~' * 70
 
 
 def update_stat_dict_and_print(key):
+
     if key not in stat_dict:
+
         stat_dict.update({key: 1})
+
     else:
+
         new_value = stat_dict[key] + 1
         stat_dict.update({key: new_value})
-    stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUp' \
-                'time: {}; corrective actions:\033[0m'.format(
-                    format_time(time() - start_time))
-    for i in stat_dict:
-        stats_msg += '\n- {}: {}'.format(i, stat_dict[i])
+
+    if print_total_stat:
+
+        stats_msg = '{}\n\033[4mThe following corrective actions have been implemented in the last {}:\033[0m'.format(
+            HR, format_time(time() - start_time))
+
+        for i in stat_dict:
+            stats_msg += '\n- {}: {}'.format(i, stat_dict[i])
+
+        print(stats_msg)
+
 
 
 def psi_mem_some_avg_total():
@@ -184,13 +198,6 @@ def rline1(path):
         for line in f:
             return line[:-1]
 
-'''
-def write(path, string):
-    """Write string to path."""
-    with open(path, 'w') as f:
-        f.write(string)
-'''
-
 
 def kib_to_mib(num):
     """Convert KiB values to MiB values."""
@@ -306,7 +313,7 @@ def notify_helper(title, body):
         except TimeoutExpired:
             proc.kill()
             print(
-                'TimeoutExpired: nohang_notify_helper {} {}'.format(
+                'TimeoutExpired: nohang_notify_helper: {} {}'.format(
                     title, body))
 
 
@@ -334,7 +341,11 @@ def send_notify_warn():
             round(mem_available / mem_total * 100))
 
     title = 'Low memory: {}'.format(low_mem_percent)
-    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(pid, name)
+    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(
+        pid, name.replace(
+            # symbol '&' can break notifications in some themes,
+            # therefore it is replaced by '*'
+            '&', '*'))
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
@@ -366,27 +377,6 @@ def send_notify(signal, name, pid):
         notify_send_wait(title, body)
 
 
-'''
-def send_notify(signal, name, pid):
-    """
-    Notificate about OOM Preventing.
-
-    signal: key for notify_sig_dict
-    name: str process name
-    pid: str process pid
-    """
-    title = 'Preventing OOM'
-    body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
-        notify_sig_dict[signal], pid, name)
-    if root:
-        # send notification to all active users with notify-send
-        notify_helper(title, body)
-    else:
-        # send notification to user that runs this nohang
-        notify_send_wait(title, body)
-'''
-
-
 def send_notify_etc(pid, name, command):
     """
     Notificate about OOM Preventing.
@@ -400,7 +390,7 @@ def send_notify_etc(pid, name, command):
         pid, name.replace('&', '*'), command.replace('&', '*'))
     if root:
         # send notification to all active users with notify-send
-        notify_send_wait(title, body)
+        notify_helper(title, body)
     else:
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
@@ -503,8 +493,8 @@ def find_victim_and_send_signal(signal):
 
         # Try to send signal to found victim
 
-        # Get VmRSS and VmSwap and cmdline of victim process and try to send
-        # signal
+        # Get VmRSS and VmSwap and cmdline of victim process
+        # and try to send a signal
         try:
 
             with open('/proc/' + pid + '/status') as f:
@@ -615,7 +605,7 @@ def find_victim_and_send_signal(signal):
         len_vm = len(str(vm_size))
 
         if detailed_rss:
-            victim_info = '\033[4mFound a victim with highest badness:\033[0m' \
+            victim_info = '\033[4mFound a process with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
@@ -643,7 +633,7 @@ def find_victim_and_send_signal(signal):
                     str(vm_swap).rjust(len_vm),
                     cmdline)
         else:
-            victim_info = '\033[4mFound a victim with highest badness:\033[0m' \
+            victim_info = '\033[4mFound a process with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
@@ -677,24 +667,23 @@ def find_victim_and_send_signal(signal):
             response_time = time() - time0
 
             etc_info = '{}' \
-                '\n\033[4mImplement corrective action:\033[0m\n  Execute the command: \033[4m{}\033[0m' \
+                '\n\033[4mImplement corrective action:\033[0m\n  Run the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
                     victim_info, command.replace(
                         '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
                     round(response_time * 1000))
 
-            # update stat_dict
-            key = "Run the command '\033[35m{}\033[0m'".format(
-                command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
-            print(key)
-            update_stat_dict_and_print(key)
-
             print(mem_info)
             print(etc_info)
 
+            key = "Run the command '\033[35m{}\033[0m'".format(command)
+            update_stat_dict_and_print(key)
+
             if gui_notifications:
-                send_notify_etc(pid, name, command.replace(
-                    '$PID', pid).replace('$NAME', pid_to_name(pid)))
+                send_notify_etc(
+                    pid,
+                    name,
+                    command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
 
         else:
 
@@ -704,11 +693,13 @@ def find_victim_and_send_signal(signal):
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
                     round(response_time * 1000))
 
-                # update stat_dict
+                preventing_oom_message = '{}' \
+                    '\n\033[4mImplement a corrective action:\033[0m\n  ' \
+                    'Sending \033[4m{}\033[0m to the victim; {}'.format(
+                        victim_info, sig_dict[signal], send_result)
+
                 key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(
                     sig_dict[signal], name)
-
-                update_stat_dict_and_print(key)
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -717,37 +708,18 @@ def find_victim_and_send_signal(signal):
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-
-                # update stat_dict
-                key = 'The victim died in the search process'
-                update_stat_dict_and_print(key)
-
+                key = 'The victim died in the search process: FileNotFoundError'
             except ProcessLookupError:
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
+                key = 'The victim died in the search process: ProcessLookupError'
 
-                # update stat_dict
-                key = 'The victim died in the search process'
-                update_stat_dict_and_print(key)
-
-            preventing_oom_message = '{}' \
-                '\n\033[4mImplement a corrective action:\033[0m\n  ' \
-                'Sending \033[4m{}\033[0m to the victim; {}'.format(
-                    victim_info, sig_dict[signal], send_result)
 
             print(mem_info)
             print(preventing_oom_message)
 
-            stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'\
-                '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; c' \
-                'orrective actions:\033[0m'.format(
-                    format_time(time() - start_time))
-
-            for key in stat_dict:
-                stats_msg += '\n- {}: {}'.format(key, stat_dict[key])
-
-            print(stats_msg)
+            update_stat_dict_and_print(key)
 
     else:
 
@@ -764,16 +736,6 @@ def find_victim_and_send_signal(signal):
         # update stat_dict
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
-
-        stats_msg = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-            '~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mUptime: {}; correcti' \
-            've actions:\033[0m'.format(
-                format_time(time() - start_time))
-
-        for key in stat_dict:
-            stats_msg += '\n- {}: {}'.format(key, stat_dict[key])
-
-        print(stats_msg)
 
     sleep_after_send_signal(signal)
 
@@ -1481,12 +1443,12 @@ while True:
             swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that r' \
+        mem_info = '{}\n\033[4mMemory status that r' \
             'equires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
+                HR,
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(mem_min_sigkill_kb),
@@ -1504,11 +1466,11 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory statu' \
+        mem_info = '{}\n\033[4mMemory statu' \
             's that requires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
+                HR,
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigkill_kb),
@@ -1524,12 +1486,12 @@ while True:
 
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-            '~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status tha' \
+        mem_info = '{}\n\033[4mMemory status tha' \
             't requires corrective actions:' \
             '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
+                HR,
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(mem_min_sigterm_kb),
@@ -1549,11 +1511,11 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~' \
-            '~~~~~~~~~~~~~~~~~~~~~~~~~~\n\033[4mMemory status that r' \
+        mem_info = '{}\n\033[4mMemory status that r' \
             'equires corrective actions:' \
             '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
+                HR,
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
