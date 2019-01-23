@@ -19,7 +19,7 @@ if self_uid == 0:
 else:
     root = False
 
-wait_time = 14
+wait_time = 12
 
 max_sleep_time = 2
 min_sleep_time = 0.1
@@ -28,6 +28,8 @@ notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 psi_path = '/proc/pressure/memory'
 psi_support = os.path.exists(psi_path)
+
+HR = '~' * 70
 
 ##########################################################################
 
@@ -182,11 +184,12 @@ def rline1(path):
         for line in f:
             return line[:-1]
 
-
+'''
 def write(path, string):
     """Write string to path."""
     with open(path, 'w') as f:
         f.write(string)
+'''
 
 
 def kib_to_mib(num):
@@ -247,12 +250,18 @@ def pid_to_name(pid):
     """
     try:
         with open('/proc/' + pid + '/status') as f:
+            f.seek(6)
             for line in f:
-                return line[:-1].split('\t')[1]
+                return line[:-1]
     except FileNotFoundError:
         return ''
     except ProcessLookupError:
         return ''
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f.seek(6)
+            return f.read(15).decode(
+                'utf-8', 'ignore').partition('\n')[0]
 
 
 def pid_to_cmdline(pid):
@@ -262,22 +271,25 @@ def pid_to_cmdline(pid):
     pid: str pid of required process
     returns string cmdline
     """
-    with open('/proc/' + pid + '/cmdline') as file:
-        try:
-            return file.readlines()[0].replace('\x00', ' ').strip()
-        except IndexError:
-            return ''
+    with open('/proc/' + pid + '/cmdline') as f:
+        return f.read().replace('\x00', ' ').rstrip()
 
 
 def pid_to_uid(pid):
     '''return euid'''
-    with open('/proc/' + pid + '/status') as f:
-        for n, line in enumerate(f):
-            if n is uid_index:
-                return line.split('\t')[2]
+    try:
+        with open('/proc/' + pid + '/status') as f:
+            for n, line in enumerate(f):
+                if n is uid_index:
+                    return line.split('\t')[2]
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f_list = f.read().decode('utf-8', 'ignore').split('\n')
+            return f_list[uid_index].split('\t')[2]
 
 
 def notify_send_wait(title, body):
+    '''GUI notifications with UID != 0'''
     with Popen(['notify-send', '--icon=dialog-warning', title, body]) as proc:
         try:
             proc.wait(timeout=wait_time)
@@ -287,6 +299,7 @@ def notify_send_wait(title, body):
 
 
 def notify_helper(title, body):
+    '''GUI notification with UID = 0'''
     with Popen([notify_helper_path, title, body]) as proc:
         try:
             proc.wait(timeout=wait_time)
@@ -342,8 +355,8 @@ def send_notify(signal, name, pid):
     title = 'Preventing OOM'
     body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
         notify_sig_dict[signal], pid, name.replace(
-            # сивол & может ломать уведомления в некоторых темах оформления,
-            # поэтому заменяется на *
+            # symbol '&' can break notifications in some themes,
+            # therefore it is replaced by '*'
             '&', '*'))
     if root:
         # send notification to all active users with notify-send
@@ -351,6 +364,27 @@ def send_notify(signal, name, pid):
     else:
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
+
+
+'''
+def send_notify(signal, name, pid):
+    """
+    Notificate about OOM Preventing.
+
+    signal: key for notify_sig_dict
+    name: str process name
+    pid: str process pid
+    """
+    title = 'Preventing OOM'
+    body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
+        notify_sig_dict[signal], pid, name)
+    if root:
+        # send notification to all active users with notify-send
+        notify_helper(title, body)
+    else:
+        # send notification to user that runs this nohang
+        notify_send_wait(title, body)
+'''
 
 
 def send_notify_etc(pid, name, command):
@@ -472,6 +506,7 @@ def find_victim_and_send_signal(signal):
         # Get VmRSS and VmSwap and cmdline of victim process and try to send
         # signal
         try:
+
             with open('/proc/' + pid + '/status') as f:
                 for n, line in enumerate(f):
 
@@ -516,24 +551,67 @@ def find_victim_and_send_signal(signal):
 
         except FileNotFoundError:
             print(mem_info)
-            print('The victim died in the search process')
-            update_stat_dict_and_print('The victim died in the search process')
+            print('The victim died in the search process: FileNotFoundError')
+            update_stat_dict_and_print('The victim died in the search process: FileNotFoundError')
             return None
         except ProcessLookupError:
             print(mem_info)
-            print('The victim died in the search process')
-            update_stat_dict_and_print('The victim died in the search process')
+            print('The victim died in the search process: ProcessLookupError')
+            update_stat_dict_and_print('The victim died in the search process: ProcessLookupError')
             return None
+        except UnicodeDecodeError:
+
+            # тут надо снова все исключ обработать
+
+            with open('/proc/' + pid + '/status', 'rb') as f:
+                f_list = f.read().decode('utf-8', 'ignore').split('\n')
+
+                for i in range(len(f_list)):
+                    if i is uid_index:
+                        uid = f_list[i].split('\t')[2]
+
+                    if i is vm_size_index:
+                        vm_size = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
+
+                    if i is vm_rss_index:
+                        vm_rss = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
+
+                    if detailed_rss:
+
+                        if i is anon_index:
+                            anon_rss = kib_to_mib(
+                                int(f_list[i].split('\t')[1][:-3]))
+
+                        if i is file_index:
+                            file_rss = kib_to_mib(
+                                int(f_list[i].split('\t')[1][:-3]))
+
+                        if i is shmem_index:
+                            shmem_rss = kib_to_mib(
+                                int(f_list[i].split('\t')[1][:-3]))
+
+                    if i is vm_swap_index:
+                        vm_swap = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
+
+
+            with open('/proc/' + pid + '/cmdline') as file:
+                cmdline = file.readlines()[0].replace('\x00', ' ')
+
+            oom_score = rline1('/proc/' + pid + '/oom_score')
+            oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
+
         except IndexError:
             print(mem_info)
-            print('The victim died in the search process')
-            update_stat_dict_and_print('The victim died in the search process')
+            print('The victim died in the search process: IndexError')
+            update_stat_dict_and_print('The victim died in the search process: IndexError')
             return None
         except ValueError:
             print(mem_info)
-            print('The victim died in the search process')
-            update_stat_dict_and_print('The victim died in the search process')
+            print('The victim died in the search process: ValueError')
+            update_stat_dict_and_print('The victim died in the search process: ValueError')
             return None
+
+
         len_vm = len(str(vm_size))
 
         if detailed_rss:

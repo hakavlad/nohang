@@ -3,7 +3,7 @@
 # Usage:
 #   ./nohang_notify_helper "title" "body"
 
-from sys import argv
+from sys import argv, stdout
 from os import listdir
 from subprocess import Popen, TimeoutExpired
 
@@ -93,10 +93,17 @@ def root_notify_env():
 
 
 list_with_envs = root_notify_env()
+list_len = len(list_with_envs)
 
 
 # if somebody logged in with GUI
-if len(list_with_envs) > 0:
+if list_len > 0:
+
+    for i in list_with_envs:
+        print('Send GUI notification:', argv[1], argv[2], i)
+
+    stdout.flush()
+
     # iterating over logged-in users
     for i in list_with_envs:
         username, display_env, dbus_env = i[0], i[1], i[2]
@@ -118,4 +125,6 @@ if len(list_with_envs) > 0:
                 proc.kill()
                 print('TimeoutExpired: notify user:' + username)
 else:
-    print('Nobody logged-in with GUI. Nothing to do.')
+    print('Not send GUI notification: [', argv[1], argv[2], ']. Nobody logged-in with GUI. Nothing to do.')
+
+stdout.flush()
