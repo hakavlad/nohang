@@ -3,10 +3,10 @@
 sort processes by oom_score
 """
 
+
 from operator import itemgetter
 from os import listdir
 from argparse import ArgumentParser
-
 
 """#######################################################################79"""
 
@@ -63,17 +63,24 @@ def get_max_pid_len():
             return len(line.strip())
 
 
-'''
-def get_max_vm_rss_len():
-    with open('/proc/meminfo') as file:
-        kib = file.readline()[:-4].split(':')[1].lstrip()
-        return len(str(round(float(kib) / 1024)))
-'''
-
-
 def human(num):
     '''Convert KiB to MiB and right align'''
     return str(round(num / 1024.0)).rjust(6, ' ')
+
+
+"""#######################################################################79"""
+
+
+sort_dict = {
+    'PID': 0,
+    'oom_score': 1,
+    'oom_score_adj': 2,
+    'cmdline': 3,
+    'Name': 4,
+    'UID': 5,
+    'VmRSS': 6,
+    'VmSwap': 7
+}
 
 
 """#######################################################################79"""
@@ -102,15 +109,44 @@ parser.add_argument(
     type=str
 )
 
+
+parser.add_argument(
+    '--sort',
+    '-s',
+    help="""sort by unit; default: oom_score""",
+    default=None,
+    type=str
+)
+
+
 args = parser.parse_args()
 
 display_cmdline = args.len
+
 num_lines = args.num
+
+sort_by = args.sort
+
+
 if num_lines is None:
     num_lines = 99999
 
 if display_cmdline is None:
     display_cmdline = 99999
+
+if sort_by is None:
+    sort_by = 'oom_score'
+
+
+if sort_by not in sort_dict:
+    print('Invalid -s/--sort value. Valid values are:\nPID\noom_scor'
+          'e [default value]\noom-sore_adj\nUID\nName\ncmdline\nVmR'
+          'SS\nVmSwap')
+    exit()
+
+
+if sort_by == '1':
+    print('Sort by:', sort_by)
 
 
 """#######################################################################79"""
@@ -125,9 +161,9 @@ status_names = []
 for s in status_list:
     status_names.append(s.split(':')[0])
 
+uid_index = status_names.index('Uid')
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
-uid_index = status_names.index('Uid')
 
 
 """#######################################################################79"""
@@ -163,20 +199,27 @@ for pid in listdir('/proc'):
         continue
 
     oom_list.append((
-        int(pid), int(oom_score), int(oom_score_adj), cmdline, name, int(uid), int(vm_rss), int(vm_swap)))
+        int(pid), int(oom_score), int(oom_score_adj), cmdline,
+        name, int(uid), int(vm_rss), int(vm_swap)))
 
 # list sorted by oom_score
-oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
+oom_list_sorted = sorted(
+    oom_list, key=itemgetter(int(sort_dict[sort_by])), reverse=True)
 
 
-'''
 max_uid_len = len(str(sorted(
     oom_list, key=itemgetter(5), reverse=True)[0][5]))
 
 
 max_vm_rss_len = len(str(round(
     sorted(oom_list, key=itemgetter(6), reverse=True)[0][6] / 1024.0)))
-'''
+
+
+if max_vm_rss_len < 5:
+    max_vm_rss_len = 5
+
+
+max_pid_len = get_max_pid_len()
 
 
 """#######################################################################79"""
@@ -185,24 +228,41 @@ max_vm_rss_len = len(str(round(
 # print table
 
 
-max_pid_len = get_max_pid_len()
-
 if display_cmdline == '0':
 
     print(
-        'oom_score oom_score_adj   UID{}PID Name             '
-        'VmRSS   VmSwap'.format(' ' * (max_pid_len - 2)))
+        'oom_score oom_score_adj{}UID{}PID Name       {}VmRSS   VmSwap'.format(
+            ' ' * (max_uid_len - 2),
+            ' ' * (max_pid_len - 2),
+            ' ' * max_vm_rss_len
+        )
+    )
 
-    print('--------- ------------- ----- {} --------------- -'
-          '------- --------'.format('-' * max_pid_len))
+    print(
+        '--------- ------------- {} {} --------------- {}-- --------'.format(
+            '-' * max_uid_len,
+            '-' * max_pid_len,
+            '-' * max_vm_rss_len
+        )
+    )
 
 else:
 
-    print('oom_score oom_score_adj   UID{}PID Name          '
-          '   VmRSS   VmSwap   cmdline'.format(' ' * (max_pid_len - 2)))
+    print(
+        'oom_score oom_score_adj{}UID{}PID Name       {}VmRSS   VmSwap   cmdline'.format(
+            ' ' * (max_uid_len - 2),
+            ' ' * (max_pid_len - 2),
+            ' ' * max_vm_rss_len
+        )
+    )
 
-    print('--------- ------------- ----- {} --------------- -'
-          '------- -------- -------'.format('-' * max_pid_len))
+    print(
+        '--------- ------------- {} {} --------------- {}-- -------- -------'.format(
+            '-' * max_uid_len,
+            '-' * max_pid_len,
+            '-' * max_vm_rss_len
+        )
+    )
 
 
 for i in oom_list_sorted[:int(num_lines)]:
@@ -220,10 +280,10 @@ for i in oom_list_sorted[:int(num_lines)]:
         '{} {} {} {} {} {} M {} M {}'.format(
             str(oom_score).rjust(9),
             str(oom_score_adj).rjust(13),
-            str(uid).rjust(5),
+            str(uid).rjust(max_uid_len),
             str(pid).rjust(max_pid_len),
             name.ljust(15),
-            human(vm_rss),
+            str(round(vm_rss / 1024.0)).rjust(max_vm_rss_len, ' '),
             human(vm_swap),
             cmdline[:int(display_cmdline)]
         )

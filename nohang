@@ -690,6 +690,15 @@ def find_victim_and_send_signal(signal):
         else:
 
             try:
+                
+                t0 = time()
+                m = check_mem_and_swap()
+                ma = round(int(m[0]) / 1024.0)
+                sf = round(int(m[2]) / 1024.0)
+                print('\nMemory status before sending a signal:\nMemAv: {} MiB, SwFree: {} MiB'.format(ma, sf))
+                print(time() - t0)
+                
+                
                 os.kill(int(pid), signal)
                 response_time = time() - time0
                 send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
@@ -1357,6 +1366,17 @@ if psi_support and not ignore_psi:
     term_psi_t0 = time() + psi_avg10_sleep_time
 
 avg_value = ''
+
+
+
+
+
+
+
+
+
+
+
 
 while True:
 

@@ -23,12 +23,12 @@ How can I prevent this in the future? Can't it at least keep a responsive core o
 
 Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) (discussion with 480+ posts on r/linux).
 
-
 ## Solution
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a very lightweight OOM preventer written in C.
-- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook.
-- Use of nohang.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and very lightweight OOM preventer written in C (the best choice for emedded and old systems). It has a minimum dependencies and can work with oldest kernels.
+- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. Needs Linux 4.20+.
+- Use of nohang (maybe this is a good choice for modern desktops and servers if you need fine tuning).
+The tools listed above may work at the same time on one computer.
 
 ## Some features
 
@@ -67,6 +67,14 @@ To use `PSI` (pressure stall information):
 
 Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be unstable.
 
+Please download the latest stable version (v0.1):
+```bash
+$ wget -ct0 https://github.com/hakavlad/nohang/archive/v0.1.tar.gz
+$ tar xvzf v0.1.tar.gz
+$ cd nohang-0.1
+```
+
+or clone the latest unstable:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
@@ -157,12 +165,23 @@ $ sudo journalctl -eu nohang
 ```
 See also `man journalctl`.
 
-
 ## Known problems
 
 - Awful documentation
 - Slowly starting, slowly looking for a victim, especially when using swapspace (although this should be enough for more than 95% of all cases, IMHO)
 - It is written in an interpreted language and is actually a prototype
+
+## Todo
+
+- Rewrite all code in Golang with tests and good documentation.
+
+
+## Nohang don't help you
+
+if you run
+```bash
+$ while true; do setsid /tail/dev/zero; done
+```
 
 ## Contribution
 
