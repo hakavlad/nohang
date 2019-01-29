@@ -153,10 +153,6 @@ oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
 
 Kthreads, zombies and Pid 1 will not be displayed.
 
-## oom-trigger
-
-Interactive OOM trigger (not implemented)
-
 ## Logging
 
 To view the latest entries in the log (for systemd users):
@@ -175,7 +171,6 @@ See also `man journalctl`.
 ## Todo
 
 - Rewrite all code in Golang with tests and good documentation.
-
 
 ## Nohang don't help you
 
