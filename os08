@@ -49,10 +49,10 @@ def pid_to_status_units(pid):
                 uid = f_list[i].split('\t')[2]
 
             if i is vm_rss_index:
-                vm_rss = f_list[i].split('\t')[1][:-3]
+                vm_rss = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
 
             if i is vm_swap_index:
-                vm_swap = f_list[i].split('\t')[1][:-3]
+                vm_swap = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
 
     return name, uid, vm_rss, vm_swap
 
@@ -63,16 +63,17 @@ def get_max_pid_len():
             return len(line.strip())
 
 
-'''
 def get_max_vm_rss_len():
-    with open('/proc/meminfo') as file:
-        kib = file.readline()[:-4].split(':')[1].lstrip()
-        return len(str(round(float(kib) / 1024)))
-'''
+    pass
+
+
+def kib_to_mib(num):
+    """Convert KiB values to MiB values."""
+    return round(num / 1024.0)
 
 
 def human(num):
-    '''Convert KiB to MiB and right align'''
+    '''Convert KiB to MiB and right align, as you see'''
     return str(round(num / 1024.0)).rjust(6, ' ')
 
 
@@ -163,34 +164,24 @@ for pid in listdir('/proc'):
         continue
 
     oom_list.append((
-        int(pid), int(oom_score), int(oom_score_adj), cmdline, name, int(uid), int(vm_rss), int(vm_swap)))
+        pid, oom_score, oom_score_adj, cmdline, name, uid, vm_rss, vm_swap))
 
 # list sorted by oom_score
 oom_list_sorted = sorted(oom_list, key=itemgetter(1), reverse=True)
-
-
-'''
-max_uid_len = len(str(sorted(
-    oom_list, key=itemgetter(5), reverse=True)[0][5]))
-
-
-max_vm_rss_len = len(str(round(
-    sorted(oom_list, key=itemgetter(6), reverse=True)[0][6] / 1024.0)))
-'''
 
 
 """#######################################################################79"""
 
 
 # print table
-
+'''
 
 max_pid_len = get_max_pid_len()
 
 if display_cmdline == '0':
 
     print(
-        'oom_score oom_score_adj   UID{}PID Name             '
+        'oom_score oom_score_adj   UID{}PID Name             ' \
         'VmRSS   VmSwap'.format(' ' * (max_pid_len - 2)))
 
     print('--------- ------------- ----- {} --------------- -'
@@ -220,7 +211,7 @@ for i in oom_list_sorted[:int(num_lines)]:
         '{} {} {} {} {} {} M {} M {}'.format(
             str(oom_score).rjust(9),
             str(oom_score_adj).rjust(13),
-            str(uid).rjust(5),
+            uid.rjust(5),
             str(pid).rjust(max_pid_len),
             name.ljust(15),
             human(vm_rss),
@@ -228,3 +219,4 @@ for i in oom_list_sorted[:int(num_lines)]:
             cmdline[:int(display_cmdline)]
         )
     )
+'''

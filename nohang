@@ -22,8 +22,10 @@ else:
 
 wait_time = 12
 
+# todo: make config option
 max_sleep_time = 2
 
+# todo: make config option
 min_sleep_time = 0.1
 
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
@@ -34,12 +36,12 @@ psi_support = os.path.exists(psi_path)
 
 HR = '~' * 79
 
+# todo: make config option
 print_total_stat = True
 
 ##########################################################################
 
-
-# function definition section
+# define functions
 
 
 def update_stat_dict_and_print(key):
@@ -848,8 +850,8 @@ def calculate_percent(arg_key):
 # find mem_total
 # find positions of SwapFree and SwapTotal in /proc/meminfo
 
-with open('/proc/meminfo') as file:
-    mem_list = file.readlines()
+with open('/proc/meminfo') as f:
+    mem_list = f.readlines()
 
 mem_list_names = []
 for s in mem_list:
