@@ -28,6 +28,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and very lightweight OOM preventer written in C (the best choice for emedded and old systems). It has a minimum dependencies and can work with oldest kernels.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. Needs Linux 4.20+.
 - Use of nohang (maybe this is a good choice for modern desktops and servers if you need fine tuning).
+
 The tools listed above may work at the same time on one computer.
 
 ## Some features
@@ -67,14 +68,14 @@ To use `PSI` (pressure stall information):
 
 Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be unstable.
 
-Please download the latest stable version (v0.1):
+To download the latest stable version (v0.1):
 ```bash
 $ wget -ct0 https://github.com/hakavlad/nohang/archive/v0.1.tar.gz
 $ tar xvzf v0.1.tar.gz
 $ cd nohang-0.1
 ```
 
-or clone the latest unstable:
+or to clone the latest unstable:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
@@ -180,7 +181,7 @@ See also `man journalctl`.
 
 if you run
 ```bash
-$ while true; do setsid /tail/dev/zero; done
+$ while true; do setsid tail /dev/zero; done
 ```
 
 ## Contribution
