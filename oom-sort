@@ -63,11 +63,6 @@ def get_max_pid_len():
             return len(line.strip())
 
 
-def human(num):
-    '''Convert KiB to MiB and right align'''
-    return str(round(num / 1024.0)).rjust(6, ' ')
-
-
 """#######################################################################79"""
 
 
@@ -86,10 +81,9 @@ sort_dict = {
 """#######################################################################79"""
 
 
-# parse input
+# parse CLI args
 
-# todo: input validation
-
+# @TODO: user input validation
 
 parser = ArgumentParser()
 
@@ -97,7 +91,7 @@ parser.add_argument(
     '--num',
     '-n',
     help="""max number of lines; default: 99999""",
-    default=None,
+    default=99999,
     type=str
 )
 
@@ -105,8 +99,8 @@ parser.add_argument(
     '--len',
     '-l',
     help="""max cmdline length; default: 99999""",
-    default=None,
-    type=str
+    default=99999,
+    type=int
 )
 
 
@@ -114,7 +108,7 @@ parser.add_argument(
     '--sort',
     '-s',
     help="""sort by unit; default: oom_score""",
-    default=None,
+    default='oom_score',
     type=str
 )
 
@@ -128,16 +122,6 @@ num_lines = args.num
 sort_by = args.sort
 
 
-if num_lines is None:
-    num_lines = 99999
-
-if display_cmdline is None:
-    display_cmdline = 99999
-
-if sort_by is None:
-    sort_by = 'oom_score'
-
-
 if sort_by not in sort_dict:
     print('Invalid -s/--sort value. Valid values are:\nPID\noom_scor'
           'e [default value]\noom-sore_adj\nUID\nName\ncmdline\nVmR'
@@ -145,18 +129,14 @@ if sort_by not in sort_dict:
     exit()
 
 
-if sort_by == '1':
-    print('Sort by:', sort_by)
-
-
 """#######################################################################79"""
 
-# find VmRSS, VmSwap and UID positions in /proc/*/status
+# find VmRSS, VmSwap and UID positions in /proc/*/status for further
+# searching positions of UID, VmRSS and VmSwap in each process
 
 with open('/proc/self/status') as file:
     status_list = file.readlines()
 
-# список имен из /proc/*/status для дальнейшего поиска позиций VmRSS and VmSwap
 status_names = []
 for s in status_list:
     status_names.append(s.split(':')[0])
@@ -176,7 +156,7 @@ oom_list = []
 
 for pid in listdir('/proc'):
 
-    # пропускаем элементы, состоящие не из цифр и PID 1
+    # skip non-numeric entries and PID 1
     if pid.isdigit() is False or pid == '1':
         continue
 
@@ -207,6 +187,14 @@ oom_list_sorted = sorted(
     oom_list, key=itemgetter(int(sort_dict[sort_by])), reverse=True)
 
 
+"""#######################################################################79"""
+
+# find width of columns
+
+
+max_pid_len = get_max_pid_len()
+
+
 max_uid_len = len(str(sorted(
     oom_list, key=itemgetter(5), reverse=True)[0][5]))
 
@@ -214,21 +202,16 @@ max_uid_len = len(str(sorted(
 max_vm_rss_len = len(str(round(
     sorted(oom_list, key=itemgetter(6), reverse=True)[0][6] / 1024.0)))
 
-
 if max_vm_rss_len < 5:
     max_vm_rss_len = 5
-
-
-max_pid_len = get_max_pid_len()
 
 
 """#######################################################################79"""
 
 
-# print table
+# print output
 
-
-if display_cmdline == '0':
+if display_cmdline == 0:
 
     print(
         'oom_score oom_score_adj{}UID{}PID Name       {}VmRSS   VmSwap'.format(
@@ -249,7 +232,8 @@ if display_cmdline == '0':
 else:
 
     print(
-        'oom_score oom_score_adj{}UID{}PID Name       {}VmRSS   VmSwap   cmdline'.format(
+        'oom_score oom_score_adj{}UID{}PID Name       {}VmRSS   VmSwa'
+        'p   cmdline'.format(
             ' ' * (max_uid_len - 2),
             ' ' * (max_pid_len - 2),
             ' ' * max_vm_rss_len
@@ -257,13 +241,15 @@ else:
     )
 
     print(
-        '--------- ------------- {} {} --------------- {}-- -------- -------'.format(
+        '--------- ------------- {} {} --------------- {}-- ------'
+        '-- -------'.format(
             '-' * max_uid_len,
             '-' * max_pid_len,
             '-' * max_vm_rss_len
         )
     )
 
+# print processes stats sorted by sort_dict[sort_by]
 
 for i in oom_list_sorted[:int(num_lines)]:
 
@@ -284,7 +270,7 @@ for i in oom_list_sorted[:int(num_lines)]:
             str(pid).rjust(max_pid_len),
             name.ljust(15),
             str(round(vm_rss / 1024.0)).rjust(max_vm_rss_len, ' '),
-            human(vm_swap),
-            cmdline[:int(display_cmdline)]
+            str(round(vm_swap / 1024.0)).rjust(6, ' '),
+            cmdline[:display_cmdline]
         )
     )
