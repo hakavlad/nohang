@@ -39,9 +39,26 @@ HR = '~' * 79
 # todo: make config option
 print_total_stat = True
 
+
+
 ##########################################################################
 
 # define functions
+
+
+
+
+
+def zenity():
+    # test
+    os.system('''sudo -u user DISPLAY=:0 DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus zenity --checklist --timeout=10 --text="\n  <b>Mem Available: 10% (300 MiB)</b>.  \n\n  Select a process to be terminated:\n" --ok-label "Terminate" --cancel-label "Do nothing" --separator=" "  --width=9999 --height=9999 --list --title="Low memory!" --column "" --column="Pid" --column="Name" --column="VmRSS" 9923 9923 Python3 "800 MiB" 2938 2938 tail "400 MiB"  3938 3938 chromium "300 MiB"''')
+
+# zenity()
+
+
+
+
+
 
 
 def update_stat_dict_and_print(key):
@@ -493,6 +510,11 @@ def find_victim_and_send_signal(signal):
 
     if victim_badness >= min_badness:
 
+
+
+
+
+
         # Try to send signal to found victim
 
         # Get VmRSS and VmSwap and cmdline of victim process
@@ -657,6 +679,16 @@ def find_victim_and_send_signal(signal):
                     str(vm_swap).rjust(len_vm),
                     cmdline)
 
+
+
+
+
+
+
+
+
+
+
         if execute_the_command and signal is SIGTERM and name in etc_dict:
             command = etc_dict[name]
             exit_status = os.system(etc_dict[name].replace(
@@ -687,6 +719,10 @@ def find_victim_and_send_signal(signal):
                     name,
                     command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
 
+
+
+
+
         else:
 
             try:
@@ -712,6 +748,10 @@ def find_victim_and_send_signal(signal):
                 key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(
                     sig_dict[signal], name)
 
+
+                # zenity()
+
+
                 if gui_notifications:
                     send_notify(signal, name, pid)
 
@@ -732,6 +772,9 @@ def find_victim_and_send_signal(signal):
 
             update_stat_dict_and_print(key)
 
+
+
+
     else:
 
         response_time = time() - time0
@@ -748,7 +791,9 @@ def find_victim_and_send_signal(signal):
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
+
     sleep_after_send_signal(signal)
+
 
 
 def sleep_after_check_mem():
