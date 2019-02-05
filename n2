@@ -40,7 +40,7 @@ HR = '~' * 79
 print_total_stat = True
 
 
-stop_cont = False
+stop_cont = True
 print_states_debug = False
 
 
