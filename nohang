@@ -73,6 +73,7 @@ def stop():
                 oom_score_r = int(
                     rline1('/proc/' + pid + '/oom_score')
                     )
+                print('PID: {}, State: {}, oom_score {}'.format(pid, pid_to_state(pid), oom_score_r))
                 if uid_r != '0' and oom_score_r > 10:
                     stopped_list.append(pid)
                     print('Send SIGSTOP to {}, {}, {}...'.format(
@@ -84,6 +85,8 @@ def stop():
         except ProcessLookupError:
             continue
     print('Stop time:', t2 - t1)
+    stdout.flush()
+
     return stopped_list
 
 def cont(stopped_list):
