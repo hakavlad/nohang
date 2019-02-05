@@ -41,7 +41,6 @@ print_total_stat = True
 
 
 stop_cont = False
-print_states_debug = False
 
 
 
@@ -50,9 +49,6 @@ print_states_debug = False
 # define functions
 
 
-def pid_to_oom_score(pid):
-    with open('/proc/' + pid + '/oom_score') as f:
-        return f.read().rstrip()
 
 
 def pid_to_state(pid):
@@ -69,10 +65,7 @@ def stop():
         if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
             continue
         try:
-            # print(pid)
-            #oom_score_r = int(pid_to_oom_score(pid))
             oom_score_r = int(rline1('/proc/' + pid + '/oom_score'))
-            #print([oom_score_r])
             if oom_score_r > 9:
                 uid_r = pid_to_uid(pid)
                 #print('PID: {}, State: {}, oom_score {}'.format(pid, pid_to_state(pid), oom_score_r))
@@ -106,36 +99,6 @@ def cont(stopped_list):
                 continue
     t2 = time()
     print('All cont time: ', t2 - t1)
-
-def print_states():
-    if print_states_debug:
-        print()
-        t1 = time()
-        print('non-S states:')
-        for pid in os.listdir('/proc'):
-            # only directories whose names consist only of numbers, except /proc/1/
-            if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
-                continue
-            try:
-                s = pid_to_state(pid)
-                if s == 'S':
-                    continue
-                else:
-                    print('State: {}, [{}], {}, {}...'.format(
-                        s, pid, pid_to_name(pid), pid_to_cmdline(pid)[:40]))
-            except FileNotFoundError:
-                continue
-            except ProcessLookupError:
-                continue
-        t2 = time()
-        print('print state time:', t2 - t1)
-        print()
-
-
-
-
-
-
 
 
 
@@ -424,6 +387,10 @@ def send_notify_warn():
     Look for process with maximum 'badness' and warn user with notification.
     (implement Low memory warnings)
     """
+
+    if stop_cont:
+        stopped_list = stop()
+
     # find process with max badness
     fat_tuple = fattest()
     pid = fat_tuple[0]
@@ -443,8 +410,8 @@ def send_notify_warn():
             round(mem_available / mem_total * 100))
 
     title = 'Low memory: {}'.format(low_mem_percent)
-    body = 'Fattest process: <b>{}</b>, <b>{}</b>'.format(
-        pid, name.replace(
+    body = 'Next victim is <b>{}</b>'.format(
+        name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
             '&', '*'))
@@ -456,6 +423,9 @@ def send_notify_warn():
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
 
+    if stop_cont:
+        cont(stopped_list)
+
 
 def send_notify(signal, name, pid):
     """
@@ -466,8 +436,8 @@ def send_notify(signal, name, pid):
     pid: str process pid
     """
     title = 'Preventing OOM'
-    body = '<b>{}</b> process <b>{}</b>, <b>{}</b>'.format(
-        notify_sig_dict[signal], pid, name.replace(
+    body = '<b>{}</b> process <b>{}</b>'.format(
+        notify_sig_dict[signal], name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
             '&', '*'))
@@ -507,7 +477,7 @@ def sleep_after_send_signal(signal):
     if signal is SIGKILL:
         if print_sleep_periods:
             print('  sleep', min_delay_after_sigkill)
-        sleep(min_delay_after_sigterm)
+        sleep(min_delay_after_sigkill)
     else:
         if print_sleep_periods:
             print('  sleep', min_delay_after_sigterm)
@@ -518,6 +488,8 @@ def fattest():
     """
     Find the process with highest badness and its badness adjustment
     Return pid and badness
+
+    -> find_mem_hog() or find_victim()
     """
 
     pid_badness_list = []
@@ -573,7 +545,8 @@ def fattest():
     pid_tuple_list = sorted(
         pid_badness_list,
         key=itemgetter(1),
-        reverse=True)[0]
+        reverse=True
+        )[0]
 
     pid = pid_tuple_list[0]
 
@@ -586,11 +559,12 @@ def fattest():
 def find_victim_and_send_signal(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
+
+    -> implement_corrective_action()
     """
 
 
     if stop_cont:
-        print_states()
         stopped_list = stop()
 
 
@@ -866,14 +840,8 @@ def find_victim_and_send_signal(signal):
         update_stat_dict_and_print(key)
 
 
-
     if stop_cont:
-        print_states()
         cont(stopped_list)
-        print_states()
-
-
-
 
     sleep_after_send_signal(signal)
 
