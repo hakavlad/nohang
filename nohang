@@ -70,11 +70,10 @@ def stop():
             continue
         try:
             # print(pid)
-            oom_score_r = pid_to_oom_score(pid)
-            #oom_score_r = rline1('/proc/' + pid + '/oom_score')
+            #oom_score_r = int(pid_to_oom_score(pid))
+            oom_score_r = int(rline1('/proc/' + pid + '/oom_score'))
             #print([oom_score_r])
-            
-            if len(oom_score_r) > 1:
+            if oom_score_r > 9:
                 uid_r = pid_to_uid(pid)
                 #print('PID: {}, State: {}, oom_score {}'.format(pid, pid_to_state(pid), oom_score_r))
                 if uid_r != '0':
