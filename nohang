@@ -20,7 +20,7 @@ if self_uid == 0:
 else:
     root = False
 
-wait_time = 12
+wait_time = 3
 
 # todo: make config option
 max_sleep_time = 2
@@ -41,6 +41,14 @@ print_total_stat = True
 
 
 stop_cont = False
+stop_cont_warn = False
+
+
+
+
+# print(os.path.realpath('/proc/29758/exe'))
+
+
 
 
 
@@ -347,6 +355,30 @@ def pid_to_cmdline(pid):
         return f.read().replace('\x00', ' ').rstrip()
 
 
+
+def pid_to_environ(pid):
+    """
+    Get process cmdline by pid.
+
+    pid: str pid of required process
+    returns string cmdline
+    """
+    with open('/proc/' + pid + '/environ') as f:
+        return f.read().replace('\x00', '\n').rstrip()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def pid_to_uid(pid):
     '''return euid'''
     try:
@@ -388,7 +420,7 @@ def send_notify_warn():
     (implement Low memory warnings)
     """
 
-    if stop_cont:
+    if stop_cont_warn:
         stopped_list = stop()
 
     # find process with max badness
@@ -409,12 +441,16 @@ def send_notify_warn():
         low_mem_percent = '{}%'.format(
             round(mem_available / mem_total * 100))
 
-    title = 'Low memory: {}'.format(low_mem_percent)
-    body = 'Next victim is <b>{}</b>'.format(
+    # title = 'Low memory: {}'.format(low_mem_percent)
+    title = 'Low memory'
+
+    body = 'Hog: <b>{}</b> [{}]'.format(
         name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
-            '&', '*'))
+            '&', '*'),
+        pid
+        )
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
@@ -423,7 +459,7 @@ def send_notify_warn():
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
 
-    if stop_cont:
+    if stop_cont_warn:
         cont(stopped_list)
 
 
@@ -435,12 +471,15 @@ def send_notify(signal, name, pid):
     name: str process name
     pid: str process pid
     """
-    title = 'Preventing OOM'
-    body = '<b>{}</b> process <b>{}</b>'.format(
-        notify_sig_dict[signal], name.replace(
+    title = 'Hang prevention'
+    body = '<b>{} {}</b> [{}]'.format(
+        notify_sig_dict[signal],
+        name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
-            '&', '*'))
+            '&', '*'),
+        pid
+        )
     if root:
         # send notification to all active users with notify-send
         notify_helper(title, body)
@@ -457,9 +496,12 @@ def send_notify_etc(pid, name, command):
     name: str process name
     pid: str process pid
     """
-    title = 'Preventing OOM'
-    body = 'Victim is process <b>{}</b>, <b>{}</b>\nExecute the command:\n<b>{}</b>'.format(
-        pid, name.replace('&', '*'), command.replace('&', '*'))
+    title = 'Hang prevention'
+    body = 'Victim is process <b>{}</b> [{}]\nExecute the command:\n<b>{}</b>'.format(
+        name.replace('&', '*'),
+        pid,
+        command.replace('&', '*')
+        )
     if root:
         # send notification to all active users with notify-send
         notify_helper(title, body)
@@ -499,8 +541,17 @@ def fattest():
         if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
             continue
 
+
+
+
         # find and modify badness (if it needs)
         try:
+            
+            
+            #realpath = os.path.realpath('/proc/' + pid + '/exe')
+            #print(pid, pid_to_name(pid), realpath)
+
+            
             badness = int(rline1('/proc/' + pid + '/oom_score'))
 
             if decrease_oom_score_adj:
@@ -642,8 +693,16 @@ def find_victim_and_send_signal(signal):
                 f_list = f.read().decode('utf-8', 'ignore').split('\n')
 
                 for i in range(len(f_list)):
+                    if i is ppid_index:
+                        ppid = f_list[i].split('\t')[2]
+
+
+                for i in range(len(f_list)):
                     if i is uid_index:
                         uid = f_list[i].split('\t')[2]
+
+
+
 
                     if i is vm_size_index:
                         vm_size = kib_to_mib(
@@ -692,11 +751,14 @@ def find_victim_and_send_signal(signal):
         len_vm = len(str(vm_size))
 
         if detailed_rss:
+            
+            environ = pid_to_environ(pid)
+            
             victim_info = '\033[4mFound a process with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
                 '\n  UID:     \033[33m{}\033[0m' \
-                '\n  Badness: \033[33m{}\033[0m, ' \
+                '\n  badness: \033[33m{}\033[0m, ' \
                 'oom_score: \033[33m{}\033[0m, ' \
                 'oom_score_adj: \033[33m{}\033[0m' \
                 '\n  VmSize:  \033[33m{}\033[0m MiB' \
@@ -705,7 +767,8 @@ def find_victim_and_send_signal(signal):
                 'File: \033[33m{}\033[0m MiB, ' \
                 'Shmem: \033[33m{}\033[0m MiB)' \
                 '\n  VmSwap:  \033[33m{}\033[0m MiB' \
-                '\n  CmdLine: \033[33m{}\033[0m'.format(
+                '\n  environ:\n\033[33m{}\033[0m' \
+                '\n  cmdline: \033[33m{}\033[0m'.format(
                     name,
                     pid,
                     uid,
@@ -718,8 +781,14 @@ def find_victim_and_send_signal(signal):
                     file_rss,
                     shmem_rss,
                     str(vm_swap).rjust(len_vm),
-                    cmdline)
+                    environ,
+                    cmdline
+                    )
         else:
+            
+            
+            # нахер такое ветвление
+            
             victim_info = '\033[4mFound a process with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
@@ -979,6 +1048,7 @@ status_names = []
 for s in status_list:
     status_names.append(s.split(':')[0])
 
+ppid_index = status_names.index('PPid')
 vm_size_index = status_names.index('VmSize')
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
