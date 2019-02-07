@@ -187,14 +187,16 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 - In progress
     - Improve modifing badness by matching with RE pattern: 
-        - Add suppot matching `cmdline` and `UID` with regular expressions
+        - Add suppot matching `cmdline` and `euid` with regular expressions
+        - Adding the ability to set many different badness_adj depending on the matching name, cmdline and euid of  processess with regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
-        - Display `UID`, `oom_score`, `oom_score_adj`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem` and `cmdline` of the victim in corrective action reports
+        - Display `UID`, `oom_score`, `oom_score_adj`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `state`, `realpath` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
         - Print statistics on corrective actions after each corrective action
     - Improve poll rate algorithm
+    - Improve improve victim search algorithm (do it ~30% faster)
     - Improve limiting `oom_score_adj`: now it can works without UID=0
     - Improve GUI warnings:
         - Find env without run `ps`
@@ -202,7 +204,6 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`
-    - Add `oom-trigger`
     - Redesign of the config
     - Remove CLI options
     - Remove self-defense options from config, use systemd unit scheduling instead
