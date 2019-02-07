@@ -187,7 +187,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 - In progress
     - Redesign of the config
-    - Improve modifing badness by matching with RE pattern: 
+    - Improve modifing badness via matching with regular expressions: 
         - Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
@@ -208,7 +208,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Remove CLI options (need to add it again via `sys.argv`)
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
-    - Handle UnicodeDecodeError if victim name consists of many unicode characters
+    - Handle `UnicodeDecodeError` if victim name consists of many unicode characters
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
