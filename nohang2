@@ -44,9 +44,18 @@ stop_cont = False
 stop_cont_warn = False
 
 
+
+
+# print(os.path.realpath('/proc/29758/exe'))
+
+
+
+
+
 ##########################################################################
 
 # define functions
+
 
 
 
@@ -98,6 +107,12 @@ def cont(stopped_list):
                 continue
     t2 = time()
     print('All cont time: ', t2 - t1)
+
+
+
+
+
+
 
 
 
@@ -341,6 +356,29 @@ def pid_to_cmdline(pid):
 
 
 
+def pid_to_environ(pid):
+    """
+    Get process cmdline by pid.
+
+    pid: str pid of required process
+    returns string cmdline
+    """
+    with open('/proc/' + pid + '/environ') as f:
+        return f.read().replace('\x00', '\n').rstrip()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def pid_to_uid(pid):
     '''return euid'''
     try:
@@ -491,62 +529,30 @@ def sleep_after_send_signal(signal):
 
 
 
-
-
-def get_pid_list():
-    """
-    Find pid list expect kthreads and zombies
-    """
-    pid_list = []
-    for pid in os.listdir('/proc'):
-        if os.path.exists('/proc/' + pid + '/exe') is True:
-            pid_list.append(pid)
-    return pid_list
-
-
-
-pid_list = get_pid_list()
-
-def get_non_decimal_pids():
-    non_decimal_list = []
-    for pid in pid_list:
-        if pid[0].isdecimal() is False:
-            non_decimal_list.append(pid)
-    return non_decimal_list
-
-
-#print(get_non_decimal_pids())
-
-
-
 def fattest():
     """
     Find the process with highest badness and its badness adjustment
     Return pid and badness
 
-    -> find_mem_hog() or find_victim() or find_worst_process()
+    -> find_mem_hog() or find_victim()
     """
-
-    pid_list = get_pid_list()
-
-    pid_list.remove(self_pid)
-
-    if '1' in pid_list:
-        pid_list.remove('1')
-
-    non_decimal_list = get_non_decimal_pids()
-
-    for i in non_decimal_list:
-        pid_list.remove(i)
 
     pid_badness_list = []
 
-    for pid in pid_list:
+    for pid in os.listdir('/proc'):
+        # only directories whose names consist only of numbers, except /proc/1/
+        if pid[0].isdecimal() is False or pid is '1' or pid == self_pid:
+            continue
+
 
         # find and modify badness (if it needs)
         try:
 
+            #realpath = os.path.realpath('/proc/' + pid + '/exe')
+            #print(pid, pid_to_name(pid), realpath)
+
             badness = int(rline1('/proc/' + pid + '/oom_score'))
+            name = pid_to_name(pid)
 
             if decrease_oom_score_adj:
                 oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
@@ -580,7 +586,6 @@ def fattest():
                             continue
                         badness += int(re_tup[0])
 
-
         except FileNotFoundError:
             continue
         except ProcessLookupError:
@@ -588,7 +593,6 @@ def fattest():
         pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
-    #print(pid_badness_list)
     pid_tuple_list = sorted(
         pid_badness_list,
         key=itemgetter(1),
@@ -600,10 +604,15 @@ def fattest():
     # Get maximum 'badness' value
     victim_badness = pid_tuple_list[1]
 
-    #print(pid_badness_list)
-
-
     return pid, victim_badness
+
+
+
+
+
+
+
+
 
 
 
@@ -618,6 +627,7 @@ def find_victim_and_send_signal(signal):
 
     if stop_cont:
         stopped_list = stop()
+
 
 
     pid, victim_badness = fattest()
@@ -667,7 +677,9 @@ def find_victim_and_send_signal(signal):
                         vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
                         break
 
-            cmdline = pid_to_cmdline(pid)
+            with open('/proc/' + pid + '/cmdline') as file:
+                cmdline = file.readlines()[0].replace('\x00', ' ')
+
             oom_score = rline1('/proc/' + pid + '/oom_score')
             oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
@@ -748,33 +760,26 @@ def find_victim_and_send_signal(signal):
 
         len_vm = len(str(vm_size))
 
-
-
-        realpath = os.path.realpath('/proc/' + pid + '/exe')
-        state = pid_to_state(pid)
-
-
-
         if detailed_rss:
-
+            
+            environ = pid_to_environ(pid)
+            
             victim_info = '\033[4mFound a process with highest badness:\033[0m' \
-                '\n  Name:     \033[33m{}\033[0m' \
-                '\n  State:    \033[33m{}\033[0m' \
-                '\n  PID:      \033[33m{}\033[0m' \
-                '\n  UID:      \033[33m{}\033[0m' \
-                '\n  badness:  \033[33m{}\033[0m, ' \
-                'oom_score:  \033[33m{}\033[0m, ' \
-                'oom_score_adj:  \033[33m{}\033[0m' \
-                '\n  VmSize:   \033[33m{}\033[0m MiB' \
-                '\n  VmRSS:    \033[33m{}\033[0m MiB (' \
+                '\n  Name:    \033[33m{}\033[0m' \
+                '\n  PID:     \033[33m{}\033[0m' \
+                '\n  UID:     \033[33m{}\033[0m' \
+                '\n  badness: \033[33m{}\033[0m, ' \
+                'oom_score: \033[33m{}\033[0m, ' \
+                'oom_score_adj: \033[33m{}\033[0m' \
+                '\n  VmSize:  \033[33m{}\033[0m MiB' \
+                '\n  VmRSS:   \033[33m{}\033[0m MiB (' \
                 'Anon: \033[33m{}\033[0m MiB, ' \
                 'File: \033[33m{}\033[0m MiB, ' \
                 'Shmem: \033[33m{}\033[0m MiB)' \
-                '\n  VmSwap:   \033[33m{}\033[0m MiB' \
-                '\n  realpath: \033[33m{}\033[0m' \
-                '\n  cmdline:  \033[33m{}\033[0m'.format(
+                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
+                '\n  environ:\n\033[33m{}\033[0m' \
+                '\n  cmdline: \033[33m{}\033[0m'.format(
                     name,
-                    state,
                     pid,
                     uid,
                     victim_badness,
@@ -786,7 +791,7 @@ def find_victim_and_send_signal(signal):
                     file_rss,
                     shmem_rss,
                     str(vm_swap).rjust(len_vm),
-                    realpath,
+                    environ,
                     cmdline
                     )
         else:
@@ -851,11 +856,14 @@ def find_victim_and_send_signal(signal):
             try:
 
 
+
+
                 m = check_mem_and_swap()
                 ma = round(int(m[0]) / 1024.0)
                 sf = round(int(m[2]) / 1024.0)
                 print('\nMemory status before sending a signal:\nMemA'
                       'v: {} MiB, SwFree: {} MiB'.format(ma, sf))
+
 
 
                 if stop_cont:
@@ -890,6 +898,7 @@ def find_victim_and_send_signal(signal):
                 key = 'The victim died in the search process: ProcessLookupError'
 
             print(mem_info)
+            print(pid_to_state(pid))
             print(preventing_oom_message)
 
             update_stat_dict_and_print(key)
