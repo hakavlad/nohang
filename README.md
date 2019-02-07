@@ -188,7 +188,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 - In progress
     - Improve modifing badness by matching with RE pattern: 
         - Add suppot matching `cmdline` and `euid` with regular expressions
-        - Adding the ability to set many different badness_adj depending on the matching name, cmdline and euid of  processess with regular expressions
+        - Adding the ability to set many different badness_adj for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
