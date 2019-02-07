@@ -186,13 +186,13 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 ## Changelog
 
 - In progress
+    - Redesign of the config
     - Improve modifing badness by matching with RE pattern: 
-        - Add suppot matching `cmdline` and `euid` with regular expressions
-        - Adding the ability to set many different badness_adj for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
+        - Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
     - Improve output:
-        - Display `UID`, `oom_score`, `oom_score_adj`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `state`, `realpath` and `cmdline` of the victim in corrective action reports
+        - Display `oom_score`, `oom_score_adj`, `euid`, `state`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
         - Print in terminal with colors
         - Print statistics on corrective actions after each corrective action
     - Improve poll rate algorithm
@@ -204,8 +204,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`
-    - Redesign of the config
-    - Remove CLI options
+    - Reduce memory usage (remove `import argparse`)
+    - Remove CLI options (need to add it again via sys.args)
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
     - Handle UnicodeDecodeError if victim name consists of many unicode characters
