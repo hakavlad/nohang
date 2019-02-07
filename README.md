@@ -196,8 +196,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - Print in terminal with colors
         - Print statistics on corrective actions after each corrective action
     - Improve poll rate algorithm
-    - Improve improve victim search algorithm (do it ~30% faster)
-    - Improve limiting `oom_score_adj`: now it can works without UID=0
+    - Improve victim search algorithm (do it ~30% faster)
+    - Improve limiting `oom_score_adj`: now it can works with UID != 0
     - Improve GUI warnings:
         - Find env without run `ps`
         - Handle all timeouts when notify-send starts
@@ -205,7 +205,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - Add `oom-sort`
     - Reduce memory usage (remove `import argparse`)
-    - Remove CLI options (need to add it again via sys.args)
+    - Remove CLI options (need to add it again via `sys.argv`)
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
     - Handle UnicodeDecodeError if victim name consists of many unicode characters
