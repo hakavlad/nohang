@@ -20,7 +20,7 @@ if self_uid == 0:
 else:
     root = False
 
-wait_time = 3
+wait_time = 12
 
 # todo: make config option
 max_sleep_time = 2
@@ -488,11 +488,6 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigterm)
 
 
-
-
-
-
-
 def get_pid_list():
     """
     Find pid list expect kthreads and zombies
@@ -504,7 +499,6 @@ def get_pid_list():
     return pid_list
 
 
-
 pid_list = get_pid_list()
 
 def get_non_decimal_pids():
@@ -513,10 +507,6 @@ def get_non_decimal_pids():
         if pid[0].isdecimal() is False:
             non_decimal_list.append(pid)
     return non_decimal_list
-
-
-#print(get_non_decimal_pids())
-
 
 
 def fattest():
@@ -557,16 +547,10 @@ def fattest():
                 name = pid_to_name(pid)
                 for re_tup in processname_re_list:
                     if search(re_tup[1], name) is not None:
-                        if pid_to_cmdline(pid) == '':
-                            # skip kthreads
-                            continue
                         badness += int(re_tup[0])
 
             if re_match_cmdline:
                 cmdline = pid_to_cmdline(pid)
-                if cmdline == '':
-                    # skip kthreads
-                    continue
                 for re_tup in cmdline_re_list:
                     if search(re_tup[1], cmdline) is not None:
                         badness += int(re_tup[0])
@@ -575,11 +559,7 @@ def fattest():
                 uid = pid_to_uid(pid)
                 for re_tup in uid_re_list:
                     if search(re_tup[1], uid) is not None:
-                        if pid_to_cmdline(pid) == '':
-                            # skip kthreads
-                            continue
                         badness += int(re_tup[0])
-
 
         except FileNotFoundError:
             continue
@@ -599,9 +579,6 @@ def fattest():
 
     # Get maximum 'badness' value
     victim_badness = pid_tuple_list[1]
-
-    #print(pid_badness_list)
-
 
     return pid, victim_badness
 
