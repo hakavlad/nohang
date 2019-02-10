@@ -44,6 +44,35 @@ stop_cont = False
 stop_cont_warn = False
 
 
+
+
+
+
+
+'''
+# define MCL_CURRENT        1                /* Lock all currently mapped pages.  */
+# define MCL_FUTURE        2                /* Lock all additions to address
+                                           space.  */
+# define MCL_ONFAULT        4                /* Lock all pages that are
+                                           faulted in.  */
+https://code.woboq.org/gcc/include/bits/mman-linux.h.html
+'''
+import ctypes
+
+MCL_CURRENT = 1
+MCL_FUTURE  = 2
+MCL_ONFAULT = 4
+
+libc = ctypes.CDLL('libc.so.6', use_errno=True)
+
+def mlockall(flags=MCL_CURRENT|MCL_FUTURE|MCL_ONFAULT):
+    result = libc.mlockall(flags)
+    if result != 0:
+        raise Exception("cannot lock memmory, errno=%s" % ctypes.get_errno())
+
+mlockall()
+
+
 ##########################################################################
 
 # define functions
