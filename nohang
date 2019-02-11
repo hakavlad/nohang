@@ -377,7 +377,7 @@ def send_notify_warn():
     # title = 'Low memory: {}'.format(low_mem_percent)
     title = 'Low memory'
 
-    body = 'Hog: <b>{}</b>, PID: {}'.format(
+    body = 'Next victim: {}[{}]'.format(
         name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
@@ -401,8 +401,8 @@ def send_notify(signal, name, pid):
     name: str process name
     pid: str process pid
     """
-    title = 'Hang prevention'
-    body = '<b>{} {}</b>, PID: {}'.format(
+    title = 'Freeze prevention'
+    body = '{} {}[{}]'.format(
         notify_sig_dict[signal],
         name.replace(
             # symbol '&' can break notifications in some themes,
@@ -426,8 +426,8 @@ def send_notify_etc(pid, name, command):
     name: str process name
     pid: str process pid
     """
-    title = 'Hang prevention'
-    body = 'Victim is process <b>{}</b>, {}\nExecute the command:\n<b>{}</b>'.format(
+    title = 'Freeze prevention'
+    body = 'Victim is {}[{}]\nExecute the command:\n<b>{}</b>'.format(
         name.replace('&', '*'),
         pid,
         command.replace('&', '*')
