@@ -189,30 +189,30 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 ## Changelog
 
 - [ ] In progress
-    - Redesign of the config
-    - Redesign of the GUI notifications
-    - Improve modifing badness via matching with regular expressions: 
+    - [ ] Redesign of the config
+    - [ ] Redesign of the GUI notifications
+    - [ ] Improve modifing badness via matching with regular expressions: 
         - Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
         - Fix: replace `re.fullmatch()` by `re.search()`
         - Validation RE patterns at startup
-    - Improve output:
-        - Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
-        - Print in terminal with colors
-        - Print statistics on corrective actions after each corrective action
-    - Improve poll rate algorithm
-    - Improve victim search algorithm (do it ~30% faster)
-    - Improve limiting `oom_score_adj`: now it can works with UID != 0
-    - Improve GUI warnings:
-        - Find env without run `ps`
-        - Handle all timeouts when notify-send starts
+    - [x] Improve output:
+        - [x] Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
+        - [x] Print in terminal with colors
+        - [x] Print statistics on corrective actions after each corrective action
+    - [x] Improve poll rate algorithm
+    - [x] Improve victim search algorithm (do it ~30% faster)
+    - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
+    - [x] Improve GUI warnings:
+        - [x] Find env without run `ps`
+        - [x] Handle all timeouts when notify-send starts
     - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
-    - Add `oom-sort`
-    - Reduce memory usage (remove `import argparse`)
+    - [x] Add `oom-sort`
+    - [x] Reduce memory usage (remove `import argparse`)
     - Remove CLI options (need to add it again via `sys.argv`)
     - Remove self-defense options from config, use systemd unit scheduling instead
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
-    - Handle `UnicodeDecodeError` if victim name consists of many unicode characters
+    - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - Improve user input validation
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
 
