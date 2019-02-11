@@ -7,7 +7,7 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 
 OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop [caches](https://en.wikipedia.org/wiki/Page_cache) and processes to be killed (via sending [SIGKILL](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGKILL)) instead of trying to terminate them correctly (via sending [SIGTERM](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGTERM) or takes other corrective action). Some applications may crash if it's impossible to allocate memory.
 
-![pic](https://i.imgur.com/yS81KAY.png)
+![pic](https://i.imgur.com/9yuZOOf.png)
 
 Here are the statements of some users:
 
@@ -44,7 +44,7 @@ The tools listed above may work at the same time on one computer.
     - OOM prevention results (displays sended signal and displays PID and name of victim)
     - Low memory warnings (displays available memory and name of fattest process)
 - `zram` support (`mem_used_total` as a trigger)
-- `PSI` support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
+- [PSI](https://lwn.net/Articles/759658/) support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
 - customizable intensity of monitoring
 - convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
@@ -200,16 +200,16 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Find env without run `ps`
         - [x] Handle all timeouts when notify-send starts
     - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
-    - [ ] Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - [x] Add `oom-sort`
     - [x] Reduce memory usage (remove `import argparse`)
     - [x] Remove CLI options (need to add it again via `sys.argv`)
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
-    - [ ] Improve user input validation
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
+    - [ ] Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - [ ] Redesign of the config
+    - [ ] Improve user input validation
     - [ ] Redesign of the GUI notifications
     - [ ] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
