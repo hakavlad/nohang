@@ -182,7 +182,7 @@ if you run
 $ while true; do setsid tail /dev/zero; done
 ```
 
-(although with some settings, nohang can even handle it)
+(although with some settings nohang can even handle it)
 
 ## Contribution
 
