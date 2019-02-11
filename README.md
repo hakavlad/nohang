@@ -188,7 +188,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 ## Changelog
 
-- In progress
+- [ ] In progress
     - Redesign of the config
     - Redesign of the GUI notifications
     - Improve modifing badness via matching with regular expressions: 
@@ -214,7 +214,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
     - Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - Improve user input validation
-    - Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
+    - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
