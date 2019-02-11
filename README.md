@@ -3,11 +3,11 @@
 
 Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
 
-![pic](https://i.imgur.com/Hq1JPMs.png)
-
 ## What is the problem?
 
 OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop [caches](https://en.wikipedia.org/wiki/Page_cache) and processes to be killed (via sending [SIGKILL](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGKILL)) instead of trying to terminate them correctly (via sending [SIGTERM](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGTERM) or takes other corrective action). Some applications may crash if it's impossible to allocate memory.
+
+![pic](https://i.imgur.com/yS81KAY.png)
 
 Here are the statements of some users:
 
@@ -27,7 +27,10 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and very lightweight OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. Needs Linux 4.20+.
-- Use of nohang (maybe this is a good choice for modern desktops and servers if you need fine tuning).
+- Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
+
+![pic](https://i.imgur.com/Hq1JPMs.png)
+
 
 The tools listed above may work at the same time on one computer.
 
@@ -211,6 +214,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - Add the ability to send any signal instead of SIGTERM for processes with certain names
     - Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - Improve user input validation
+    - Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release

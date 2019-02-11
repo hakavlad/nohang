@@ -427,7 +427,7 @@ def send_notify_etc(pid, name, command):
     pid: str process pid
     """
     title = 'Hang prevention'
-    body = 'Victim is process <b>{}</b> [{}]\nExecute the command:\n<b>{}</b>'.format(
+    body = 'Victim is process <b>{}</b>, {}\nExecute the command:\n<b>{}</b>'.format(
         name.replace('&', '*'),
         pid,
         command.replace('&', '*')
@@ -691,8 +691,12 @@ def find_victim_and_send_signal(signal):
 
         len_vm = len(str(vm_size))
 
+        try:
+            realpath = os.path.realpath('/proc/' + pid + '/exe')
+        except FileNotFoundError:
+            print('Victim died: /proc/{}/exe does not exists'.format(pid))
 
-        realpath = os.path.realpath('/proc/' + pid + '/exe')
+
         state = pid_to_state(pid)
         pname = pid_to_name(ppid.strip('\n '))
         # print([ppid], [pname])
@@ -736,10 +740,9 @@ def find_victim_and_send_signal(signal):
                     cmdline
                     )
         else:
-            
-            
+
             # нахер такое ветвление
-            
+
             victim_info = '\033[4mFound a process with highest badness:\033[0m' \
                 '\n  Name:    \033[33m{}\033[0m' \
                 '\n  PID:     \033[33m{}\033[0m' \
@@ -958,11 +961,13 @@ def calculate_percent(arg_key):
 
 ##########################################################################
 
+# Lock all memory
 
 
 mlockall()
 
 
+##########################################################################
 
 
 # find mem_total
