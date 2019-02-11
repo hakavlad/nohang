@@ -168,8 +168,8 @@ See also `man journalctl`.
 ## Known problems
 
 - Awful documentation
-- Slowly starting, slowly looking for a victim, especially when using swapspace (although this should be enough for more than 95% of all cases, IMHO)
-- It is written in an interpreted language and is actually a prototype
+- It is written in Python and is actually a prototype (although the algorithm may be good)
+- No tests
 
 ## Todo
 
