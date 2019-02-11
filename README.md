@@ -213,6 +213,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
     - [ ] Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - [ ] Redesign of the config
+    - [ ] Decrease CPU usage: ignore `zram` by default
     - [ ] Improve user input validation
     - [ ] Redesign of the GUI notifications
     - [ ] Improve modifing badness via matching with regular expressions: 
