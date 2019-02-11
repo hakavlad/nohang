@@ -174,6 +174,8 @@ See also `man journalctl`.
 ## Todo
 
 - Rewrite all code in Golang with tests and good documentation.
+- Make installer for non-systemd users
+- Deb/rpm packaging
 
 ## Nohang don't help you
 
