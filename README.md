@@ -167,9 +167,9 @@ See also `man journalctl`.
 
 ## Known problems
 
-- Awful documentation
+- Awful documentation (the problem will be solved gradually in the next releases)
 - It is written in Python and is actually a prototype (although the algorithm may be good)
-- No tests
+- No tests (by itself this does not make the algorithm bad)
 
 ## Todo
 
@@ -181,6 +181,8 @@ if you run
 ```bash
 $ while true; do setsid tail /dev/zero; done
 ```
+
+(although with some settings, nohang can even handle it)
 
 ## Contribution
 
