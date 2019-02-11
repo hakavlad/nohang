@@ -188,13 +188,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 ## Changelog
 
-- [ ] In progress
-    - [ ] Redesign of the config
-    - [ ] Redesign of the GUI notifications
-    - [ ] Improve modifing badness via matching with regular expressions: 
-        - Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
-        - Fix: replace `re.fullmatch()` by `re.search()`
-        - Validation RE patterns at startup
+- In progress
     - [x] Improve output:
         - [x] Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
         - [x] Print in terminal with colors
@@ -205,16 +199,22 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Improve GUI warnings:
         - [x] Find env without run `ps`
         - [x] Handle all timeouts when notify-send starts
-    - Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
-    - Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
+    - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
+    - [ ] Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
     - [x] Add `oom-sort`
     - [x] Reduce memory usage (remove `import argparse`)
-    - Remove CLI options (need to add it again via `sys.argv`)
-    - Remove self-defense options from config, use systemd unit scheduling instead
-    - Add the ability to send any signal instead of SIGTERM for processes with certain names
+    - [x] Remove CLI options (need to add it again via `sys.argv`)
+    - [x] Remove self-defense options from config, use systemd unit scheduling instead
+    - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
-    - Improve user input validation
+    - [ ] Improve user input validation
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
+    - [ ] Redesign of the config
+    - [ ] Redesign of the GUI notifications
+    - [ ] Improve modifing badness via matching with regular expressions: 
+        - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
+        - [x] Fix: replace `re.fullmatch()` by `re.search()`
+        - [ ] Validation RE patterns at startup
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
     - 1st release
