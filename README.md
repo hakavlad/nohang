@@ -219,12 +219,11 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Add `oom-sort`
     - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
-    - [x] Remove CLI options (need to add it again via `sys.argv`)
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
-    - [x] Add initial support for `PSI` (using `/proc/pressure/memory`, need Linux 4.20+)
+    - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
     - [ ] Redesign of the config
     - [ ] Decrease CPU usage: ignore `zram` by default
     - [ ] Improve user input validation
