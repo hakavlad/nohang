@@ -4,8 +4,47 @@ import os
 from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
-from sys import stdout
+from sys import stdout, stderr, argv, exit
 from signal import SIGKILL, SIGTERM
+
+
+help_mess = """usage: nohang [-h] [-c CONFIG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        path to the config file, default values:
+                        ./nohang.conf, /etc/nohang/nohang.conf"""
+
+
+if len(argv) == 1:
+    if os.path.exists('./nohang.conf'):
+        config = cd = os.getcwd() + '/nohang.conf'
+    else:
+        config = '/etc/nohang/nohang.conf'
+
+elif len(argv) == 2:
+    if argv[1] == '--help' or argv[1] == '-h':
+        print(help_mess)
+        exit(1)
+    else:
+        print('Invalid CLI input')
+        exit(1)
+
+elif len(argv) > 3:
+    print('Invalid CLI input')
+    exit(1)
+
+else:
+    if argv[1] == '--config' or argv[1] == '-c':
+        config = argv[2]
+    else:
+        print('Invalid option: {}'.format(argv[1]))
+        exit(1)
+
+
+conf_err_mess = 'Invalid config. Exit.'
+
 
 start_time = time()
 
@@ -39,6 +78,7 @@ HR = '~' * 79
 
 # todo: make config option
 print_total_stat = True
+
 
 ##########################################################################
 
@@ -194,7 +234,7 @@ def conf_parse_string(param):
     else:
         print('All the necessary parameters must be in the config')
         print('There is no "{}" parameter in the config'.format(param))
-        exit()
+        exit(1)
 
 
 def conf_parse_bool(param):
@@ -211,14 +251,14 @@ def conf_parse_bool(param):
         elif param_str == 'False':
             return False
         else:
-            print('Invalid value of the "{}" parameter.'.format(param_str))
+            print('Invalid value of the "{}" parameter.'.format(param))
             print('Valid values are True and False.')
             print('Exit')
-            exit()
+            exit(1)
     else:
         print('All the necessary parameters must be in the config')
-        print('There is no "{}" parameter in the config'.format(param_str))
-        exit()
+        print('There is no "{}" parameter in the config'.format(param))
+        exit(1)
 
 
 def rline1(path):
@@ -325,6 +365,9 @@ def pid_to_uid(pid):
             return f_list[uid_index].split('\t')[2]
 
 
+
+
+
 def notify_send_wait(title, body):
     '''GUI notifications with UID != 0'''
     with Popen(['notify-send', '--icon=dialog-warning', title, body]) as proc:
@@ -338,8 +381,6 @@ def notify_send_wait(title, body):
 def notify_helper(title, body):
     '''GUI notification with UID = 0'''
 
-    # os.system(notify_helper_path + ' foo bar &')
-
     with Popen([notify_helper_path, title, body]) as proc:
         try:
             proc.wait(timeout=wait_time)
@@ -350,12 +391,16 @@ def notify_helper(title, body):
                     title, body))
 
 
+
+
+
 def send_notify_warn():
     """
     Look for process with maximum 'badness' and warn user with notification.
     (implement Low memory warnings)
     """
 
+    '''
     # find process with max badness
     fat_tuple = fattest()
     pid = fat_tuple[0]
@@ -376,7 +421,14 @@ def send_notify_warn():
 
     # title = 'Low memory: {}'.format(low_mem_percent)
     title = 'Low memory'
+    '''
 
+
+
+
+
+
+    '''
     body = 'Next victim: {}[{}]'.format(
         name.replace(
             # symbol '&' can break notifications in some themes,
@@ -384,6 +436,13 @@ def send_notify_warn():
             '&', '*'),
         pid
         )
+    '''
+    
+    
+    '''
+    body = 'MemAvail: {}%\nSwapFree: {}%'.format(
+        round(mem_available / mem_total * 100),
+        round(swap_free / (swap_total + 0.1) * 100))
 
     if root:  # If nohang was started by root
         # send notification to all active users with special script
@@ -391,6 +450,22 @@ def send_notify_warn():
     else:  # Or by regular user
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
+    '''
+
+
+    b = """{} 'Low memory' 'MemAvail: {}%\nSwapFree: {}%' &""".format(
+        notify_helper_path,
+        round(mem_available / mem_total * 100),
+        round(swap_free / (swap_total + 0.1) * 100)
+        )
+
+    t0 = time()
+    os.system(b)
+    t1 = time()
+    print('t:', t1 - t0)
+
+
+
 
 
 def send_notify(signal, name, pid):
@@ -402,13 +477,14 @@ def send_notify(signal, name, pid):
     pid: str process pid
     """
     title = 'Freeze prevention'
-    body = '{} {}[{}]'.format(
+    body = '<b>{}</b> [{}] <b>{}</b>'.format(
         notify_sig_dict[signal],
+        pid,
         name.replace(
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
-            '&', '*'),
-        pid
+            '&', '*'
+            )
         )
     if root:
         # send notification to all active users with notify-send
@@ -899,7 +975,7 @@ def sleep_after_check_mem():
         stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
-        exit()
+        exit(1)
 
 
 def calculate_percent(arg_key):
@@ -922,12 +998,12 @@ def calculate_percent(arg_key):
             mem_min_percent = string_to_float_convert_test(mem_min_percent)
             if mem_min_percent is None:
                 print('Invalid {} value, not float\nExit'.format(arg_key))
-                exit()
+                exit(1)
             # Final validations...
             if mem_min_percent < 0 or mem_min_percent > 100:
                 print(
                     '{}, as percents value, out of range [0; 100]\nExit'.format(arg_key))
-                exit()
+                exit(1)
 
             # mem_min_sigterm_percent is clean and valid float percentage. Can
             # translate into Kb
@@ -938,14 +1014,14 @@ def calculate_percent(arg_key):
             mem_min_mb = string_to_float_convert_test(mem_min[:-1].strip())
             if mem_min_mb is None:
                 print('Invalid {} value, not float\nExit'.format(arg_key))
-                exit()
+                exit(1)
             mem_min_kb = mem_min_mb * 1024
             if mem_min_kb > mem_total:
                 print(
                     '{} value can not be greater then MemTotal ({} MiB)\nExit'.format(
                         arg_key, round(
                             mem_total / 1024)))
-                exit()
+                exit(1)
             mem_min_percent = mem_min_kb / mem_total * 100
 
         else:
@@ -982,7 +1058,7 @@ for s in mem_list:
 
 if mem_list_names[2] != 'MemAvailable':
     print('Your Linux kernel is too old, Linux 3.14+ requied\nExit')
-    exit()
+    exit(1)
 
 swap_total_index = mem_list_names.index('SwapTotal')
 swap_free_index = swap_total_index + 1
@@ -1003,6 +1079,8 @@ vm_size_index = status_names.index('VmSize')
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
 uid_index = status_names.index('Uid')
+state_index = status_names.index('State')
+
 
 try:
     anon_index = status_names.index('RssAnon')
@@ -1023,7 +1101,7 @@ cd = os.getcwd()
 
 '''
 
-config = '/etc/nohang/nohang.conf'
+#config = '/etc/nohang/nohang.conf'
 
 # config = 'nohang.conf'
 
@@ -1075,7 +1153,7 @@ try:
                 if len(etc_name) > 15:
                     print('Invalid config, the length of the process '
                           'name must not exceed 15 characters\nExit')
-                    exit()
+                    exit(1)
                 etc_dict[etc_name] = etc_command
 
             # NEED VALIDATION!
@@ -1095,16 +1173,21 @@ try:
 
 except PermissionError:
     print('PermissionError', conf_err_mess)
-    exit()
+    exit(1)
 except UnicodeDecodeError:
     print('UnicodeDecodeError', conf_err_mess)
-    exit()
+    exit(1)
 except IsADirectoryError:
     print('IsADirectoryError', conf_err_mess)
-    exit()
+    exit(1)
 except IndexError:
     print('IndexError', conf_err_mess)
-    exit()
+    exit(1)
+except FileNotFoundError:
+    print('FileNotFoundError', conf_err_mess)
+    exit(1)
+
+
 
 # print(processname_re_list)
 # print(cmdline_re_list)
@@ -1158,53 +1241,53 @@ if 'rate_mem' in config_dict:
     rate_mem = string_to_float_convert_test(config_dict['rate_mem'])
     if rate_mem is None:
         print('Invalid rate_mem value, not float\nExit')
-        exit()
+        exit(1)
     if rate_mem <= 0:
         print('rate_mem MUST be > 0\nExit')
-        exit()
+        exit(1)
 else:
     print('rate_mem not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'rate_swap' in config_dict:
     rate_swap = string_to_float_convert_test(config_dict['rate_swap'])
     if rate_swap is None:
         print('Invalid rate_swap value, not float\nExit')
-        exit()
+        exit(1)
     if rate_swap <= 0:
         print('rate_swap MUST be > 0\nExit')
-        exit()
+        exit(1)
 else:
     print('rate_swap not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'rate_zram' in config_dict:
     rate_zram = string_to_float_convert_test(config_dict['rate_zram'])
     if rate_zram is None:
         print('Invalid rate_zram value, not float\nExit')
-        exit()
+        exit(1)
     if rate_zram <= 0:
         print('rate_zram MUST be > 0\nExit')
-        exit()
+        exit(1)
 else:
     print('rate_zram not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'swap_min_sigterm' in config_dict:
     swap_min_sigterm = config_dict['swap_min_sigterm']
 else:
     print('swap_min_sigterm not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'swap_min_sigkill' in config_dict:
     swap_min_sigkill = config_dict['swap_min_sigkill']
 else:
     print('swap_min_sigkill not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'min_delay_after_sigterm' in config_dict:
@@ -1212,13 +1295,13 @@ if 'min_delay_after_sigterm' in config_dict:
         config_dict['min_delay_after_sigterm'])
     if min_delay_after_sigterm is None:
         print('Invalid min_delay_after_sigterm value, not float\nExit')
-        exit()
+        exit(1)
     if min_delay_after_sigterm < 0:
         print('min_delay_after_sigterm must be positiv\nExit')
-        exit()
+        exit(1)
 else:
     print('min_delay_after_sigterm not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'min_delay_after_sigkill' in config_dict:
@@ -1226,13 +1309,13 @@ if 'min_delay_after_sigkill' in config_dict:
         config_dict['min_delay_after_sigkill'])
     if min_delay_after_sigkill is None:
         print('Invalid min_delay_after_sigkill value, not float\nExit')
-        exit()
+        exit(1)
     if min_delay_after_sigkill < 0:
         print('min_delay_after_sigkill must be positive\nExit')
-        exit()
+        exit(1)
 else:
     print('min_delay_after_sigkill not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'psi_avg10_sleep_time' in config_dict:
@@ -1240,13 +1323,13 @@ if 'psi_avg10_sleep_time' in config_dict:
         config_dict['psi_avg10_sleep_time'])
     if psi_avg10_sleep_time is None:
         print('Invalid psi_avg10_sleep_time value, not float\nExit')
-        exit()
+        exit(1)
     if psi_avg10_sleep_time < 0:
         print('psi_avg10_sleep_time must be positive\nExit')
-        exit()
+        exit(1)
 else:
     print('psi_avg10_sleep_time not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'sigkill_psi_avg10' in config_dict:
@@ -1254,13 +1337,13 @@ if 'sigkill_psi_avg10' in config_dict:
         config_dict['sigkill_psi_avg10'])
     if sigkill_psi_avg10 is None:
         print('Invalid sigkill_psi_avg10 value, not float\nExit')
-        exit()
+        exit(1)
     if sigkill_psi_avg10 < 0 or sigkill_psi_avg10 > 100:
         print('sigkill_psi_avg10 must be in the range [0; 100]\nExit')
-        exit()
+        exit(1)
 else:
     print('sigkill_psi_avg10 not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'sigterm_psi_avg10' in config_dict:
@@ -1268,13 +1351,13 @@ if 'sigterm_psi_avg10' in config_dict:
         config_dict['sigterm_psi_avg10'])
     if sigterm_psi_avg10 is None:
         print('Invalid sigterm_psi_avg10 value, not float\nExit')
-        exit()
+        exit(1)
     if sigterm_psi_avg10 < 0 or sigterm_psi_avg10 > 100:
         print('sigterm_psi_avg10 must be in the range [0; 100]\nExit')
-        exit()
+        exit(1)
 else:
     print('sigterm_psi_avg10 not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'min_badness' in config_dict:
@@ -1282,13 +1365,13 @@ if 'min_badness' in config_dict:
         config_dict['min_badness'])
     if min_badness is None:
         print('Invalid min_badness value, not integer\nExit')
-        exit()
+        exit(1)
     if min_badness < 0 or min_badness > 1000:
         print('Invalud min_badness value\nExit')
-        exit()
+        exit(1)
 else:
     print('min_badness not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'oom_score_adj_max' in config_dict:
@@ -1296,13 +1379,13 @@ if 'oom_score_adj_max' in config_dict:
         config_dict['oom_score_adj_max'])
     if oom_score_adj_max is None:
         print('Invalid oom_score_adj_max value, not integer\nExit')
-        exit()
+        exit(1)
     if oom_score_adj_max < 0 or oom_score_adj_max > 1000:
         print('Invalid oom_score_adj_max value\nExit')
-        exit()
+        exit(1)
 else:
     print('oom_score_adj_max not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'min_time_between_warnings' in config_dict:
@@ -1310,20 +1393,20 @@ if 'min_time_between_warnings' in config_dict:
         config_dict['min_time_between_warnings'])
     if min_time_between_warnings is None:
         print('Invalid min_time_between_warnings value, not float\nExit')
-        exit()
+        exit(1)
     if min_time_between_warnings < 1 or min_time_between_warnings > 300:
         print('min_time_between_warnings value out of range [1; 300]\nExit')
-        exit()
+        exit(1)
 else:
     print('min_time_between_warnings not in config\nExit')
-    exit()
+    exit(1)
 
 
 if 'swap_min_warnings' in config_dict:
     swap_min_warnings = config_dict['swap_min_warnings']
 else:
     print('swap_min_warnings not in config\nExit')
-    exit()
+    exit(1)
 
 
 ##########################################################################
@@ -1344,12 +1427,12 @@ def get_swap_threshold_tuple(string):
         valid = string_to_float_convert_test(string[:-1])
         if valid is None:
             print('somewhere swap unit is not float_%')
-            exit()
+            exit(1)
 
         value = float(string[:-1].strip())
         if value < 0 or value > 100:
             print('invalid value, must be from the range[0; 100] %')
-            exit()
+            exit(1)
 
         return value, True
 
@@ -1357,18 +1440,18 @@ def get_swap_threshold_tuple(string):
         valid = string_to_float_convert_test(string[:-1])
         if valid is None:
             print('somewhere swap unit is not float_M')
-            exit()
+            exit(1)
 
         value = float(string[:-1].strip()) * 1024
         if value < 0:
             print('invalid unit in config (negative value)')
-            exit()
+            exit(1)
 
         return value, False
 
     else:
         print('Invalid config file. There are invalid units somewhere\nExit')
-        exit()
+        exit(1)
 
 
 swap_min_sigterm_tuple = get_swap_threshold_tuple(swap_min_sigterm)

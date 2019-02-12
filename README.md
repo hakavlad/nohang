@@ -107,6 +107,19 @@ $ sudo systemctl start nohang
 $ sudo systemctl enable nohang
 ```
 
+## Command line options
+
+```
+./nohang -h
+usage: nohang [-h] [-c CONFIG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG, --config CONFIG
+                        path to the config file, default values:
+                        ./nohang.conf, /etc/nohang/nohang.conf
+```
+
 ## How to configure nohang
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
@@ -205,13 +218,13 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Handle all timeouts when notify-send starts
     - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Add `oom-sort`
-    - [x] Reduce memory usage (remove `import argparse`)
+    - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Remove CLI options (need to add it again via `sys.argv`)
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
-    - [ ] Add `PSI` support (using `/proc/pressure/memory`, need Linux 4.20+)
+    - [x] Add initial support for `PSI` (using `/proc/pressure/memory`, need Linux 4.20+)
     - [ ] Redesign of the config
     - [ ] Decrease CPU usage: ignore `zram` by default
     - [ ] Improve user input validation
@@ -221,5 +234,4 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
         - [ ] Validation RE patterns at startup
 
-- [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23
-    - 1st release
+- [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release

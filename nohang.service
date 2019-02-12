@@ -4,7 +4,7 @@ After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
-ExecStart=/usr/sbin/nohang
+ExecStart=/usr/sbin/nohang --config /etc/nohang/nohang.conf
 Slice=nohang.slice
 Restart=always
 ProtectSystem=strict
