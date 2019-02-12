@@ -650,7 +650,8 @@ def find_victim_and_send_signal(signal):
             with open('/proc/' + pid + '/status') as f:
                 for n, line in enumerate(f):
 
-
+                    if n is state_index:
+                        state = line.split('\t')[1].rstrip()
 
                     if n is ppid_index:
                         ppid = line.split('\t')[1]
@@ -773,7 +774,7 @@ def find_victim_and_send_signal(signal):
             print('Victim died: /proc/{}/exe does not exists'.format(pid))
 
 
-        state = pid_to_state(pid)
+        #state = pid_to_state(pid)
         pname = pid_to_name(ppid.strip('\n '))
         # print([ppid], [pname])
 
