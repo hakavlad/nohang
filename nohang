@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """A daemon that prevents OOM in Linux systems."""
+
 import os
 from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from signal import SIGKILL, SIGTERM
+
+
+start_time = time()
 
 
 help_mess = """usage: nohang [-h] [-c CONFIG]
@@ -46,8 +50,6 @@ else:
 conf_err_mess = 'Invalid config. Exit.'
 
 
-start_time = time()
-
 sig_dict = {SIGKILL: 'SIGKILL',
             SIGTERM: 'SIGTERM'}
 
@@ -60,10 +62,10 @@ if self_uid == 0:
 else:
     root = False
 
-wait_time = 12
+wait_time = 10
 
 # todo: make config option
-max_sleep_time = 2
+max_sleep_time = 3
 
 # todo: make config option
 min_sleep_time = 0.1
@@ -78,6 +80,8 @@ HR = '~' * 79
 
 # todo: make config option
 print_total_stat = True
+
+debug = False
 
 
 ##########################################################################
@@ -575,7 +579,14 @@ def fattest():
 
     pid_badness_list = []
 
+
+    if debug:
+        print('    PID  badness  Name                  eUID')
+        print('-------  -------  --------------- ----------')
+
+
     for pid in pid_list:
+
 
         # find and modify badness (if it needs)
         try:
@@ -604,6 +615,19 @@ def fattest():
                 for re_tup in uid_re_list:
                     if search(re_tup[1], uid) is not None:
                         badness += int(re_tup[0])
+
+
+
+            if debug:
+                print('{}  {}  {} {}'.format(
+                    pid.rjust(7),
+                    str(badness).rjust(7),
+                    pid_to_name(pid).ljust(15),
+                    pid_to_uid(pid).rjust(10)
+                    )
+                )
+
+
 
         except FileNotFoundError:
             continue
@@ -843,9 +867,12 @@ def find_victim_and_send_signal(signal):
                     cmdline)
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
+
             command = etc_dict[name]
+
             exit_status = os.system(etc_dict[name].replace(
                 '$PID', pid).replace('$NAME', pid_to_name(pid)))
+
             if exit_status == 0:
                 exit_status = '\033[32m0\033[0m'
             else:
@@ -854,7 +881,7 @@ def find_victim_and_send_signal(signal):
             response_time = time() - time0
 
             etc_info = '{}' \
-                '\n\033[4mImplement corrective action:\033[0m\n  Run the command: \033[4m{}\033[0m' \
+                '\n\033[4mImplement a corrective action:\033[0m\n  Run the command: \033[4m{}\033[0m' \
                 '\n  Exit status: {}; response time: {} ms'.format(
                     victim_info, command.replace(
                         '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
@@ -947,9 +974,17 @@ def sleep_after_check_mem():
     else:
         swap_point = swap_free - swap_min_sigkill_kb
 
+    if swap_point < 0:
+        swap_point = 0
+
+    if mem_point < 0:
+        mem_point = 0
+
     t_mem = mem_point / rate_mem
     t_swap = swap_point / rate_swap
     t_zram = (mem_total * 0.9 - mem_used_zram) / rate_zram
+    if t_zram < 0:
+        t_zram = 0
 
     t_mem_swap = t_mem + t_swap
     t_mem_zram = t_mem + t_zram
@@ -966,14 +1001,20 @@ def sleep_after_check_mem():
     else:
         pass
 
+    if print_sleep_periods:
+
+        print(
+            'Sleep time: {} sec; (t_mem={}, t_swap={}, t_zram={})'.format(
+            round(t, 2),
+            round(t_mem, 2),
+            round(t_swap, 2),
+            round(t_zram, 2)
+            )
+        )
+
+    stdout.flush()
+
     try:
-        if print_sleep_periods:
-            print('sleep', round(t, 2))
-            #  '  (t_mem={}, t_swap={}, t_zram={})'.format(
-            # round(t_mem, 2),
-            # round(t_swap, 2),
-            # round(t_zram, 2)))
-        stdout.flush()
         sleep(t)
     except KeyboardInterrupt:
         exit(1)
@@ -1095,16 +1136,6 @@ except ValueError:
 
 ##########################################################################
 
-'''
-# Configurations
-
-cd = os.getcwd()
-
-'''
-
-#config = '/etc/nohang/nohang.conf'
-
-# config = 'nohang.conf'
 
 print('Config:', config)
 
@@ -1566,9 +1597,18 @@ rate_mem = rate_mem * 1048576
 rate_swap = rate_swap * 1048576
 rate_zram = rate_zram * 1048576
 
+
+# print(rate_mem, rate_swap, rate_zram)
+
+
 warn_time_now = 0
 warn_time_delta = 1000
 warn_timer = 0
+
+if debug:
+    print()
+    fattest()
+    print()
 
 print('Monitoring started!')
 
@@ -1586,6 +1626,8 @@ if psi_support and not ignore_psi:
     term_psi_t0 = time() + psi_avg10_sleep_time
 
 avg_value = ''
+
+
 
 
 while True:
@@ -1611,6 +1653,8 @@ while True:
             pass
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
+    
+    # print(mem_available, swap_total, swap_free)
 
     # если метры - получаем киб выше и сразу. см.
 
