@@ -36,17 +36,23 @@ The tools listed above may work at the same time on one computer.
 
 ## Some features
 
-- `SIGKILL` and `SIGTERM` as signals that can be sent to the victim
-- the ability to send any signal instead of SIGTERM for processes with certain names ([screenshot](https://i.imgur.com/cs1PRC5.png))
-- impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
-- possibility of restarting processes via command like `systemctl restart something` if the process is selected as a victim (or run any other command)
+- Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.
+- Impact on the badness of processes via matching their
+    - names,
+    - cmdlines and
+    - eUIDs
+    with specified regular expressions
+- If the name of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
+    - `sysmemctl restart foo`
+    - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID)
+    - `kill -TERM $PID && script.sh` (in addition to sending any signal, you can run a specified script)
 - GUI notifications:
-    - OOM prevention results (displays sended signal and displays PID and name of victim)
-    - Low memory warnings (displays available memory and name of fattest process)
+    - Notification of corrective actions taken and displaying the name and PID of the victim
+    - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
 - [PSI](https://lwn.net/Articles/759658/) support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
-- customizable intensity of monitoring
-- convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
+- Customizable intensity of monitoring
+- Convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
 
@@ -130,7 +136,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 4. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
 5. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
 6. GUI notifications:
-   - results of preventing OOM
+   - notifications of corrective actions taken
    - low memory warnings
 7. Output verbosity
 
@@ -186,9 +192,9 @@ See also `man journalctl`.
 
 ## Todo
 
-- Rewrite all code in Golang with tests and good documentation.
 - Make installer for non-systemd users
 - Deb/rpm packaging
+- Rewrite all code in Golang with tests and good documentation.
 
 ## Nohang don't help you
 
@@ -210,6 +216,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
         - [x] Print in terminal with colors
         - [x] Print statistics on corrective actions after each corrective action
+        - [ ] Add memory report interval
+        - [ ] Add delta memory info (the rate of change of available memory)
     - [x] Improve poll rate algorithm
     - [x] Improve victim search algorithm (do it ~30% faster)
     - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
@@ -224,13 +232,10 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters
     - [x] Fix `mlockall()` using `MCL_ONFAULT` and lock all memory by default
     - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
-    - [ ] Redesign of the config
-    - [ ] Decrease CPU usage: ignore `zram` by default
-    - [ ] Improve user input validation
-    - [ ] Redesign of the GUI notifications
-    - [ ] Improve modifing badness via matching with regular expressions: 
+    - [x] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
-        - [ ] Validation RE patterns at startup
+    - [ ] Improve user input validation
+    - [ ] Redesign of the GUI notifications
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release
