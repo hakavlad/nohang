@@ -214,7 +214,6 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 - In progress
     - [x] Improve output:
         - [x] Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
-        - [x] Print in terminal with colors
         - [x] Print statistics on corrective actions after each corrective action
         - [ ] Add memory report interval
         - [ ] Add delta memory info (the rate of change of available memory)
@@ -230,7 +229,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
-    - [x] Fix `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+    - [x] Reduce memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
     - [x] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
