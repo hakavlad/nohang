@@ -83,7 +83,7 @@ print_total_stat = True
 
 print_proc_table = False
 
-min_mem_report_interval = 10
+min_mem_report_interval = 5
 
 
 ##########################################################################
@@ -135,7 +135,7 @@ def update_stat_dict_and_print(key):
 
     if print_total_stat:
 
-        stats_msg = '{}\n\033[4mWhat happened in the last {}:\033[0m'.format(
+        stats_msg = '{}\nWhat happened in the last {}:'.format(
             HR, format_time(time() - start_time))
 
         for i in stat_dict:
@@ -348,6 +348,44 @@ def pid_to_name(pid):
             f.seek(6)
             return f.read(15).decode(
                 'utf-8', 'ignore').partition('\n')[0]
+
+
+
+
+
+
+def pid_to_ppid(pid):
+    try:
+        with open('/proc/' + pid + '/status') as f:
+            for n, line in enumerate(f):
+                if n is ppid_index:
+                    return line.split('\t')[1].strip()
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f_list = f.read().decode('utf-8', 'ignore').split('\n')
+            for i in range(len(f_list)):
+                if i is ppid_index:
+                    ppid = f_list[i].split('\t')[1]
+
+
+
+
+
+def pid_to_ancestry(pid):
+    anc_list = []
+    while True:
+        ppid = pid_to_ppid(pid)
+        pname = pid_to_name(ppid)
+        anc_list.append((ppid, pname))
+        if ppid == '1':
+            break
+        pid = ppid
+    print('Ancestry: ', anc_list)
+
 
 
 def pid_to_cmdline(pid):
@@ -795,74 +833,57 @@ def find_victim_and_send_signal(signal):
                 'The victim died in the search process: FileNotFoundError')
             return None
 
-
         #state = pid_to_state(pid)
         pname = pid_to_name(ppid.strip('\n '))
         # print([ppid], [pname])
 
+        '''
+        te1 = time()
+        ancestry = pid_to_ancestry(pid)
+        print((time() - te1) * 1000)
+        '''
 
         if detailed_rss:
-
-            victim_info = '\033[4mFound a process with highest badness:\033[0m' \
-                '\n  Name:     \033[33m{}\033[0m' \
-                '\n  State:    \033[33m{}\033[0m' \
-                '\n  PID:      \033[33m{}\033[0m' \
-                '\n  PPID:     \033[33m{}\033[0m (\033[33m{}\033[0m)' \
-                '\n  EUID:     \033[33m{}\033[0m' \
-                '\n  badness:  \033[33m{}\033[0m, ' \
-                'oom_score:  \033[33m{}\033[0m, ' \
-                'oom_score_adj:  \033[33m{}\033[0m' \
-                '\n  VmSize:   \033[33m{}\033[0m MiB' \
-                '\n  VmRSS:    \033[33m{}\033[0m MiB (' \
-                'Anon: \033[33m{}\033[0m MiB, ' \
-                'File: \033[33m{}\033[0m MiB, ' \
-                'Shmem: \033[33m{}\033[0m MiB)' \
-                '\n  VmSwap:   \033[33m{}\033[0m MiB' \
-                '\n  realpath: \033[33m{}\033[0m' \
-                '\n  cmdline:  \033[33m{}\033[0m'.format(
-                    name,
-                    state,
-                    pid,
-                    ppid.strip('\n '),
-                    pname,
-                    uid,
-                    victim_badness,
-                    oom_score,
-                    oom_score_adj,
-                    vm_size,
-                    str(vm_rss).rjust(len_vm),
+            detailed_rss_info = ' (' \
+                'Anon: {} MiB, ' \
+                'File: {} MiB, ' \
+                'Shmem: {} MiB)'.format(
                     anon_rss,
                     file_rss,
-                    shmem_rss,
-                    str(vm_swap).rjust(len_vm),
-                    realpath,
-                    cmdline
-                    )
+                    shmem_rss)
         else:
+            detailed_rss_info = ''
 
-            # нахер такое ветвление
+        victim_info = 'Found a process with highest badness:' \
+            '\n  Name:     {}' \
+            '\n  State:    {}' \
+            '\n  PID:      {}' \
+            '\n  PPID:     {} ({})' \
+            '\n  EUID:     {}' \
+            '\n  badness:  {}, ' \
+            'oom_score:  {}, ' \
+            'oom_score_adj:  {}' \
+            '\n  VmSize:   {} MiB' \
+            '\n  VmRSS:    {} MiB {}' \
+            '\n  VmSwap:   {} MiB' \
+            '\n  realpath: {}' \
+            '\n  cmdline:  {}'.format(
+                name,
+                state,
+                pid,
+                ppid.strip('\n '),
+                pname,
+                uid,
+                victim_badness,
+                oom_score,
+                oom_score_adj,
+                vm_size,
+                str(vm_rss).rjust(len_vm),
+                detailed_rss_info,
+                str(vm_swap).rjust(len_vm),
+                realpath,
+                cmdline)
 
-            victim_info = '\033[4mFound a process with highest badness:\033[0m' \
-                '\n  Name:    \033[33m{}\033[0m' \
-                '\n  PID:     \033[33m{}\033[0m' \
-                '\n  UID:     \033[33m{}\033[0m' \
-                '\n  Badness: \033[33m{}\033[0m, ' \
-                'oom_score: \033[33m{}\033[0m, ' \
-                'oom_score_adj: \033[33m{}\033[0m' \
-                '\n  VmSize:  \033[33m{}\033[0m MiB' \
-                '\n  VmRSS:   \033[33m{}\033[0m MiB' \
-                '\n  VmSwap:  \033[33m{}\033[0m MiB' \
-                '\n  CmdLine: \033[33m{}\033[0m'.format(
-                    name,
-                    pid,
-                    uid,
-                    victim_badness,
-                    oom_score,
-                    oom_score_adj,
-                    vm_size,
-                    str(vm_rss).rjust(len_vm),
-                    str(vm_swap).rjust(len_vm),
-                    cmdline)
 
         if execute_the_command and signal is SIGTERM and name in etc_dict:
 
@@ -872,14 +893,14 @@ def find_victim_and_send_signal(signal):
                 '$PID', pid).replace('$NAME', pid_to_name(pid)))
 
             if exit_status == 0:
-                exit_status = '\033[32m0\033[0m'
+                exit_status = '0'
             else:
-                exit_status = '\033[31m{}\033[0m'.format(exit_status)
+                exit_status = '{}'.format(exit_status)
 
             response_time = time() - time0
 
             etc_info = '{}' \
-                '\n\033[4mImplement a corrective action:\033[0m\n  Run the command: \033[4m{}\033[0m' \
+                '\nImplement a corrective action:\n  Run the command: {}' \
                 '\n  Exit status: {}; response time: {} ms'.format(
                     victim_info, command.replace(
                         '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
@@ -888,7 +909,7 @@ def find_victim_and_send_signal(signal):
             print(mem_info)
             print(etc_info)
 
-            key = "Run the command '\033[35m{}\033[0m'".format(command)
+            key = "Run the command '{}'".format(command)
             update_stat_dict_and_print(key)
 
             if gui_notifications:
@@ -910,15 +931,15 @@ def find_victim_and_send_signal(signal):
 
                 os.kill(int(pid), signal)
                 response_time = time() - time0
-                send_result = '\033[32mOK\033[0m; response time: {} ms'.format(
+                send_result = 'OK; response time: {} ms'.format(
                     round(response_time * 1000))
 
                 preventing_oom_message = '{}' \
-                    '\n\033[4mImplement a corrective action:\033[0m\n  ' \
-                    'Send \033[4m{}\033[0m to the victim; {}'.format(
+                    '\nImplement a corrective action:\n  ' \
+                    'Send {} to the victim; {}'.format(
                         victim_info, sig_dict[signal], send_result)
 
-                key = 'Send \033[35m{}\033[0m to \033[35m{}\033[0m'.format(
+                key = 'Send {} to {}'.format(
                     sig_dict[signal], name)
 
                 if gui_notifications:
@@ -928,12 +949,12 @@ def find_victim_and_send_signal(signal):
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = '\033[33mFileNotFoundError\033[0m (the victim died in the search process): '
+                key = 'FileNotFoundError (the victim died in the search process): '
             except ProcessLookupError:
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = '\033[33mProcessLookupError\033[0m (the victim died in the search process): '
+                key = 'ProcessLookupError (the victim died in the search process): '
 
             print(mem_info)
             print(preventing_oom_message)
@@ -1769,9 +1790,9 @@ while True:
             swap_free <= swap_min_sigkill_kb:
         time0 = time()
 
-        mem_info = '{}\n\033[4mMemory status that r' \
+        mem_info = '{}\nMemory status that r' \
             'equires corrective actions:' \
-            '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
+            '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
                 HR,
@@ -1792,9 +1813,9 @@ while True:
     elif mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '{}\n\033[4mMemory statu' \
+        mem_info = '{}\nMemory statu' \
             's that requires corrective actions:' \
-            '\033[0m\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
+            '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 HR,
                 kib_to_mib(mem_used_zram),
@@ -1812,9 +1833,9 @@ while True:
 
         time0 = time()
 
-        mem_info = '{}\n\033[4mMemory status tha' \
+        mem_info = '{}\nMemory status tha' \
             't requires corrective actions:' \
-            '\033[0m\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
+            '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
                 HR,
@@ -1837,9 +1858,9 @@ while True:
     elif mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '{}\n\033[4mMemory status that r' \
+        mem_info = '{}\nMemory status that r' \
             'equires corrective actions:' \
-            '\033[0m\n  MemUsedZram [{} MiB, {} %] >= ' \
+            '\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 HR,
                 kib_to_mib(mem_used_zram),
