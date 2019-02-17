@@ -219,7 +219,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [ ] Add memory report interval
         - [ ] Add delta memory info (the rate of change of available memory)
     - [x] Improve poll rate algorithm
-    - [x] Improve victim search algorithm (do it ~30% faster) [rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114)
+    - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Improve GUI warnings:
         - [x] Find env without run `ps`
@@ -229,11 +229,11 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
-    - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters [rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110)
-    - [x] Fix `mlockall()` using `MCL_ONFAULT` [rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112) and lock all memory by default
+    - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
+    - [x] Fix `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
     - [x] Improve modifing badness via matching with regular expressions: 
-        - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions [issue #74](https://github.com/hakavlad/nohang/issues/11)
+        - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [ ] Improve user input validation
     - [ ] Redesign of the GUI notifications
