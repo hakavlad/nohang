@@ -86,6 +86,9 @@ print_proc_table = False
 min_mem_report_interval = 5
 
 
+post_kill_exe = ''
+
+
 ##########################################################################
 
 # define functions
@@ -941,6 +944,17 @@ def find_victim_and_send_signal(signal):
 
                 key = 'Send {} to {}'.format(
                     sig_dict[signal], name)
+
+
+                if signal is SIGKILL and post_kill_exe != '':
+                    os.system(
+                        post_kill_exe.replace(
+                            '$PID', pid).replace(
+                                '$NAME', pid_to_name(pid)
+                                )
+                        )
+
+
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
