@@ -101,18 +101,18 @@ def errprint(text):
 def mlockall():
 
     MCL_CURRENT = 1
-    MCL_FUTURE  = 2
+    MCL_FUTURE = 2
     MCL_ONFAULT = 4
 
     libc = CDLL('libc.so.6', use_errno=True)
 
     result = libc.mlockall(
         MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
-        )
+    )
     if result != 0:
         result = libc.mlockall(
             MCL_CURRENT | MCL_FUTURE
-            )
+        )
         if result != 0:
             print('Cannot lock all memory')
         else:
@@ -353,10 +353,6 @@ def pid_to_name(pid):
                 'utf-8', 'ignore').partition('\n')[0]
 
 
-
-
-
-
 def pid_to_ppid(pid):
     try:
         with open('/proc/' + pid + '/status') as f:
@@ -375,9 +371,6 @@ def pid_to_ppid(pid):
                     ppid = f_list[i].split('\t')[1]
 
 
-
-
-
 def pid_to_ancestry(pid):
     anc_list = []
     while True:
@@ -388,7 +381,6 @@ def pid_to_ancestry(pid):
             break
         pid = ppid
     print('Ancestry: ', anc_list)
-
 
 
 def pid_to_cmdline(pid):
@@ -476,8 +468,7 @@ def send_notify_warn():
         pid
         )
     '''
-    
-    
+
     '''
     body = 'MemAvail: {}%\nSwapFree: {}%'.format(
         round(mem_available / mem_total * 100),
@@ -495,7 +486,7 @@ def send_notify_warn():
         notify_helper_path,
         round(mem_available / mem_total * 100),
         round(swap_free / (swap_total + 0.1) * 100)
-        )
+    )
 
     t0 = time()
     os.system(b)
@@ -519,8 +510,8 @@ def send_notify(signal, name, pid):
             # symbol '&' can break notifications in some themes,
             # therefore it is replaced by '*'
             '&', '*'
-            )
         )
+    )
     if root:
         # send notification to all active users with notify-send
         notify_helper(title, body)
@@ -542,7 +533,7 @@ def send_notify_etc(pid, name, command):
         name.replace('&', '*'),
         pid,
         command.replace('&', '*')
-        )
+    )
     if root:
         # send notification to all active users with notify-send
         notify_helper(title, body)
@@ -580,6 +571,7 @@ def get_pid_list():
 
 pid_list = get_pid_list()
 
+
 def get_non_decimal_pids():
     non_decimal_list = []
     for pid in pid_list:
@@ -612,11 +604,9 @@ def fattest():
 
     pid_badness_list = []
 
-
     if print_proc_table:
         print('    PID  badness  Name                  eUID')
         print('-------  -------  --------------- ----------')
-
 
     for pid in pid_list:
 
@@ -654,7 +644,7 @@ def fattest():
                     str(badness).rjust(7),
                     pid_to_name(pid).ljust(15),
                     pid_to_uid(pid).rjust(10)
-                    )
+                )
                 )
 
         except FileNotFoundError:
@@ -664,12 +654,12 @@ def fattest():
         pid_badness_list.append((pid, badness))
 
     # Make list of (pid, badness) tuples, sorted by 'badness' values
-    #print(pid_badness_list)
+    # print(pid_badness_list)
     pid_tuple_list = sorted(
         pid_badness_list,
         key=itemgetter(1),
         reverse=True
-        )[0]
+    )[0]
 
     pid = pid_tuple_list[0]
 
@@ -682,8 +672,8 @@ def fattest():
             pid_to_name(pid),
             victim_badness,
             round((time() - ft1) * 1000)
-            )
         )
+    )
 
     return pid, victim_badness
 
@@ -714,7 +704,6 @@ def find_victim_and_send_signal(signal):
 
                     if n is ppid_index:
                         ppid = line.split('\t')[1]
-
 
                     if n is uid_index:
                         uid = line.split('\t')[2]
@@ -779,7 +768,6 @@ def find_victim_and_send_signal(signal):
                 for i in range(len(f_list)):
                     if i is uid_index:
                         uid = f_list[i].split('\t')[2]
-
 
                     if i is vm_size_index:
                         vm_size = kib_to_mib(
@@ -887,7 +875,6 @@ def find_victim_and_send_signal(signal):
                 realpath,
                 cmdline)
 
-
         if execute_the_command and signal is SIGTERM and name in etc_dict:
 
             command = etc_dict[name]
@@ -925,7 +912,6 @@ def find_victim_and_send_signal(signal):
 
             try:
 
-
                 m = check_mem_and_swap()
                 ma = round(int(m[0]) / 1024.0)
                 sf = round(int(m[2]) / 1024.0)
@@ -945,16 +931,13 @@ def find_victim_and_send_signal(signal):
                 key = 'Send {} to {}'.format(
                     sig_dict[signal], name)
 
-
                 if signal is SIGKILL and post_kill_exe != '':
                     os.system(
                         post_kill_exe.replace(
                             '$PID', pid).replace(
                                 '$NAME', pid_to_name(pid)
-                                )
                         )
-
-
+                    )
 
                 if gui_notifications:
                     send_notify(signal, name, pid)
@@ -1038,10 +1021,10 @@ def sleep_after_check_mem():
 
         print(
             'Sleep time: {} sec; (t_mem={}, t_swap={}, t_zram={})'.format(
-            round(t, 2),
-            round(t_mem, 2),
-            round(t_swap, 2),
-            round(t_zram, 2)
+                round(t, 2),
+                round(t_mem, 2),
+                round(t_swap, 2),
+                round(t_zram, 2)
             )
         )
 
@@ -1217,7 +1200,7 @@ try:
                 etc_command = a[1].strip()
                 if len(etc_name) > 15:
                     errprint('Invalid config, the length of the process '
-                          'name must not exceed 15 characters\nExit')
+                             'name must not exceed 15 characters\nExit')
                     exit(1)
                 etc_dict[etc_name] = etc_command
 
@@ -1251,7 +1234,6 @@ except IndexError:
 except FileNotFoundError:
     errprint('FileNotFoundError', conf_err_mess)
     exit(1)
-
 
 
 # print(processname_re_list)
@@ -1650,14 +1632,12 @@ stdout.flush()
 
 sigterm_psi = sigterm_psi_avg10
 sigkill_psi = sigkill_psi_avg10
-psi_min_sleep_time_after_action = psi_avg10_sleep_time
 
 
 ##########################################################################
 
 if psi_support and not ignore_psi:
-    kill_psi_t0 = time() + psi_avg10_sleep_time
-    term_psi_t0 = time() + psi_avg10_sleep_time
+    psi_t0 = time() + psi_avg10_sleep_time
 
 avg_value = ''
 
@@ -1681,21 +1661,21 @@ while True:
         if print_mem_check_results:
             avg_value = 'PSI mem some avg10: {} | '.format(str(avg10).rjust(6))
 
-        if avg10 >= sigkill_psi and time() - kill_psi_t0 >= psi_min_sleep_time_after_action:
+        if avg10 >= sigkill_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
             mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
             find_victim_and_send_signal(SIGKILL)
-            kill_psi_t0 = time()
-        elif avg10 >= sigterm_psi and time() - term_psi_t0 >= psi_min_sleep_time_after_action:
+            psi_t0 = time()
+            continue
+
+        if avg10 >= sigterm_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
             mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
             find_victim_and_send_signal(SIGTERM)
-            term_psi_t0 = time()
-        else:
-            pass
+            psi_t0 = time()
+            continue
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
-
 
     # print(mem_available, swap_total, swap_free)
 
@@ -1741,9 +1721,9 @@ while True:
         if mem_report:
 
             speed = delta / 1024.0 / report_delta
-            speed_info = ' | ΔMem, M/s: {}'.format(
+            speed_info = ' | ΔMem: {} M/s'.format(
                 str(round(speed)).rjust(5)
-                )
+            )
 
             # Calculate 'swap-column' width
             swap_len = len(str(round(swap_total / 1024.0)))
@@ -1755,7 +1735,7 @@ while True:
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
                     speed_info
-                    )
+                )
                 )
 
             elif swap_total > 0 and mem_used_zram == 0:
@@ -1766,21 +1746,21 @@ while True:
                     human(swap_free, swap_len),
                     just_percent_swap(swap_free / (swap_total + 0.1)),
                     speed_info)
-                    )
+                )
 
             else:
                 print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
-                    'UsedZram: {} M, {} %{}'.format(
-                        avg_value,
-                        human(mem_available, mem_len),
-                        just_percent_mem(mem_available / mem_total),
-                        human(swap_free, swap_len),
-                        just_percent_swap(swap_free / (swap_total + 0.1)),
-                        human(mem_used_zram, mem_len),
-                        just_percent_mem(mem_used_zram / mem_total),
-                        speed_info
-                        )
-                    )
+                      'UsedZram: {} M, {} %{}'.format(
+                          avg_value,
+                          human(mem_available, mem_len),
+                          just_percent_mem(mem_available / mem_total),
+                          human(swap_free, swap_len),
+                          just_percent_swap(swap_free / (swap_total + 0.1)),
+                          human(mem_used_zram, mem_len),
+                          just_percent_mem(mem_used_zram / mem_total),
+                          speed_info
+                      )
+                      )
 
     # если swap_min_sigkill задан в абсолютной величине и Swap_total = 0
     if swap_total > swap_min_sigkill_kb:  # If swap_min_sigkill is absolute
@@ -1797,7 +1777,7 @@ while True:
 
     # это для печати меминфо. Все переработать нахрен.
 
-    # далее пошло ветвление
+    # далее пошла проверка превышения порогов
 
     # MEM SWAP KILL
     if mem_available <= mem_min_sigkill_kb and \
@@ -1820,11 +1800,11 @@ while True:
                 swap_sigkill_pc)
 
         find_victim_and_send_signal(SIGKILL)
-        kill_psi_t0 = time()
-        term_psi_t0 = time()
+        psi_t0 = time()
+        continue
 
     # ZRAM KILL
-    elif mem_used_zram >= zram_max_sigkill_kb:
+    if mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
         mem_info = '{}\nMemory statu' \
@@ -1838,11 +1818,11 @@ while True:
                 percent(zram_max_sigkill_kb / mem_total))
 
         find_victim_and_send_signal(SIGKILL)
-        kill_psi_t0 = time()
-        term_psi_t0 = time()
+        psi_t0 = time()
+        continue
 
     # MEM SWAP TERM
-    elif mem_available <= mem_min_sigterm_kb and \
+    if mem_available <= mem_min_sigterm_kb and \
             swap_free <= swap_min_sigterm_kb:
 
         time0 = time()
@@ -1865,11 +1845,11 @@ while True:
                 swap_sigterm_pc)
 
         find_victim_and_send_signal(SIGTERM)
-        kill_psi_t0 = time()
-        term_psi_t0 = time()
+        psi_t0 = time()
+        continue
 
     # ZRAM TERM
-    elif mem_used_zram >= zram_max_sigterm_kb:
+    if mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
         mem_info = '{}\nMemory status that r' \
@@ -1884,13 +1864,12 @@ while True:
 
         find_victim_and_send_signal(SIGTERM)
 
-        # сделать одно время для обоих уровней. 
-        kill_psi_t0 = time()
-        term_psi_t0 = time()
-        # -> psi_t0
+        # сделать одно время для обоих уровней.
+        psi_t0 = time()
+        continue
 
     # LOW MEMORY WARNINGS
-    elif gui_low_memory_warnings:
+    if gui_low_memory_warnings:
 
         if mem_available <= mem_min_warnings_kb and \
             swap_free <= swap_min_warnings_kb + 0.1 or \
@@ -1904,9 +1883,5 @@ while True:
                 print(time() - t0, 'send notify warning time')
                 warn_timer = 0
 
-        sleep_after_check_mem()
-
     # SLEEP BETWEEN MEM CHECKS
-    else:
-
-        sleep_after_check_mem()
+    sleep_after_check_mem()
