@@ -213,11 +213,12 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 
 - In progress
     - [x] Improve output:
-        - [x] Display `oom_score`, `oom_score_adj`, `PPID`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `realpath` and `cmdline` of the victim in corrective action reports
+        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
         - [x] Print statistics on corrective actions after each corrective action
         - [ ] Add memory report interval
         - [ ] Add delta memory info (the rate of change of available memory)
     - [x] Improve poll rate algorithm
+    - [x] Add `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Improve GUI warnings:
