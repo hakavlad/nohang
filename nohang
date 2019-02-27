@@ -1890,6 +1890,8 @@ while True:
                 kib_to_mib(swap_min_sigkill_kb),
                 swap_sigkill_pc)
 
+        print(mem_info)
+
         implement_corrective_action(SIGKILL)
         psi_t0 = time()
         continue
@@ -1906,6 +1908,8 @@ while True:
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigkill_kb),
                 percent(zram_max_sigkill_kb / mem_total))
+
+        print(mem_info)
 
         implement_corrective_action(SIGKILL)
         psi_t0 = time()
@@ -1951,6 +1955,8 @@ while True:
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
                 percent(zram_max_sigterm_kb / mem_total))
+
+        print(mem_info)
 
         implement_corrective_action(SIGTERM)
 
