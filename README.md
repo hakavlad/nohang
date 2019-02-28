@@ -214,9 +214,10 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 - In progress
     - [x] Improve output:
         - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
-        - [x] Print statistics on corrective actions after each corrective action
         - [x] Add memory report interval
         - [x] Add delta memory info (the rate of change of available memory)
+        - [x] Print statistics on corrective actions after each corrective action
+        - [x] Added ability to print a process table before each corrective action
     - [x] Improve poll rate algorithm
     - [x] Add `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
@@ -227,11 +228,11 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Handle all timeouts when notify-send starts
     - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Add `oom-sort`
-    - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
     - [x] Reduce memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+    - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
     - [x] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
