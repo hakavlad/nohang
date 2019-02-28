@@ -69,9 +69,8 @@ To use `PSI` (pressure stall information):
 
 ## Memory and CPU usage
 
-- VmRSS is about 10 MiB
-- CPU usage depends on the level of available memory and monitoring intensity
-![pic](https://i.imgur.com/OWjTrTa.png)
+- VmRSS is about 10 - 12 MiB instead of the settings, about 10 MiB by default.
+- CPU usage depends on the level of available memory and monitoring intensity.
 
 ## Download, install, uninstall
 

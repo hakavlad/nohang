@@ -898,9 +898,11 @@ def implement_corrective_action(signal):
 
     pid, victim_badness, name = find_victim()
 
+    victim_info = find_victim_info(pid, victim_badness, name)
+
     if victim_badness >= min_badness:
 
-        print(find_victim_info(pid, victim_badness, name))
+        print(victim_info)
 
         # kill the victim if it doesn't respond to SIGTERM
         if signal is SIGTERM:
@@ -940,7 +942,7 @@ def implement_corrective_action(signal):
             etc_info = '{}' \
                 '\nImplement a corrective action:\n  Run the command: {}' \
                 '\n  Exit status: {}; response time: {} ms'.format(
-                    victim_info, command.replace(
+                    victim_info, command.replace(       ###############################  victim_info
                         '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
                     round(response_time * 1000))
 
