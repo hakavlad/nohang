@@ -21,11 +21,11 @@ How can I prevent this in the future? Can't it at least keep a responsive core o
 
 — [serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625)
 
-Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/) (discussion with 480+ posts on r/linux).
+Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)
 
 ## Solution
 
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and very lightweight OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. Needs Linux 4.20+.
 - Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
 
@@ -50,8 +50,7 @@ The tools listed above may work at the same time on one computer.
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
-- [PSI](https://lwn.net/Articles/759658/) support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
-- Customizable intensity of monitoring
+- Initial [PSI](https://lwn.net/Articles/759658/) support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
 - Convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
@@ -237,7 +236,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
-    - [ ] Improve user input validation
     - [ ] Redesign of the GUI notifications
+    - [ ] Improve user input validation
+    - [ ] Improve documentation
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release
