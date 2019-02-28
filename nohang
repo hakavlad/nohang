@@ -684,7 +684,7 @@ def find_victim():
         print('===============================================================================')
 
     print(
-        '\nWorst process found in {} ms: PID: {}, Name: {}, badness: {}'.format(
+        '\nProcess with highest badness (found in {} ms):\n  PID: {}, Name: {}, badness: {}'.format(
             round((time() - ft1) * 1000),
             pid,
             victim_name,
@@ -696,6 +696,7 @@ def find_victim():
 
 
 def find_victim_info(pid, victim_badness, name):
+
 
     status0 = time()
 
@@ -838,11 +839,9 @@ def find_victim_info(pid, victim_badness, name):
             'The victim died in the search process: FileNotFoundError')
         return None
 
-    te1 = time()
+    # te1 = time()
     ancestry = pid_to_ancestry(pid, max_ancestry_depth)
     # print((time() - te1) * 1000, 'ms, ancestry')
-    # if max_ancestry_depth == 0:
-    #     ancestry = '\n  PPID:     {} ({})'.format(ppid, pname)
 
     if detailed_rss:
         detailed_rss_info = ' (' \
@@ -857,7 +856,7 @@ def find_victim_info(pid, victim_badness, name):
 
     victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
 
-    victim_info = '\nFound a process with highest badness:' \
+    victim_info = '\nVictim information (found in {} ms):' \
         '\n  Name:     {}' \
         '\n  State:    {}' \
         '\n  PID:      {}' \
@@ -872,6 +871,7 @@ def find_victim_info(pid, victim_badness, name):
         '\n  Realpath: {}' \
         '\n  Cmdline:  {}' \
         '\n  Lifetime: {}'.format(
+            round((time() - status0) * 1000),
             name,
             state,
             pid,
@@ -896,13 +896,15 @@ def implement_corrective_action(signal):
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
 
-    pid, victim_badness, name = find_victim()
+    print(mem_info)
 
-    victim_info = find_victim_info(pid, victim_badness, name)
+    pid, victim_badness, name = find_victim()
 
     if victim_badness >= min_badness:
 
-        print(victim_info)
+        if print_victim_info:
+            victim_info = find_victim_info(pid, victim_badness, name)
+            print(victim_info)
 
         # kill the victim if it doesn't respond to SIGTERM
         if signal is SIGTERM:
@@ -939,11 +941,10 @@ def implement_corrective_action(signal):
 
             response_time = time() - time0
 
-            etc_info = '{}' \
-                '\nImplement a corrective action:\n  Run the command: {}' \
-                '\n  Exit status: {}; response time: {} ms'.format(
-                    victim_info, command.replace(       ###############################  victim_info
-                        '$PID', pid).replace('$NAME', pid_to_name(pid)), exit_status,
+            etc_info = '\nImplement a corrective action:\n  Run the command: {}' \
+                '\n  Exit status: {}; total response time: {} ms'.format(
+                    command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)),
+                    exit_status,
                     round(response_time * 1000))
 
             print(etc_info)
@@ -969,7 +970,7 @@ def implement_corrective_action(signal):
 
                 os.kill(int(pid), signal)
                 response_time = time() - time0
-                send_result = 'OK; response time: {} ms'.format(
+                send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
 
                 preventing_oom_message = '\nImplement a corrective action:' \
@@ -1019,6 +1020,9 @@ def implement_corrective_action(signal):
         # update stat_dict
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
+
+
+    print('###############################################################################')
 
     sleep_after_send_signal(signal)
 
@@ -1313,6 +1317,15 @@ except FileNotFoundError:
 # extracting parameters from the dictionary
 # check for all necessary parameters
 # validation of all parameters
+
+
+
+print_victim_info = conf_parse_bool('print_victim_info')
+
+
+
+
+
 
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
@@ -1949,7 +1962,7 @@ while True:
             swap_free <= swap_min_sigkill_kb):
         time0 = time()
 
-        mem_info = '{}\nMemory status that requires corrective actions:' \
+        mem_info = '{}\nSIGKILL threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -1971,7 +1984,7 @@ while True:
     if mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '{}\nMemory status that requires corrective actions:' \
+        mem_info = '{}\nSIGKILL threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 HR,
@@ -1990,7 +2003,7 @@ while True:
 
         time0 = time()
 
-        mem_info = '{}\nMemory status that requires corrective actions:' \
+        mem_info = '{}\nSIGTERM threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -2006,8 +2019,6 @@ while True:
                 kib_to_mib(swap_min_sigterm_kb),
                 swap_sigterm_pc)
 
-        print(mem_info)
-
         implement_corrective_action(SIGTERM)
         psi_t0 = time()
         continue
@@ -2016,7 +2027,7 @@ while True:
     if mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '{}\nMemory status that requires corrective actions:' \
+        mem_info = '{}\nSIGTERM threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 HR,
