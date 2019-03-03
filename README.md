@@ -34,6 +34,10 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 The tools listed above may work at the same time on one computer.
 
+### See also
+
+- `memlockd` - daemon to lock files in memory with mlock. It is used to lock system programs and config files in memory so that if a DOS attack is experienced then the chance of the sys-admin regaining control of the system in a reasonable amount of time (and therefore having a reasonable chance of discovering the cause of the problem) is significantly increased. 
+
 ## Some features
 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.

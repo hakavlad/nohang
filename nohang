@@ -50,6 +50,13 @@ HR = ''
 victim_dict = dict()
 
 
+
+extra_process_table_info = None
+
+
+
+
+
 ##########################################################################
 
 # define functions
@@ -124,11 +131,11 @@ def update_stat_dict_and_print(key):
 
     if print_total_stat:
 
-        stats_msg = '{}\nWhat happened in the last {}:'.format(
+        stats_msg = '{}\nTotal stat (what happened in the last {}):'.format(
             HR, format_time(time() - start_time))
 
         for i in stat_dict:
-            stats_msg += '\n- {}: {}'.format(i, stat_dict[i])
+            stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
 
         print(stats_msg)
 
@@ -393,6 +400,18 @@ def pid_to_cmdline(pid):
     """
     with open('/proc/' + pid + '/cmdline') as f:
         return f.read().replace('\x00', ' ').rstrip()
+
+
+
+def pid_to_realpath(pid):
+    try:
+        return os.path.realpath('/proc/' + pid + '/exe')
+    except FileNotFoundError:
+        return ''
+
+
+
+
 
 
 def pid_to_uid(pid):
@@ -661,7 +680,9 @@ def find_victim():
                 str(badness).rjust(7),
                 pid_to_name(pid).ljust(15),
                 pid_to_uid(pid).rjust(10),
-                pid_to_cmdline(pid))
+                pid_to_cmdline(pid)
+                # pid_to_realpath(pid)
+                )
             )
 
         pid_badness_list.append((pid, badness))
@@ -974,7 +995,7 @@ def implement_corrective_action(signal):
                     round(response_time * 1000))
 
                 preventing_oom_message = '\nImplement a corrective action:' \
-                    '\n    Send {} to the victim; {}'.format(
+                    '\n  Send {} to the victim; {}'.format(
                         sig_dict[signal], send_result)
 
                 key = 'Send {} to {}'.format(
