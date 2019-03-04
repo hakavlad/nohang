@@ -29,14 +29,11 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. It needs Linux 4.20+.
 - Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
 
-![pic](https://i.imgur.com/Hq1JPMs.png)
-
-
 The tools listed above may work at the same time on one computer.
 
-### See also
+#### See also
 
-- `memlockd` - daemon to lock files in memory with mlock. It is used to lock system programs and config files in memory so that if a DOS attack is experienced then the chance of the sys-admin regaining control of the system in a reasonable amount of time (and therefore having a reasonable chance of discovering the cause of the problem) is significantly increased. 
+- `memlockd` is a daemon that locks files into memory. Then if a machine starts paging heavily the chance of being able to login successfully is significantly increased.
 
 ## Some features
 
