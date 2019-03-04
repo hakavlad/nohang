@@ -57,12 +57,21 @@ def re_pid_environ(pid):
                     if i.startswith('HOME=/var'):
                         return None
 
-            env = user.partition('USER=')[2], display, dbus
+
+            try:
+                # dirty hack; todo: fix alg
+                env = user.partition('USER=')[2], display, dbus
+            except UnboundLocalError:
+                print('notify helper: UnboundLocalError')
+                return None
+
             return env
 
     except FileNotFoundError:
+        print('notify helper: FileNotFoundError')
         return None
     except ProcessLookupError:
+        print('notify helper: ProcessLookupError')
         return None
 
 
