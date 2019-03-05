@@ -62,23 +62,16 @@ stat_dict = dict()
 # define functions
 
 
-
 def print_version():
     try:
         v = rline1('/etc/nohang/version')
     except FileNotFoundError:
         v = None
     if v is None:
-        print('nohang unknown version')
+        print('Nohang unknown version')
     else:
-        print(v)
+        print('Nohang ' + v)
     exit()
-
-
-
-
-
-
 
 
 def test():
@@ -110,7 +103,6 @@ def test():
     print(hr)
     print("pid_to_state('2')")
     print(pid_to_state('2'))
-
 
     '''
     print(hr)
@@ -1247,11 +1239,6 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
-
-
-
-
-
 if len(argv) == 1:
     if os.path.exists('./nohang.conf'):
         config = cd = os.getcwd() + '/nohang.conf'
@@ -1280,14 +1267,6 @@ else:
     else:
         errprint('Invalid option: {}'.format(argv[1]))
         exit(1)
-
-
-
-
-
-
-
-
 
 
 ##########################################################################
@@ -1363,7 +1342,6 @@ uid_re_list = []
 # execute_the_command
 # тут тоже список нужен, а не словарь
 etc_dict = dict()
-
 
 
 try:
@@ -1733,30 +1711,6 @@ if max_sleep_time < min_sleep_time:
 ##########################################################################
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Get KiB levels if it's possible.
 
 # получ кб. если не кб - то процент. Если процент - находим кб ниже на
@@ -1958,9 +1912,6 @@ if print_mem_check_results:
 
     # init mem report interval
     report0 = 0
-
-
-
 
 
 while True:
