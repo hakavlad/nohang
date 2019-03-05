@@ -7,6 +7,7 @@ from time import sleep, time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from signal import SIGKILL, SIGTERM
+import sys
 
 
 start_time = time()
@@ -50,16 +51,96 @@ HR = ''
 victim_dict = dict()
 
 
+# extra_process_table_info = None
 
-extra_process_table_info = None
-
-
-
+# will store corrective actions stat
+stat_dict = dict()
 
 
 ##########################################################################
 
 # define functions
+
+
+
+def print_version():
+    try:
+        v = rline1('/etc/nohang/version')
+    except FileNotFoundError:
+        v = None
+    if v is None:
+        print('nohang unknown version')
+    else:
+        print(v)
+    exit()
+
+
+
+
+
+
+
+
+def test():
+
+    print(sys.version)
+    print(sys.argv)
+
+    hr = '=================================='
+    print(hr)
+    print("uptime()")
+    print(uptime())
+
+    print(hr)
+    print("pid_to_starttime('self')")
+    print(pid_to_starttime('self'))
+
+    print(hr)
+    print("get_victim_id('self')")
+    print(get_victim_id('self'))
+
+    print(hr)
+    print("errprint('test')")
+    print(errprint('test'))
+
+    print(hr)
+    print("mlockall()")
+    print(mlockall())
+
+    print(hr)
+    print("pid_to_state('2')")
+    print(pid_to_state('2'))
+
+
+    '''
+    print(hr)
+    print("update_stat_dict_and_print('key')")
+    print(update_stat_dict_and_print('key'))
+
+    print(hr)
+    print("psi_mem_some_avg_total()")
+    print(psi_mem_some_avg_total())
+
+    print(hr)
+    print("psi_mem_some_avg10()")
+    print(psi_mem_some_avg10())
+
+    print(hr)
+    print("check_mem()")
+    print(check_mem())
+
+    print(hr)
+    print("os.uname()")
+    print(os.uname())
+
+    print(hr)
+    print("check_mem()")
+    print(check_mem())
+
+    '''
+
+    print(hr)
+    exit()
 
 
 def uptime():
@@ -146,11 +227,13 @@ def psi_mem_some_avg_total():
 
 
 def psi_mem_some_avg10():
-    return float(rline1(psi_path).split(' ')[1].split('=')[1])
+    if psi_support:
+        return float(rline1(psi_path).split(' ')[1].split('=')[1])
 
 
 def check_mem():
     """find mem_available"""
+    # исправить название фции
     return int(rline1('/proc/meminfo').split(':')[1][:-4])
 
 
@@ -402,16 +485,11 @@ def pid_to_cmdline(pid):
         return f.read().replace('\x00', ' ').rstrip()
 
 
-
 def pid_to_realpath(pid):
     try:
         return os.path.realpath('/proc/' + pid + '/exe')
     except FileNotFoundError:
         return ''
-
-
-
-
 
 
 def pid_to_uid(pid):
@@ -507,6 +585,8 @@ def send_notify_warn():
         round(mem_available / mem_total * 100),
         round(swap_free / (swap_total + 0.1) * 100)
     )
+
+    b = 'head ' + str(b.encode())
 
     t0 = time()
     os.system(b)
@@ -682,7 +762,7 @@ def find_victim():
                 pid_to_uid(pid).rjust(10),
                 pid_to_cmdline(pid)
                 # pid_to_realpath(pid)
-                )
+            )
             )
 
         pid_badness_list.append((pid, badness))
@@ -717,7 +797,6 @@ def find_victim():
 
 
 def find_victim_info(pid, victim_badness, name):
-
 
     status0 = time()
 
@@ -964,7 +1043,9 @@ def implement_corrective_action(signal):
 
             etc_info = '\nImplement a corrective action:\n  Run the command: {}' \
                 '\n  Exit status: {}; total response time: {} ms'.format(
-                    command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)),
+                    command.replace(
+                        '$PID', pid).replace(
+                        '$NAME', pid_to_name(pid)),
                     exit_status,
                     round(response_time * 1000))
 
@@ -1041,7 +1122,6 @@ def implement_corrective_action(signal):
         # update stat_dict
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
-
 
     print('###############################################################################')
 
@@ -1167,6 +1247,11 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
+
+
+
+
+
 if len(argv) == 1:
     if os.path.exists('./nohang.conf'):
         config = cd = os.getcwd() + '/nohang.conf'
@@ -1175,8 +1260,12 @@ if len(argv) == 1:
 
 elif len(argv) == 2:
     if argv[1] == '--help' or argv[1] == '-h':
-        errprint(help_mess)
-        exit(1)
+        print(help_mess)
+        exit()
+    elif argv[1] == '--version' or argv[1] == '-v':
+        print_version()
+    elif argv[1] == '--test' or argv[1] == '-t':
+        test()
     else:
         errprint('Invalid CLI input')
         exit(1)
@@ -1191,6 +1280,14 @@ else:
     else:
         errprint('Invalid option: {}'.format(argv[1]))
         exit(1)
+
+
+
+
+
+
+
+
 
 
 ##########################################################################
@@ -1267,8 +1364,7 @@ uid_re_list = []
 # тут тоже список нужен, а не словарь
 etc_dict = dict()
 
-# will store corrective actions stat
-stat_dict = dict()
+
 
 try:
     with open(config) as f:
@@ -1340,14 +1436,7 @@ except FileNotFoundError:
 # validation of all parameters
 
 
-
 print_victim_info = conf_parse_bool('print_victim_info')
-
-
-
-
-
-
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
@@ -1355,15 +1444,11 @@ gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
 execute_the_command = conf_parse_bool('execute_the_command')
-
-
 ignore_psi = conf_parse_bool('ignore_psi')
-
 regex_matching = conf_parse_bool('regex_matching')
-
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
-
 re_match_uid = conf_parse_bool('re_match_uid')
+
 
 if regex_matching or re_match_cmdline or re_match_uid:
     from re import search
@@ -1648,6 +1733,30 @@ if max_sleep_time < min_sleep_time:
 ##########################################################################
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Get KiB levels if it's possible.
 
 # получ кб. если не кб - то процент. Если процент - находим кб ниже на
@@ -1851,6 +1960,9 @@ if print_mem_check_results:
     report0 = 0
 
 
+
+
+
 while True:
 
     if psi_support and not ignore_psi:
@@ -1944,7 +2056,8 @@ while True:
                     just_percent_mem(mem_available / mem_total),
                     human(swap_free, swap_len),
                     just_percent_swap(swap_free / (swap_total + 0.1)),
-                    speed_info)
+                    speed_info
+                )
                 )
 
             else:

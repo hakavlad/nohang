@@ -4,14 +4,14 @@
 #   ./nohang_notify_helper "title" "body"
 
 from sys import argv, stdout
-from os import listdir
+from os import listdir, path
 from subprocess import Popen, TimeoutExpired
 
 if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
     print('Usage: ./nohang_notify_helper "title" "body"')
     exit(1)
 
-wait_time = 10
+wait_time = 15
 
 display_env = 'DISPLAY='
 dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
@@ -57,21 +57,19 @@ def re_pid_environ(pid):
                     if i.startswith('HOME=/var'):
                         return None
 
-
             try:
-                # dirty hack; todo: fix alg
                 env = user.partition('USER=')[2], display, dbus
             except UnboundLocalError:
-                print('notify helper: UnboundLocalError')
+                # print('notify helper: UnboundLocalError')
                 return None
 
             return env
 
     except FileNotFoundError:
-        print('notify helper: FileNotFoundError')
+        # print('notify helper: FileNotFoundError')
         return None
     except ProcessLookupError:
-        print('notify helper: ProcessLookupError')
+        # print('notify helper: ProcessLookupError')
         return None
 
 
@@ -80,10 +78,11 @@ def root_notify_env():
     unsorted_envs_list = []
     # iterates over processes, find processes with suitable env
     for pid in listdir('/proc'):
-        if pid[0].isdecimal() is False:
-            continue
-        one_env = re_pid_environ(pid)
-        unsorted_envs_list.append(one_env)
+
+        if path.exists('/proc/' + pid + '/exe') is True:
+            one_env = re_pid_environ(pid)
+            unsorted_envs_list.append(one_env)
+
     env = set(unsorted_envs_list)
     env.discard(None)
 
@@ -134,6 +133,8 @@ if list_len > 0:
                 proc.kill()
                 print('TimeoutExpired: notify user:' + username)
 else:
-    print('Not send GUI notification: [', argv[1], argv[2], ']. Nobody logged-in with GUI. Nothing to do.')
-
-stdout.flush()
+    print(
+        'Not send GUI notification: [',
+        argv[1],
+        argv[2],
+        ']. Nobody logged-in with GUI. Nothing to do.')

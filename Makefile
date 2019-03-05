@@ -1,10 +1,10 @@
-#
+VERSION ?= $(shell git describe --tags --long --dirty > /etc/nohang/version 2> /dev/null)
 PREFIX = /
 
 all:
 	@ echo "Nothing to compile. Use: make install, make uninstall, make systemd"
 
-install:
+install:	
 	install -d $(DESTDIR)/$(PREFIX)/usr/sbin
 	install -m0755 ./nohang $(DESTDIR)/$(PREFIX)/usr/sbin/nohang
 	install -m0755 ./nohang_notify_helper $(DESTDIR)/$(PREFIX)/usr/sbin/nohang_notify_helper
@@ -14,8 +14,8 @@ install:
 	install -m0755 ./oom-trigger $(DESTDIR)/$(PREFIX)/usr/bin/oom-trigger
 	
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
-	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang
-	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.backup
+	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/$(VERSION)
+	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
 	
 	install -d $(DESTDIR)/$(PREFIX)/usr/share/man/man1
 	gzip -k -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
