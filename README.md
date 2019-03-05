@@ -228,6 +228,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Handle all timeouts when notify-send starts
     - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Add `oom-sort`
+    - [x] Add `--version` and `--test` flags
     - [x] Remove self-defense options from config, use systemd unit scheduling instead
     - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
