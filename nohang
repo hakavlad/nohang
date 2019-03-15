@@ -153,8 +153,9 @@ def pid_to_starttime(pid):
 
 
 def get_victim_id(pid):
-    return pid + '-' + rline1(
-        '/proc/' + pid + '/stat').rpartition(')')[2].split(' ')[20]
+    """victim_id is starttime + pid"""
+    return rline1('/proc/' + pid + '/stat').rpartition(
+        ')')[2].split(' ')[20] + pid
 
 
 def errprint(*text):
