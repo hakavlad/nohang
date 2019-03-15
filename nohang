@@ -211,15 +211,46 @@ def update_stat_dict_and_print(key):
 
         print(stats_msg)
 
-
+'''
 def psi_mem_some_avg_total():
     if psi_support:
         return float(rline1(psi_path).rpartition('=')[2])
+'''
 
-
+'''
 def psi_mem_some_avg10():
     if psi_support:
         return float(rline1(psi_path).split(' ')[1].split('=')[1])
+'''
+
+
+
+
+# psi_metrics = 'some_avg10'
+
+def find_psi_metrics_value(psi_path, psi_metrics):
+
+    if psi_support:
+
+        if psi_metrics == 'some_avg10':
+            return float(rline1(psi_path).split(' ')[1].split('=')[1])
+        if psi_metrics == 'some_avg60':
+            return float(rline1(psi_path).split(' ')[2].split('=')[1])
+        if psi_metrics == 'some_avg300':
+            return float(rline1(psi_path).split(' ')[3].split('=')[1])
+
+        if psi_metrics == 'full_avg10':
+            with open(psi_path) as f:
+                psi_list = f.readlines()
+                return float(psi_list[1].split(' ')[1].split('=')[1])
+        if psi_metrics == 'full_avg60':
+            with open(psi_path) as f:
+                psi_list = f.readlines()
+                return float(psi_list[1].split(' ')[2].split('=')[1])
+        if psi_metrics == 'full_avg300':
+            with open(psi_path) as f:
+                psi_list = f.readlines()
+                return float(psi_list[1].split(' ')[3].split('=')[1])
 
 
 def check_mem():
@@ -352,6 +383,15 @@ def rline1(path):
         with open(path, 'rb') as f:
             return f.read(999).decode(
                 'utf-8', 'ignore').split('\n')[0]
+
+
+
+
+
+
+
+
+
 
 
 def kib_to_mib(num):
@@ -1662,7 +1702,11 @@ else:
     exit(1)
 
 
-
+if 'psi_metrics' in config_dict:
+    psi_metrics = config_dict['psi_metrics']
+else:
+    errprint('psi_metrics is not in config\nExit')
+    exit(1)
 
 
 
@@ -1939,21 +1983,22 @@ while True:
 
     if psi_support and not ignore_psi:
 
-        avg10 = psi_mem_some_avg10()
+        # avg10 = psi_mem_some_avg10()
+        avg10 = find_psi_metrics_value(psi_path, psi_metrics)
 
         if print_mem_check_results:
-            avg_value = 'PSI mem some avg10: {} | '.format(str(avg10).rjust(6))
+            avg_value = 'PSI value: {} | '.format(str(avg10).rjust(6))
 
         if avg10 >= sigkill_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'avg ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
+            mem_info = 'PSI value ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
             implement_corrective_action(SIGKILL)
             psi_t0 = time()
             continue
 
         if avg10 >= sigterm_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'avg ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
+            mem_info = 'PSI value ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
             implement_corrective_action(SIGTERM)
             psi_t0 = time()
             continue
