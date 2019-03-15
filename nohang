@@ -42,8 +42,6 @@ wait_time = 10
 
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
-psi_path = '/proc/pressure/memory'
-
 psi_support = os.path.exists(psi_path)
 
 HR = ''
@@ -63,6 +61,7 @@ stat_dict = dict()
 
 
 def print_version():
+    # сначала пытаться получ версию прямо из гита  - вариант для неустановленых
     try:
         v = rline1('/etc/nohang/version')
     except FileNotFoundError:
@@ -146,7 +145,7 @@ def pid_to_starttime(pid):
             2].split(' ')[20]
 
     except UnicodeDecodeError:
-        print('LOL')
+        # print('LOL')
         with open('/proc/' + pid + '/stat', 'rb') as f:
             starttime = f.read().decode('utf-8', 'ignore').rpartition(
                 ')')[2].split(' ')[20]
@@ -1655,6 +1654,19 @@ else:
     exit(1)
 
 
+
+if 'psi_path' in config_dict:
+    psi_path = config_dict['psi_path']
+else:
+    errprint('psi_path is not in config\nExit')
+    exit(1)
+
+
+
+
+
+
+
 print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
 
@@ -1861,9 +1873,9 @@ if gui_notifications or gui_low_memory_warnings:
                        SIGTERM: 'Terminating'}
 
 
-rate_mem = rate_mem * 1048576
-rate_swap = rate_swap * 1048576
-rate_zram = rate_zram * 1048576
+rate_mem = rate_mem * 1024
+rate_swap = rate_swap * 1024
+rate_zram = rate_zram * 1024
 
 
 # print(rate_mem, rate_swap, rate_zram)
@@ -1983,7 +1995,7 @@ while True:
         if mem_report:
 
             speed = delta / 1024.0 / report_delta
-            speed_info = ' | ΔMem: {} M/s'.format(
+            speed_info = ' | dMem: {} M/s'.format(
                 str(round(speed)).rjust(5)
             )
 
