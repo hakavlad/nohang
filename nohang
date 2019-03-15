@@ -42,7 +42,6 @@ wait_time = 10
 
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
-psi_support = os.path.exists(psi_path)
 
 HR = ''
 
@@ -1721,6 +1720,15 @@ if max_sleep_time < min_sleep_time:
 
 
 ##########################################################################
+
+
+psi_support = os.path.exists(psi_path)
+
+
+
+##########################################################################
+
+
 
 
 # Get KiB levels if it's possible.
