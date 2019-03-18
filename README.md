@@ -26,7 +26,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 ## Solution
 
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
-- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. It needs Linux 4.20+.
+- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
 
 The tools listed above may work at the same time on one computer.
