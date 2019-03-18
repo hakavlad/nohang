@@ -210,7 +210,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Add delta memory info (the rate of change of available memory)
         - [x] Print statistics on corrective actions after each corrective action
         - [x] Added ability to print a process table before each corrective action
-    -     [x] Added the ability to log into a separate file
+        - [x] Added the ability to log into a separate file
     - [x] Improve poll rate algorithm
     - [x] Add `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
