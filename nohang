@@ -9,6 +9,36 @@ from sys import stdout, stderr, argv, exit
 from signal import SIGKILL, SIGTERM
 import sys
 
+import logging
+from logging import basicConfig
+from logging import info
+
+
+logfile = '/var/log/nohang/nohang.log'
+
+
+basicConfig(filename=logfile,
+            level=logging.INFO,
+            format="%(asctime)s: %(message)s")
+
+
+separate_log = True
+
+
+
+def log(msg):
+    print(msg)
+    if separate_log:
+        info(msg)
+
+
+
+
+
+
+
+
+
 
 start_time = time()
 
@@ -43,7 +73,6 @@ wait_time = 10
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 
-HR = ''
 
 victim_dict = dict()
 
@@ -203,8 +232,8 @@ def update_stat_dict_and_print(key):
 
     if print_total_stat:
 
-        stats_msg = '{}\nTotal stat (what happened in the last {}):'.format(
-            HR, format_time(time() - start_time))
+        stats_msg = 'Total stat (what happened in the last {}):'.format(
+            format_time(time() - start_time))
 
         for i in stat_dict:
             stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
@@ -775,9 +804,9 @@ def find_victim():
     pid_badness_list = []
 
     if print_proc_table:
-        print('===============================================================================')
-        print('    PID  badness  Name                  eUID  cmdline')
-        print('-------  -------  --------------- ----------  ---------------------------------')
+        log('===============================================================================')
+        log('    PID  badness  Name                  eUID  cmdline')
+        log('-------  -------  --------------- ----------  ---------------------------------')
 
     for pid in pid_list:
 
@@ -786,7 +815,7 @@ def find_victim():
             continue
 
         if print_proc_table:
-            print('{}  {}  {} {}  {}'.format(
+            log('{}  {}  {} {}  {}'.format(
                 pid.rjust(7),
                 str(badness).rjust(7),
                 pid_to_name(pid).ljust(15),
@@ -813,10 +842,10 @@ def find_victim():
     victim_name = pid_to_name(pid)
 
     if print_proc_table:
-        print('===============================================================================')
+        log('===============================================================================')
 
-    print(
-        '\nProcess with highest badness (found in {} ms):\n  PID: {}, Name: {}, badness: {}'.format(
+    log(
+        'Process with highest badness (found in {} ms):\n  PID: {}, Name: {}, badness: {}'.format(
             round((time() - ft1) * 1000),
             pid,
             victim_name,
@@ -987,7 +1016,7 @@ def find_victim_info(pid, victim_badness, name):
 
     victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
 
-    victim_info = '\nVictim information (found in {} ms):' \
+    victim_info = 'Victim information (found in {} ms):' \
         '\n  Name:     {}' \
         '\n  State:    {}' \
         '\n  PID:      {}' \
@@ -1027,7 +1056,7 @@ def implement_corrective_action(signal):
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
 
-    print(mem_info)
+    log(mem_info)
 
     pid, victim_badness, name = find_victim()
 
@@ -1035,7 +1064,7 @@ def implement_corrective_action(signal):
 
         if print_victim_info:
             victim_info = find_victim_info(pid, victim_badness, name)
-            print(victim_info)
+            log(victim_info)
 
         # kill the victim if it doesn't respond to SIGTERM
         if signal is SIGTERM:
@@ -1059,7 +1088,7 @@ def implement_corrective_action(signal):
             m = check_mem_and_swap()
             ma = round(int(m[0]) / 1024.0)
             sf = round(int(m[2]) / 1024.0)
-            print('\nMemory status before implementing a corrective action:\n  MemAvailable'
+            log('Memory status before implementing a corrective action:\n  MemAvailable'
                   ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
             exit_status = os.system(etc_dict[name].replace(
@@ -1072,7 +1101,7 @@ def implement_corrective_action(signal):
 
             response_time = time() - time0
 
-            etc_info = '\nImplement a corrective action:\n  Run the command: {}' \
+            etc_info = 'Implement a corrective action:\n  Run the command: {}' \
                 '\n  Exit status: {}; total response time: {} ms'.format(
                     command.replace(
                         '$PID', pid).replace(
@@ -1098,7 +1127,7 @@ def implement_corrective_action(signal):
                 m = check_mem_and_swap()
                 ma = round(int(m[0]) / 1024.0)
                 sf = round(int(m[2]) / 1024.0)
-                print('\nMemory status before implementing a corrective action:\n  MemAvailable'
+                log('Memory status before implementing a corrective action:\n  MemAvailable'
                       ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
                 os.kill(int(pid), signal)
@@ -1106,7 +1135,7 @@ def implement_corrective_action(signal):
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
 
-                preventing_oom_message = '\nImplement a corrective action:' \
+                preventing_oom_message = 'Implement a corrective action:' \
                     '\n  Send {} to the victim; {}'.format(
                         sig_dict[signal], send_result)
 
@@ -1135,7 +1164,7 @@ def implement_corrective_action(signal):
                     round(response_time * 1000))
                 key = 'ProcessLookupError (the victim died in the search process): '
 
-            print(preventing_oom_message)
+            log(preventing_oom_message)
 
             update_stat_dict_and_print(key)
 
@@ -1154,7 +1183,6 @@ def implement_corrective_action(signal):
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-    print('###############################################################################')
 
     sleep_after_send_signal(signal)
 
@@ -1987,18 +2015,18 @@ while True:
         avg10 = find_psi_metrics_value(psi_path, psi_metrics)
 
         if print_mem_check_results:
-            avg_value = 'PSI value: {} | '.format(str(avg10).rjust(6))
+            avg_value = 'PSI avg value: {} | '.format(str(avg10).rjust(6))
 
         if avg10 >= sigkill_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'PSI value ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
+            mem_info = 'PSI avg value ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
             implement_corrective_action(SIGKILL)
             psi_t0 = time()
             continue
 
         if avg10 >= sigterm_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'PSI value ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
+            mem_info = 'PSI avg value ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
             implement_corrective_action(SIGTERM)
             psi_t0 = time()
             continue
@@ -2058,7 +2086,7 @@ while True:
 
             # Output avialable mem sizes
             if swap_total == 0 and mem_used_zram == 0:
-                print('{}MemAvail: {} M, {} %{}'.format(
+                log('{}MemAvail: {} M, {} %{}'.format(
                     avg_value,
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
@@ -2113,11 +2141,10 @@ while True:
             swap_free <= swap_min_sigkill_kb):
         time0 = time()
 
-        mem_info = '{}\nSIGKILL threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Hard threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
-                HR,
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(mem_min_sigkill_kb),
@@ -2135,10 +2162,9 @@ while True:
     if mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = '{}\nSIGKILL threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Hard threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
-                HR,
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigkill_kb),
@@ -2154,11 +2180,10 @@ while True:
 
         time0 = time()
 
-        mem_info = '{}\nSIGTERM threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Soft threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
-                HR,
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(mem_min_sigterm_kb),
@@ -2178,10 +2203,9 @@ while True:
     if mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = '{}\nSIGTERM threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Soft threshold exeeded\nMemory status that requires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
-                HR,
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),

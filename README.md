@@ -51,8 +51,8 @@ The tools listed above may work at the same time on one computer.
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
-- Initial [PSI](https://lwn.net/Articles/759658/) support (since Linux 4.20+, using `/proc/pressure/memory` and `some avg10` as a trigger)
-- Convenient configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
+- Initial [PSI](https://lwn.net/Articles/759658/) support
+- Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
 
@@ -186,15 +186,7 @@ See also `man journalctl`.
 
 ## Known problems
 
-- Awful documentation (the problem will be solved gradually in the next releases)
-- It is written in Python and is actually a prototype (although the algorithm may be good)
-- No tests (by itself this does not make the algorithm bad)
-
-## Todo
-
-- Make installer for non-systemd users
-- Deb/rpm packaging
-- Rewrite all code in Golang with tests and good documentation.
+- Awful documentation.
 
 ## Nohang don't help you
 
@@ -218,6 +210,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Add delta memory info (the rate of change of available memory)
         - [x] Print statistics on corrective actions after each corrective action
         - [x] Added ability to print a process table before each corrective action
+    -     [x] Added the ability to log into a separate file
     - [x] Improve poll rate algorithm
     - [x] Add `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
