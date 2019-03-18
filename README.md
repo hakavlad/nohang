@@ -227,7 +227,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
     - [x] Reduce memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
-    - [x] Add initial support for `PSI` (using `some avg10` in `/proc/pressure/memory`, need Linux 4.20+)
+    - [x] Add initial support for `PSI`
     - [x] Improve modifing badness via matching with regular expressions: 
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
