@@ -17,6 +17,8 @@ install:
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/$(VERSION)
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
 	
+	install -d $(DESTDIR)/$(PREFIX)/var/log/nohang
+	
 	install -d $(DESTDIR)/$(PREFIX)/usr/share/man/man1
 	gzip -k -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
 	gzip -k -c oom-sort.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-sort.1.gz
@@ -37,6 +39,7 @@ uninstall:
 	rm -fv $(PREFIX)/usr/share/man/man1/oom-trigger.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service
 	rm -fvr $(PREFIX)/etc/nohang/
+	rm -fvr $(PREFIX)/var/log/nohang/
 	
 systemd:
 	systemctl daemon-reload

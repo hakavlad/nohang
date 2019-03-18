@@ -14,6 +14,9 @@ from logging import basicConfig
 from logging import info
 
 
+start_time = time()
+
+
 logfile = '/var/log/nohang/nohang.log'
 
 
@@ -22,8 +25,7 @@ basicConfig(filename=logfile,
             format="%(asctime)s: %(message)s")
 
 
-separate_log = True
-
+separate_log = False
 
 
 def log(msg):
@@ -31,16 +33,6 @@ def log(msg):
     if separate_log:
         info(msg)
 
-
-
-
-
-
-
-
-
-
-start_time = time()
 
 
 help_mess = """usage: nohang [-h] [-c CONFIG]
