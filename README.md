@@ -51,7 +51,8 @@ The tools listed above may work at the same time on one computer.
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
-- Initial [PSI](https://lwn.net/Articles/759658/) support
+- Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support
+
 - Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
@@ -65,7 +66,7 @@ To show GUI notifications:
 - `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
 - `sudo` if nohang started with UID=0
 
-To use `PSI` (pressure stall information):
+To use `PSI`:
 - `Linux` 4.20+
 
 ## Memory and CPU usage
