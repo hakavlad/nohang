@@ -52,7 +52,6 @@ The tools listed above may work at the same time on one computer.
     - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
 - Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support
-
 - Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
