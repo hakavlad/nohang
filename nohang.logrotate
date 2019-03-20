@@ -1,0 +1,9 @@
+/var/log/nohang/*.log {
+  missingok
+  copytruncate
+  notifempty
+  size 1M
+  rotate 5
+  compress
+  delaycompress
+}

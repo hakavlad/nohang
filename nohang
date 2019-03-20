@@ -1740,13 +1740,6 @@ else:
     exit(1)
 
 
-if 'log_dir' in config_dict:
-    log_dir = config_dict['log_dir']
-else:
-    errprint('log_dir is not in config\nExit')
-    exit(1)
-
-
 print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
 
@@ -1757,6 +1750,8 @@ if separate_log:
     import logging
     from logging import basicConfig
     from logging import info
+
+    log_dir = '/var/log/nohang'
 
     try:
         os.mkdir(log_dir)
