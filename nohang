@@ -5,9 +5,8 @@ import os
 from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
-from sys import stdout, stderr, argv, exit
+from sys import stdout, stderr, argv, exit, version
 from signal import SIGKILL, SIGTERM
-import sys
 
 
 start_time = time()
@@ -46,10 +45,13 @@ notify_helper_path = '/usr/sbin/nohang_notify_helper'
 victim_dict = dict()
 
 
-# extra_process_table_info = None
+# extra_process_table_info = None/cmdline/realpath #  (todo)
 
 # will store corrective actions stat
 stat_dict = dict()
+
+
+separate_log = False  # will be overwritten after parse config
 
 
 ##########################################################################
@@ -85,8 +87,8 @@ def test():
     """
     """
 
-    print(sys.version)
-    print(sys.argv)
+    print(version)
+    print(argv)
 
     hr = '=================================='
     print(hr)
@@ -1995,12 +1997,10 @@ if gui_notifications or gui_low_memory_warnings:
                        SIGTERM: 'Terminating'}
 
 
+# convert rates from MiB/s to KiB/s
 rate_mem = rate_mem * 1024
 rate_swap = rate_swap * 1024
 rate_zram = rate_zram * 1024
-
-
-# print(rate_mem, rate_swap, rate_zram)
 
 
 warn_time_now = 0
@@ -2018,14 +2018,13 @@ mlockall()
 
 
 if print_proc_table:
-    print()
     find_victim()
-    print()
 
 log('Monitoring started!')
 
 stdout.flush()
 
+# тупое присвоение. нид фикс
 sigterm_psi = sigterm_psi_avg10
 sigkill_psi = sigkill_psi_avg10
 
@@ -2053,6 +2052,7 @@ while True:
     if psi_support and not ignore_psi:
 
         # avg10 = psi_mem_some_avg10()
+        # psi_avg_value!
         avg10 = find_psi_metrics_value(psi_path, psi_metrics)
 
         if print_mem_check_results:
@@ -2138,7 +2138,7 @@ while True:
                 )
 
             elif swap_total > 0 and mem_used_zram == 0:
-                print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %{}'.format(
+                log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %{}'.format(
                     avg_value,
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
@@ -2149,7 +2149,7 @@ while True:
                 )
 
             else:
-                print('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
+                log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
                       'UsedZram: {} M, {} %{}'.format(
                           avg_value,
                           human(mem_available, mem_len),
@@ -2275,7 +2275,7 @@ while True:
             if warn_timer > min_time_between_warnings:
                 t0 = time()
                 send_notify_warn()
-                print(time() - t0, 'send notify warning time')
+                log(time() - t0, 'send notify warning time')
                 warn_timer = 0
 
     # SLEEP BETWEEN MEM CHECKS

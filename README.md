@@ -142,7 +142,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 8. Verbosity
 9. Misc
 
-Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
+Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
 
 ## oom-sort
