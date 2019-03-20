@@ -12,10 +12,14 @@ from signal import SIGKILL, SIGTERM
 start_time = time()
 
 
-help_mess = """usage: nohang [-h] [-c CONFIG]
+help_mess = """usage: nohang [-h] [-v] [-t] [--ppt] [-c CONFIG]
 
 optional arguments:
   -h, --help            show this help message and exit
+  -v, --version         print version
+  -t, --test            print some tests
+  --ppt, --print-proc-table
+                        print table of processes with their badness values
   -c CONFIG, --config CONFIG
                         path to the config file, default values:
                         ./nohang.conf, /etc/nohang/nohang.conf"""
@@ -57,6 +61,18 @@ separate_log = False  # will be overwritten after parse config
 ##########################################################################
 
 # define functions
+
+
+
+def func_print_proc_table():
+    print_proc_table = True
+    find_victim(print_proc_table)
+    exit()
+
+
+
+
+
 
 
 def log(*msg):
@@ -766,7 +782,7 @@ def pid_to_badness(pid):
         return None, None
 
 
-def find_victim():
+def find_victim(_print_proc_table):
     """
     Find the process with highest badness and its badness adjustment
     Return pid and badness
@@ -788,7 +804,7 @@ def find_victim():
 
     pid_badness_list = []
 
-    if print_proc_table:
+    if _print_proc_table:
         log('=============================================================='
             '=================')
         log('    PID  badness  Name                  eUID  cmdline')
@@ -801,7 +817,7 @@ def find_victim():
         if badness is None:
             continue
 
-        if print_proc_table:
+        if _print_proc_table:
             log('{}  {}  {} {}  {}'.format(
                 pid.rjust(7),
                 str(badness).rjust(7),
@@ -828,7 +844,7 @@ def find_victim():
     victim_badness = pid_tuple_list[1]
     victim_name = pid_to_name(pid)
 
-    if print_proc_table:
+    if _print_proc_table:
         log('============================================================'
             '===================')
 
@@ -1049,7 +1065,7 @@ def implement_corrective_action(signal):
 
     log(mem_info)
 
-    pid, victim_badness, name = find_victim()
+    pid, victim_badness, name = find_victim(print_proc_table)
 
     if victim_badness >= min_badness:
 
@@ -1305,12 +1321,15 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
+print_proc_table_flag = False
+
+# print(len(argv), argv)
+
 if len(argv) == 1:
     if os.path.exists('./nohang.conf'):
         config = cd = os.getcwd() + '/nohang.conf'
     else:
         config = '/etc/nohang/nohang.conf'
-
 elif len(argv) == 2:
     if argv[1] == '--help' or argv[1] == '-h':
         print(help_mess)
@@ -1319,20 +1338,24 @@ elif len(argv) == 2:
         print_version()
     elif argv[1] == '--test' or argv[1] == '-t':
         test()
+    elif argv[1] == '--print-proc-table' or argv[1] == '--ppt':
+        print_proc_table_flag = True
+        if os.path.exists('./nohang.conf'):
+            config = cd = os.getcwd() + '/nohang.conf'
+        else:
+            config = '/etc/nohang/nohang.conf'
     else:
-        errprint('Invalid CLI input')
+        errprint('Unknown option: {}'.format(argv[1]))
         exit(1)
-
-elif len(argv) > 3:
-    errprint('Invalid CLI input')
-    exit(1)
-
-else:
+elif len(argv) == 3:
     if argv[1] == '--config' or argv[1] == '-c':
         config = argv[2]
     else:
-        errprint('Invalid option: {}'.format(argv[1]))
+        errprint('Unknown option: {}'.format(argv[1]))
         exit(1)
+else:
+    errprint('Invalid CLI input: too many options')
+    exit(1)
 
 
 ##########################################################################
@@ -1832,6 +1855,21 @@ if max_sleep_time < min_sleep_time:
     exit(1)
 
 
+
+
+
+
+
+
+
+
+
+if print_proc_table_flag:
+    func_print_proc_table()
+
+
+
+
 ##########################################################################
 
 
@@ -1911,6 +1949,11 @@ else:
 
 
 ##########################################################################
+
+
+
+
+
 
 if print_config:
 

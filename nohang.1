@@ -1,16 +1,94 @@
 .TH nohang 1
+
 .SH NAME
-nohang \- no hang daemon
+
+nohang \- A highly configurable OOM preventer
 
 .SH SYNOPSIS
 .B nohang
 .RB [ OPTION ]...
 
 .SH DESCRIPTION
+
 Nohang is a highly configurable daemon for Linux which is able to correctly prevent out of memory (OOM) and keep system responsiveness in low memory conditions.
 
+.SH REQUIREMENTS
+
+.B For basic usage:
+
+    - Linux 3.14+ (since MemAvailable appeared in /proc/meminfo)
+
+    - Python 3.3+ (not tested with previous)
+
+.B To show GUI notifications:
+
+    - Notification server (most of desktop environments use their own implementations)
+
+    - libnotify (Fedora, Arch Linux) or libnotify-bin (Debian GNU/Linux, Ubuntu)
+
+    - sudo if nohang started with UID=0
+
+.B To use PSI:
+
+    - Linux 4.20+
+
+.SH OPTIONS
+
+  -h, --help            show this help message and exit
+
+  -v, --version         print version
+
+  -t, --test            print some tests
+
+  --ppt, --print-proc-table
+                        print table of processes with their badness values
+
+  -c CONFIG, --config CONFIG
+                        path to the config file, default values:
+                        ./nohang.conf, /etc/nohang/nohang.conf
+
 .SH HOW TO CONFIGURE
-Just edit the config /etc/nohang/nohang.conf and restart the daemon.
+
+The program can be configured by editing the config file.
+
+.B The configuration includes the following sections:
+
+    - Memory levels to respond to as an OOM threat
+
+    - Response on PSI memory metrics
+
+    - The frequency of checking the level of available memory (and CPU usage)
+
+    - The prevention of killing innocent victims
+
+    - Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
+
+    - The execution of a specific command or sending any signal instead of sending the SIGTERM signal
+
+    - GUI notifications:
+        - notifications of corrective actions taken
+        - low memory warnings
+
+    - Verbosity
+
+    - Misc
+
+Just read the description of the parameters and edit the values.
+
+Please restart nohang to apply the changes.
+
+Default path to the config after installing is /etc/nohang/nohang.conf.
+
+.SH LOGGING
+
+To view the latest entries in the log (for systemd users):
+
+$ sudo journalctl -eu nohang
+
+See also man journalctl.
+
+You can also enable separate_log in the config to logging in /var/log/nohang/nohang.log.
 
 .SH SEE ALSO
+
 https://github.com/hakavlad/nohang
