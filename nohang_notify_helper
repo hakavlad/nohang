@@ -3,15 +3,10 @@
 # Usage:
 #   ./nohang_notify_helper "title" "body"
 
-from sys import argv, stdout
 from os import listdir, path
 from subprocess import Popen, TimeoutExpired
 
-if len(argv) < 2 or argv[1] == "-h" or argv[1] == "--help":
-    print('Usage: ./nohang_notify_helper "title" "body"')
-    exit(1)
-
-wait_time = 15
+wait_time = 10
 
 display_env = 'DISPLAY='
 dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
@@ -23,6 +18,15 @@ def rline1(path):
     with open(path) as f:
         for line in f:
             return line
+
+
+def rfile(path):
+    """read file."""
+    with open(path) as f:
+        return f.read()
+
+
+a1, a2 = rfile('/dev/shm/nohang_notify').split('\x00')
 
 
 def re_pid_environ(pid):
@@ -108,9 +112,7 @@ list_len = len(list_with_envs)
 if list_len > 0:
 
     for i in list_with_envs:
-        print('Send GUI notification:', argv[1], argv[2], i)
-
-    stdout.flush()
+        print('Send GUI notification:', a1, a2, i)
 
     # iterating over logged-in users
     for i in list_with_envs:
@@ -125,7 +127,10 @@ if list_len > 0:
             'env',
             'DISPLAY=' + display_value,
             'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
-            'notify-send', '--icon=dialog-warning', argv[1], argv[2]
+            'notify-send',
+            '--icon=dialog-warning',
+            a1,
+            a2
         ]) as proc:
             try:
                 proc.wait(timeout=wait_time)
@@ -135,6 +140,6 @@ if list_len > 0:
 else:
     print(
         'Not send GUI notification: [',
-        argv[1],
-        argv[2],
+        a1,
+        a2,
         ']. Nobody logged-in with GUI. Nothing to do.')
