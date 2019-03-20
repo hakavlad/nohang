@@ -49,7 +49,3 @@ while True:
 
     stdout.flush()
     sleep(0.1)
-
-
-
-

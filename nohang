@@ -9,30 +9,8 @@ from sys import stdout, stderr, argv, exit
 from signal import SIGKILL, SIGTERM
 import sys
 
-import logging
-from logging import basicConfig
-from logging import info
-
 
 start_time = time()
-
-
-logfile = '/var/log/nohang/nohang.log'
-
-
-basicConfig(filename=logfile,
-            level=logging.INFO,
-            format="%(asctime)s: %(message)s")
-
-
-separate_log = False
-
-
-def log(msg):
-    print(msg)
-    if separate_log:
-        info(msg)
-
 
 
 help_mess = """usage: nohang [-h] [-c CONFIG]
@@ -65,7 +43,6 @@ wait_time = 10
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 
-
 victim_dict = dict()
 
 
@@ -80,8 +57,19 @@ stat_dict = dict()
 # define functions
 
 
+def log(*msg):
+    """
+    """
+    print(*msg)
+    if separate_log:
+        info(*msg)
+
+
 def print_version():
-    # сначала пытаться получ версию прямо из гита  - вариант для неустановленых
+    """
+    сначала пытаться получ версию прямо из гита  - вариант для неустановленых,
+    для тех, кто еще не запускал make install
+    """
     try:
         v = rline1('/etc/nohang/version')
     except FileNotFoundError:
@@ -94,6 +82,8 @@ def print_version():
 
 
 def test():
+    """
+    """
 
     print(sys.version)
     print(sys.argv)
@@ -155,11 +145,14 @@ def test():
 
 
 def uptime():
+    """
+    """
     return float(rline1('/proc/uptime').split(' ')[0])
 
 
 def pid_to_starttime(pid):
-
+    """
+    """
     try:
         starttime = rline1('/proc/' + pid + '/stat').rpartition(')')[
             2].split(' ')[20]
@@ -180,6 +173,8 @@ def get_victim_id(pid):
 
 
 def errprint(*text):
+    """
+    """
     print(*text, file=stderr, flush=True)
 
 
@@ -200,19 +195,22 @@ def mlockall():
             MCL_CURRENT | MCL_FUTURE
         )
         if result != 0:
-            print('Cannot lock all memory')
+            log('Cannot lock all memory')
         else:
-            print('All memory locked with MCL_CURRENT | MCL_FUTURE')
+            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
     else:
-        print('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+        log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
 def pid_to_state(pid):
+    """
+    """
     return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
 
 def update_stat_dict_and_print(key):
-
+    """
+    """
     if key not in stat_dict:
 
         stat_dict.update({key: 1})
@@ -232,24 +230,10 @@ def update_stat_dict_and_print(key):
 
         print(stats_msg)
 
-'''
-def psi_mem_some_avg_total():
-    if psi_support:
-        return float(rline1(psi_path).rpartition('=')[2])
-'''
-
-'''
-def psi_mem_some_avg10():
-    if psi_support:
-        return float(rline1(psi_path).split(' ')[1].split('=')[1])
-'''
-
-
-
-
-# psi_metrics = 'some_avg10'
 
 def find_psi_metrics_value(psi_path, psi_metrics):
+    """
+    """
 
     if psi_support:
 
@@ -309,9 +293,11 @@ def check_zram():
 
     # Means that when setting zram disksize = 1 GiB available memory
     # decrease by 0.0042 GiB.
-    # Found experimentally, requires clarification with different kernaels and architectures.
+    # Found experimentally, requires clarification with different kernaels and
+    # architectures.
     # On small disk drives (up to gigabyte) it can be more, up to 0.0045.
-    # The creator of the zram module claims that ZRAM_DISKSIZE_FACTOR should be 0.001:
+    # The creator of the zram module claims that ZRAM_DISKSIZE_FACTOR should
+    # be 0.001:
     # ("zram uses about 0.1% of the size of the disk"
     # - https://www.kernel.org/doc/Documentation/blockdev/zram.txt),
     # but this statement contradicts the experimental data.
@@ -323,6 +309,8 @@ def check_zram():
 
 
 def format_time(t):
+    """
+    """
     t = int(t)
     if t < 60:
         return '{} sec'.format(t)
@@ -406,15 +394,6 @@ def rline1(path):
                 'utf-8', 'ignore').split('\n')[0]
 
 
-
-
-
-
-
-
-
-
-
 def kib_to_mib(num):
     """Convert KiB values to MiB values."""
     return round(num / 1024.0)
@@ -431,6 +410,8 @@ def just_percent_mem(num):
 
 
 def just_percent_swap(num):
+    """
+    """
     return str(round(num * 100, 1)).rjust(5, ' ')
 
 
@@ -488,6 +469,8 @@ def pid_to_name(pid):
 
 
 def pid_to_ppid(pid):
+    """
+    """
     try:
         with open('/proc/' + pid + '/status') as f:
             for n, line in enumerate(f):
@@ -506,6 +489,8 @@ def pid_to_ppid(pid):
 
 
 def pid_to_ancestry(pid, max_ancestry_depth=1):
+    """
+    """
     if max_ancestry_depth == 1:
         ppid = pid_to_ppid(pid)
         pname = pid_to_name(ppid)
@@ -545,7 +530,7 @@ def pid_to_realpath(pid):
 
 
 def pid_to_uid(pid):
-    '''return euid'''
+    """return euid"""
     try:
         with open('/proc/' + pid + '/status') as f:
             for n, line in enumerate(f):
@@ -558,7 +543,7 @@ def pid_to_uid(pid):
 
 
 def notify_send_wait(title, body):
-    '''GUI notifications with UID != 0'''
+    """GUI notifications with UID != 0"""
     with Popen(['notify-send', '--icon=dialog-warning', title, body]) as proc:
         try:
             proc.wait(timeout=wait_time)
@@ -568,7 +553,7 @@ def notify_send_wait(title, body):
 
 
 def notify_helper(title, body):
-    '''GUI notification with UID = 0'''
+    """GUI notification with UID = 0"""
 
     with Popen([notify_helper_path, title, body]) as proc:
         try:
@@ -727,6 +712,8 @@ pid_list = get_pid_list()
 
 
 def get_non_decimal_pids():
+    """
+    """
     non_decimal_list = []
     for pid in pid_list:
         if pid[0].isdecimal() is False:
@@ -765,6 +752,10 @@ def pid_to_badness(pid):
                 if search(re_tup[1], uid) is not None:
                     badness += int(re_tup[0])
 
+        if forbid_negative_badness:
+            if badness < 0:
+                badness = 0
+
         return badness, oom_score
 
     except FileNotFoundError:
@@ -796,9 +787,11 @@ def find_victim():
     pid_badness_list = []
 
     if print_proc_table:
-        log('===============================================================================')
+        log('=============================================================='
+            '=================')
         log('    PID  badness  Name                  eUID  cmdline')
-        log('-------  -------  --------------- ----------  ---------------------------------')
+        log('-------  -------  --------------- ----------  -----------'
+            '----------------------')
 
     for pid in pid_list:
 
@@ -834,10 +827,12 @@ def find_victim():
     victim_name = pid_to_name(pid)
 
     if print_proc_table:
-        log('===============================================================================')
+        log('============================================================'
+            '===================')
 
     log(
-        'Process with highest badness (found in {} ms):\n  PID: {}, Name: {}, badness: {}'.format(
+        'Process with highest badness (found in {} ms):\n  PID: {}, Na'
+        'me: {}, badness: {}'.format(
             round((time() - ft1) * 1000),
             pid,
             victim_name,
@@ -849,6 +844,8 @@ def find_victim():
 
 
 def find_victim_info(pid, victim_badness, name):
+    """
+    """
 
     status0 = time()
 
@@ -1080,8 +1077,9 @@ def implement_corrective_action(signal):
             m = check_mem_and_swap()
             ma = round(int(m[0]) / 1024.0)
             sf = round(int(m[2]) / 1024.0)
-            log('Memory status before implementing a corrective action:\n  MemAvailable'
-                  ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
+            log('Memory status before implementing a corrective act'
+                'ion:\n  MemAvailable'
+                ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
             exit_status = os.system(etc_dict[name].replace(
                 '$PID', pid).replace('$NAME', pid_to_name(pid)))
@@ -1093,13 +1091,15 @@ def implement_corrective_action(signal):
 
             response_time = time() - time0
 
-            etc_info = 'Implement a corrective action:\n  Run the command: {}' \
-                '\n  Exit status: {}; total response time: {} ms'.format(
-                    command.replace(
-                        '$PID', pid).replace(
-                        '$NAME', pid_to_name(pid)),
-                    exit_status,
-                    round(response_time * 1000))
+            etc_info = 'Implement a corrective act' \
+                       'ion:\n  Run the command: {}' \
+                       '\n  Exit status: {}; total response ' \
+                       'time: {} ms'.format(
+                           command.replace(
+                               '$PID', pid).replace(
+                               '$NAME', pid_to_name(pid)),
+                           exit_status,
+                           round(response_time * 1000))
 
             print(etc_info)
 
@@ -1110,7 +1110,8 @@ def implement_corrective_action(signal):
                 send_notify_etc(
                     pid,
                     name,
-                    command.replace('$PID', pid).replace('$NAME', pid_to_name(pid)))
+                    command.replace('$PID', pid).replace(
+                        '$NAME', pid_to_name(pid)))
 
         else:
 
@@ -1119,8 +1120,9 @@ def implement_corrective_action(signal):
                 m = check_mem_and_swap()
                 ma = round(int(m[0]) / 1024.0)
                 sf = round(int(m[2]) / 1024.0)
-                log('Memory status before implementing a corrective action:\n  MemAvailable'
-                      ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
+                log('Memory status before implementing a correct'
+                    'ive action:\n  MemAvailable'
+                    ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
                 os.kill(int(pid), signal)
                 response_time = time() - time0
@@ -1149,12 +1151,14 @@ def implement_corrective_action(signal):
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'FileNotFoundError (the victim died in the search process): '
+                key = 'FileNotFoundError (the victim died in the se' \
+                      'arch process): '
             except ProcessLookupError:
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'ProcessLookupError (the victim died in the search process): '
+                key = 'ProcessLookupError (the victim died in the se' \
+                      'arch process): '
 
             log(preventing_oom_message)
 
@@ -1174,7 +1178,6 @@ def implement_corrective_action(signal):
         # update stat_dict
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
-
 
     sleep_after_send_signal(signal)
 
@@ -1262,7 +1265,8 @@ def calculate_percent(arg_key):
             # Final validations...
             if mem_min_percent < 0 or mem_min_percent > 100:
                 errprint(
-                    '{}, as percents value, out of range [0; 100]\nExit'.format(arg_key))
+                    '{}, as percents value, out of ran'
+                    'ge [0; 100]\nExit'.format(arg_key))
                 exit(1)
 
             # mem_min_sigterm_percent is clean and valid float percentage. Can
@@ -1278,7 +1282,8 @@ def calculate_percent(arg_key):
             mem_min_kb = mem_min_mb * 1024
             if mem_min_kb > mem_total:
                 errprint(
-                    '{} value can not be greater then MemTotal ({} MiB)\nExit'.format(
+                    '{} value can not be greater then MemT'
+                    'otal ({} MiB)\nExit'.format(
                         arg_key, round(
                             mem_total / 1024)))
                 exit(1)
@@ -1381,6 +1386,7 @@ except ValueError:
 
 
 print('Config:', config)
+# todo: log it
 
 
 ##########################################################################
@@ -1473,6 +1479,7 @@ except FileNotFoundError:
 # validation of all parameters
 
 
+forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
 print_victim_info = conf_parse_bool('print_victim_info')
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
@@ -1491,20 +1498,23 @@ if regex_matching or re_match_cmdline or re_match_uid:
     from re import search
     import sre_constants
 
-mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent = calculate_percent(
-    'mem_min_sigterm')
-mem_min_sigkill_kb, mem_min_sigkill_mb, mem_min_sigkill_percent = calculate_percent(
-    'mem_min_sigkill')
+(mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
+ ) = calculate_percent('mem_min_sigterm')
 
-zram_max_sigterm_kb, zram_max_sigterm_mb, zram_max_sigterm_percent = calculate_percent(
-    'zram_max_sigterm')
-zram_max_sigkill_kb, zram_max_sigkill_mb, zram_max_sigkill_percent = calculate_percent(
-    'zram_max_sigkill')
+(mem_min_sigkill_kb, mem_min_sigkill_mb, mem_min_sigkill_percent
+ ) = calculate_percent('mem_min_sigkill')
 
-mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent = calculate_percent(
-    'mem_min_warnings')
-zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent = calculate_percent(
-    'zram_max_warnings')
+(zram_max_sigterm_kb, zram_max_sigterm_mb, zram_max_sigterm_percent
+ ) = calculate_percent('zram_max_sigterm')
+
+(zram_max_sigkill_kb, zram_max_sigkill_mb, zram_max_sigkill_percent
+ ) = calculate_percent('zram_max_sigkill')
+
+(mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent
+ ) = calculate_percent('mem_min_warnings')
+
+(zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent
+ ) = calculate_percent('zram_max_warnings')
 
 
 if 'rate_mem' in config_dict:
@@ -1697,10 +1707,12 @@ if 'max_post_sigterm_victim_lifetime' in config_dict:
     max_post_sigterm_victim_lifetime = string_to_float_convert_test(
         config_dict['max_post_sigterm_victim_lifetime'])
     if max_post_sigterm_victim_lifetime is None:
-        errprint('Invalid max_post_sigterm_victim_lifetime value, not float\nExit')
+        errprint('Invalid max_post_sigterm_victim_lifetime val'
+                 'ue, not float\nExit')
         exit(1)
     if max_post_sigterm_victim_lifetime < 0:
-        errprint('max_post_sigterm_victim_lifetime must be non-negative number\nExit')
+        errprint('max_post_sigterm_victim_lifetime must be non-n'
+                 'egative number\nExit')
         exit(1)
 else:
     errprint('max_post_sigterm_victim_lifetime is not in config\nExit')
@@ -1712,7 +1724,6 @@ if 'post_kill_exe' in config_dict:
 else:
     errprint('post_kill_exe is not in config\nExit')
     exit(1)
-
 
 
 if 'psi_path' in config_dict:
@@ -1729,10 +1740,50 @@ else:
     exit(1)
 
 
+if 'log_dir' in config_dict:
+    log_dir = config_dict['log_dir']
+else:
+    errprint('log_dir is not in config\nExit')
+    exit(1)
 
 
 print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
+
+separate_log = conf_parse_bool('separate_log')
+
+if separate_log:
+
+    import logging
+    from logging import basicConfig
+    from logging import info
+
+    try:
+        os.mkdir(log_dir)
+    except PermissionError:
+        print('ERROR: can not create log dir')
+    except FileExistsError:
+        pass
+
+    logfile = log_dir + '/nohang.log'
+
+    try:
+        with open(logfile, 'a') as f:
+            pass
+    except FileNotFoundError:
+        print('ERROR: log FileNotFoundError')
+    except PermissionError:
+        print('ERROR: log PermissionError')
+
+    try:
+        basicConfig(
+            filename=logfile,
+            level=logging.INFO,
+            format="%(asctime)s: %(message)s")
+    except PermissionError:
+        errprint('ERROR: Permission denied: {}'.format(logfile))
+    except FileNotFoundError:
+        errprint('ERROR: FileNotFoundError: {}'.format(logfile))
 
 
 if 'min_mem_report_interval' in config_dict:
@@ -1790,10 +1841,7 @@ if max_sleep_time < min_sleep_time:
 psi_support = os.path.exists(psi_path)
 
 
-
 ##########################################################################
-
-
 
 
 # Get KiB levels if it's possible.
@@ -1834,7 +1882,8 @@ def get_swap_threshold_tuple(string):
         return value, False
 
     else:
-        errprint('Invalid config file. There are invalid units somewhere\nExit')
+        errprint(
+            'Invalid config file. There are invalid units somewhere\nExit')
         exit(1)
 
 
@@ -1869,7 +1918,8 @@ else:
 if print_config:
 
     print(
-        '\n1. Memory levels to respond to as an OOM threat\n[displaying these options need fix]\n')
+        '\n1. Memory levels to respond to as an OOM threat\n[display'
+        'ing these options need fix]\n')
 
     print('mem_min_sigterm:           {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
@@ -1884,7 +1934,8 @@ if print_config:
     print('zram_max_sigkill:          {} MiB, {} %'.format(
         round(zram_max_sigkill_mb), round(zram_max_sigkill_percent, 1)))
 
-    print('\n2. The frequency of checking the level of available memory (and CPU usage)\n')
+    print('\n2. The frequency of checking the level of available m'
+          'emory (and CPU usage)\n')
     print('rate_mem:                  {}'.format(rate_mem))
     print('rate_swap:                 {}'.format(rate_swap))
     print('rate_zram:                 {}'.format(rate_zram))
@@ -1906,19 +1957,22 @@ if print_config:
 
     print('(todo)')
 
-    print('\n5. The execution of a specific command instead of sending the\nSIGTERM signal\n')
+    print('\n5. The execution of a specific command instead of sen'
+          'ding the\nSIGTERM signal\n')
     print('execute_the_command:       {}'.format(execute_the_command))
     if execute_the_command:
         print('\nPROCESS NAME     COMMAND TO EXECUTE')
         for key in etc_dict:
             print('{}  {}'.format(key.ljust(15), etc_dict[key]))
 
-    print('\n6. GUI notifications:\n- OOM prevention results and\n- low memory warnings\n')
+    print('\n6. GUI notifications:\n- OOM prevention results and\n- low m'
+          'emory warnings\n')
     print('gui_notifications:         {}'.format(gui_notifications))
 
     print('gui_low_memory_warnings:   {}'.format(gui_low_memory_warnings))
     if gui_low_memory_warnings:
-        print('min_time_between_warnings: {}'.format(min_time_between_warnings))
+        print('min_time_between_warnings: {}'.format(
+            min_time_between_warnings))
 
         print('mem_min_warnings:          {} MiB, {} %'.format(
             round(mem_min_warnings_mb), round(mem_min_warnings_percent, 1)))
@@ -1973,7 +2027,7 @@ if print_proc_table:
     find_victim()
     print()
 
-print('Monitoring started!')
+log('Monitoring started!')
 
 stdout.flush()
 
@@ -2011,14 +2065,16 @@ while True:
 
         if avg10 >= sigkill_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigkill_psi ({})'.format(avg10, sigkill_psi)
+            mem_info = 'PSI avg value ({}) > sigkill_psi ({})'.format(
+                avg10, sigkill_psi)
             implement_corrective_action(SIGKILL)
             psi_t0 = time()
             continue
 
         if avg10 >= sigterm_psi and time() - psi_t0 >= psi_avg10_sleep_time:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigterm_psi ({})'.format(avg10, sigterm_psi)
+            mem_info = 'PSI avg value ({}) > sigterm_psi ({})'.format(
+                avg10, sigterm_psi)
             implement_corrective_action(SIGTERM)
             psi_t0 = time()
             continue
@@ -2076,7 +2132,7 @@ while True:
             # Calculate 'swap-column' width
             swap_len = len(str(round(swap_total / 1024.0)))
 
-            # Output avialable mem sizes
+            # Output available mem sizes
             if swap_total == 0 and mem_used_zram == 0:
                 log('{}MemAvail: {} M, {} %{}'.format(
                     avg_value,
@@ -2133,7 +2189,8 @@ while True:
             swap_free <= swap_min_sigkill_kb):
         time0 = time()
 
-        mem_info = 'Hard threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Hard threshold exceeded\nMemory status that requ' \
+                   'ires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -2154,7 +2211,8 @@ while True:
     if mem_used_zram >= zram_max_sigkill_kb:
         time0 = time()
 
-        mem_info = 'Hard threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Hard threshold exceeded\nMemory status that requir' \
+            'es corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -2172,7 +2230,8 @@ while True:
 
         time0 = time()
 
-        mem_info = 'Soft threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Soft threshold exceeded\nMemory status that requi' \
+                   'res corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -2195,7 +2254,8 @@ while True:
     if mem_used_zram >= zram_max_sigterm_kb:
         time0 = time()
 
-        mem_info = 'Soft threshold exeeded\nMemory status that requires corrective actions:' \
+        mem_info = 'Soft threshold exceeded\nMemory status that requ' \
+                   'ires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
