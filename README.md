@@ -50,7 +50,7 @@ The tools listed above may work at the same time on one computer.
 - GUI notifications:
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
-- `zram` support (`mem_used_total` as a trigger)
+- [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger)
 - Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support ([demo](https://youtu.be/2m2c9TGva1Y))
 - Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
@@ -186,7 +186,7 @@ $ sudo journalctl -eu nohang
 ```
 See also `man journalctl`.
 
-On non-systemd systems you can enable `separate_log` in config to logging in `/var/log/nohang/nohang.log`.
+You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
 
 ## Known problems
 
