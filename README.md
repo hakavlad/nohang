@@ -51,7 +51,7 @@ The tools listed above may work at the same time on one computer.
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
 - `zram` support (`mem_used_total` as a trigger)
-- Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support
+- Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support ([demo](https://youtu.be/2m2c9TGva1Y))
 - Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
@@ -131,14 +131,16 @@ optional arguments:
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
 1. Memory levels to respond to as an OOM threat
-2. The frequency of checking the level of available memory (and CPU usage)
-3. The prevention of killing innocent victims
-4. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
-5. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
-6. GUI notifications:
+2. Response on PSI memory metrics
+3. The frequency of checking the level of available memory (and CPU usage)
+4. The prevention of killing innocent victims
+5. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
+6. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
+7. GUI notifications:
    - notifications of corrective actions taken
    - low memory warnings
-7. Output verbosity
+8. Verbosity
+9. Misc
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
@@ -184,6 +186,8 @@ $ sudo journalctl -eu nohang
 ```
 See also `man journalctl`.
 
+On non-systemd systems you can enable `separate_log` in config to logging in `/var/log/nohang/nohang.log`.
+
 ## Known problems
 
 - Awful documentation.
@@ -228,7 +232,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Reduce memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Add initial support for `PSI`
-    - [x] Improve modifing badness via matching with regular expressions: 
+    - [x] Improve modifing badness via matching with regular expressions:
         - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [ ] Redesign of the GUI notifications
