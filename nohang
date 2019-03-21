@@ -674,6 +674,9 @@ def send_notify_etc(pid, name, command):
         command.replace('&', '*')
     )
 
+
+    # write() -> wrinte_notify(title, body)
+
     write('{}\x00{}'.format(title, body))
     os.system(notify_helper_path + ' &')
     '''
@@ -698,9 +701,8 @@ def sleep_after_send_signal(signal):
         sleep(min_delay_after_sigkill)
     else:
         if print_sleep_periods:
-            log(
-                'Sleep {} sec after implementing a corrective action'.format(
-                    min_delay_after_sigterm))
+            log('Sleep {} sec after implementing a corrective action'.format(
+                min_delay_after_sigterm))
         sleep(min_delay_after_sigterm)
 
 
@@ -1047,10 +1049,20 @@ def find_victim_info(pid, victim_badness, name):
     return victim_info
 
 
+
+# для дедупликации уведомлений
+dick = dict()
+dick['v'] = [1, 2, 3, time()]
+
+
 def implement_corrective_action(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
+
+    notif = True
+
+
 
     log(mem_info)
 
@@ -1152,7 +1164,39 @@ def implement_corrective_action(signal):
                     )
 
                 if gui_notifications:
-                    send_notify(signal, name, pid)
+
+                    # min delay after same notification
+                    # все не так. От этого вообще пол дедупликация . терминация один раз покажется при любом раскладе.
+                    delay_after_same_notify = 1
+
+                    x = dick['v']
+
+                    dick['v'] = [signal, name, pid, time()]
+
+                    y = dick['v']
+
+                    print(y[3] - x[3])
+
+                    if x[0] == y[0] and x[1] == y[1] and x[2] == y[2]:
+                        print('совпадение имени, пид, сигнала')
+
+                        # сохр в словаре первре совпавшее время
+                        dt = y[3] - x[3]
+                        print(dt, 'dt')
+                        if dt < delay_after_same_notify:
+                            notif = False
+
+
+                    if notif:
+                        send_notify(signal, name, pid)
+
+
+
+
+
+
+
+
 
             except FileNotFoundError:
                 response_time = time() - time0

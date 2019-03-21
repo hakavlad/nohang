@@ -214,30 +214,33 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 - In progress
     - [x] Improve output:
         - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
-        - [x] Add memory report interval
-        - [x] Add delta memory info (the rate of change of available memory)
+        - [x] Added memory report interval
+        - [x] Added delta memory info (the rate of change of available memory)
         - [x] Print statistics on corrective actions after each corrective action
         - [x] Added ability to print a process table before each corrective action
         - [x] Added the ability to log into a separate file
     - [x] Improve poll rate algorithm
-    - [x] Add `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
+    - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Fixed process crash before performing corrective actions if Python 3.3 or Python 3.4 are used to interpret nohang
-    - [x] Improve GUI warnings:
+    - [x] Improved GUI warnings:
         - [x] Find env without run `ps`
         - [x] Handle all timeouts when notify-send starts
-    - [x] Fix conf parsing: use of `line.partition('=')` instead of `line.split('=')`
-    - [x] Add `oom-sort`
-    - [x] Add `--version` and `--test` flags
-    - [x] Remove self-defense options from config, use systemd unit scheduling instead
-    - [x] Add the ability to send any signal instead of SIGTERM for processes with certain names
-    - [x] Handle `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
-    - [x] Reduce memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
-    - [x] Reduce memory usage and startup time (using `sys.argv` instead of `argparse`)
-    - [x] Add initial support for `PSI`
-    - [x] Improve modifing badness via matching with regular expressions:
-        - [x] Adding the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+    - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
+    - [x] Added `oom-sort`
+    - [x] Added new CLI options:
+        - [x] -v, --version
+        - [x] -t, --test
+        - [x] --ppt, --print-proc-table
+    - [x] Removed self-defense options from config, use systemd unit scheduling instead
+    - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
+    - [x] Handled `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
+    - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+    - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
+    - [x] Added initial support for `PSI`
+    - [x] Improved modifing badness via matching with regular expressions:
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [ ] Redesign of the GUI notifications
     - [ ] Improve user input validation
