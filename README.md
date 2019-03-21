@@ -212,6 +212,13 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
 ## Changelog
 
 - In progress
+    - [x] Added new CLI options:
+        - [x] -v, --version
+        - [x] -t, --test
+        - [x] --ppt, --print-proc-table
+    - [x] Possible process crashes are fixed:
+        - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
+        - [x] Fixed process crash before performing corrective actions if Python 3.4 or lower are used to interpret nohang
     - [x] Improve output:
         - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
         - [x] Added memory report interval
@@ -219,30 +226,26 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Print statistics on corrective actions after each corrective action
         - [x] Added ability to print a process table before each corrective action
         - [x] Added the ability to log into a separate file
-    - [x] Improve poll rate algorithm
-    - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
-    - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
-    - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
-    - [x] Fixed process crash before performing corrective actions if Python 3.3 or Python 3.4 are used to interpret nohang
     - [x] Improved GUI warnings:
         - [x] Find env without run `ps`
-        - [x] Handle all timeouts when notify-send starts
-    - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
-    - [x] Added `oom-sort`
-    - [x] Added new CLI options:
-        - [x] -v, --version
-        - [x] -t, --test
-        - [x] --ppt, --print-proc-table
-    - [x] Removed self-defense options from config, use systemd unit scheduling instead
-    - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
-    - [x] Handled `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
-    - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
-    - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
-    - [x] Added initial support for `PSI`
+        - [x] Reduced the idle time of the daemon in the process of launching a notification
+        - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
+        - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
     - [x] Improved modifing badness via matching with regular expressions:
         - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
-    - [ ] Redesign of the GUI notifications
+    - [x] Improve poll rate algorithm
+    - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
+    - [x] Added `post_kill_exe` option
+    - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
+    - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
+    - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
+    - [x] Added `oom-sort`
+    - [x] Removed self-defense options from the config, use systemd unit scheduling instead
+    - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
+    - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+    - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
+    - [x] Added initial support for `PSI`
     - [ ] Improve user input validation
     - [ ] Improve documentation
 
