@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Deactivate swap
+swapoff /dev/zram0
+
+# Reset zram
+echo 1 > /sys/block/zram0/reset
+
+# Remove zram module
+modprobe -r zram
