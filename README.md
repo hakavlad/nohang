@@ -229,7 +229,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Improved GUI warnings:
         - [x] Reduced the idle time of the daemon in the process of launching a notification
         - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
-        - [x] Native python implementation of `env` search without running `ps` to notify users if nohang started with UID=0.
+        - [x] Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
         - [ ] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
