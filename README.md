@@ -227,13 +227,17 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Added ability to print a process table before each corrective action
         - [x] Added the ability to log into a separate file
     - [x] Improved GUI warnings:
-        - [x] Find env without run `ps`
         - [x] Reduced the idle time of the daemon in the process of launching a notification
         - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
+        - [x] Native python implementation of `env` search without running `ps` to notify users if nohang started with UID=0.
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
+        - [ ] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
         - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
+    - [x] Reduced memory usage:
+        - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
+        - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Improve poll rate algorithm
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Added `post_kill_exe` option
@@ -243,8 +247,6 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Added `oom-sort`
     - [x] Removed self-defense options from the config, use systemd unit scheduling instead
     - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
-    - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
-    - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
     - [x] Added initial support for `PSI`
     - [ ] Improve user input validation
     - [ ] Improve documentation
