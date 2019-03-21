@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-#
-# Usage:
-#   ./nohang_notify_helper "title" "body"
 
 from os import listdir, path
 from subprocess import Popen, TimeoutExpired
@@ -122,21 +119,24 @@ if list_len > 0:
         display_value = display_tuple[2]
         dbus_value = dbus_tuple[2]
 
-        with Popen([
-            'sudo', '-u', username,
-            'env',
-            'DISPLAY=' + display_value,
-            'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
-            'notify-send',
-            '--icon=dialog-warning',
-            a1,
-            a2
-        ]) as proc:
-            try:
-                proc.wait(timeout=wait_time)
-            except TimeoutExpired:
-                proc.kill()
-                print('TimeoutExpired: notify user:' + username)
+        try:
+            with Popen([
+                'sudo', '-u', username,
+                'env',
+                'DISPLAY=' + display_value,
+                'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
+                'notify-send',
+                '--icon=dialog-warning',
+                a1,
+                a2
+            ]) as proc:
+                try:
+                    proc.wait(timeout=wait_time)
+                except TimeoutExpired:
+                    proc.kill()
+                    print('TimeoutExpired: notify user:' + username)
+        except BlockingIOError:
+            print('nohang_notify_helper: BlockingIOError')
 else:
     print(
         'Not send GUI notification: [',
