@@ -2132,8 +2132,7 @@ while True:
             mem_info = 'PSI avg value ({}) > sigkill_psi_threshold ({})'.format(
                 psi_avg_value, sigkill_psi_threshold)
 
-            # implement_corrective_action(SIGKILL)
-            print('implement!')
+            implement_corrective_action(SIGKILL)
 
             psi_t0 = time()
             continue
@@ -2143,8 +2142,7 @@ while True:
             mem_info = 'PSI avg value ({}) > sigterm_psi_threshold ({})'.format(
                 psi_avg_value, sigterm_psi_threshold)
 
-            # implement_corrective_action(SIGTERM)
-            print('implement!')
+            implement_corrective_action(SIGTERM)
 
             psi_t0 = time()
             continue
