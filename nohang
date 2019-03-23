@@ -41,7 +41,6 @@ if self_uid == 0:
 else:
     root = False
 
-# wait_time = 10
 
 notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
@@ -1528,6 +1527,7 @@ except FileNotFoundError:
 # extracting parameters from the dictionary
 # check for all necessary parameters
 # validation of all parameters
+psi_debug = conf_parse_bool('psi_debug')
 
 
 forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
@@ -1649,45 +1649,45 @@ else:
     exit(1)
 
 
-if 'psi_avg10_sleep_time' in config_dict:
-    psi_avg10_sleep_time = string_to_float_convert_test(
-        config_dict['psi_avg10_sleep_time'])
-    if psi_avg10_sleep_time is None:
-        errprint('Invalid psi_avg10_sleep_time value, not float\nExit')
+if 'psi_post_action_delay' in config_dict:
+    psi_post_action_delay = string_to_float_convert_test(
+        config_dict['psi_post_action_delay'])
+    if psi_post_action_delay is None:
+        errprint('Invalid psi_post_action_delay value, not float\nExit')
         exit(1)
-    if psi_avg10_sleep_time < 0:
-        errprint('psi_avg10_sleep_time must be positive\nExit')
+    if psi_post_action_delay < 0:
+        errprint('psi_post_action_delay must be positive\nExit')
         exit(1)
 else:
-    errprint('psi_avg10_sleep_time not in config\nExit')
+    errprint('psi_post_action_delay not in config\nExit')
     exit(1)
 
 
-if 'sigkill_psi_avg10' in config_dict:
-    sigkill_psi_avg10 = string_to_float_convert_test(
-        config_dict['sigkill_psi_avg10'])
-    if sigkill_psi_avg10 is None:
-        errprint('Invalid sigkill_psi_avg10 value, not float\nExit')
+if 'sigkill_psi_threshold' in config_dict:
+    sigkill_psi_threshold = string_to_float_convert_test(
+        config_dict['sigkill_psi_threshold'])
+    if sigkill_psi_threshold is None:
+        errprint('Invalid sigkill_psi_threshold value, not float\nExit')
         exit(1)
-    if sigkill_psi_avg10 < 0 or sigkill_psi_avg10 > 100:
-        errprint('sigkill_psi_avg10 must be in the range [0; 100]\nExit')
+    if sigkill_psi_threshold < 0 or sigkill_psi_threshold > 100:
+        errprint('sigkill_psi_threshold must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('sigkill_psi_avg10 not in config\nExit')
+    errprint('sigkill_psi_threshold not in config\nExit')
     exit(1)
 
 
-if 'sigterm_psi_avg10' in config_dict:
-    sigterm_psi_avg10 = string_to_float_convert_test(
-        config_dict['sigterm_psi_avg10'])
-    if sigterm_psi_avg10 is None:
-        errprint('Invalid sigterm_psi_avg10 value, not float\nExit')
+if 'sigterm_psi_threshold' in config_dict:
+    sigterm_psi_threshold = string_to_float_convert_test(
+        config_dict['sigterm_psi_threshold'])
+    if sigterm_psi_threshold is None:
+        errprint('Invalid sigterm_psi_threshold value, not float\nExit')
         exit(1)
-    if sigterm_psi_avg10 < 0 or sigterm_psi_avg10 > 100:
-        errprint('sigterm_psi_avg10 must be in the range [0; 100]\nExit')
+    if sigterm_psi_threshold < 0 or sigterm_psi_threshold > 100:
+        errprint('sigterm_psi_threshold must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('sigterm_psi_avg10 not in config\nExit')
+    errprint('sigterm_psi_threshold not in config\nExit')
     exit(1)
 
 
@@ -2077,17 +2077,12 @@ log('Monitoring started!')
 
 stdout.flush()
 
-# тупое присвоение. нид фикс
-sigterm_psi = sigterm_psi_avg10
-sigkill_psi = sigkill_psi_avg10
-
 
 ##########################################################################
 
 if psi_support and not ignore_psi:
-    psi_t0 = time() + psi_avg10_sleep_time
-
-avg_value = ''
+    psi_t0 = time()
+    psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
 
 
 if print_mem_check_results:
@@ -2104,26 +2099,53 @@ while True:
 
     if psi_support and not ignore_psi:
 
-        # avg10 = psi_mem_some_avg10()
-        # psi_avg_value!
-        avg10 = find_psi_metrics_value(psi_path, psi_metrics)
+        psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
 
         if print_mem_check_results:
-            avg_value = 'PSI avg value: {} | '.format(str(avg10).rjust(6))
+            psi_avg_string = 'PSI avg value: {} | '.format(
+                str(psi_avg_value).rjust(6))
 
-        if avg10 >= sigkill_psi and time() - psi_t0 >= psi_avg10_sleep_time:
+        if psi_avg_value >= sigkill_psi_threshold:
+            sigkill_psi_exceeded = True
+        else:
+            sigkill_psi_exceeded = False
+
+        if psi_avg_value >= sigterm_psi_threshold:
+            sigterm_psi_exceeded = True
+        else:
+            sigterm_psi_exceeded = False
+
+        if time() - psi_t0 >= psi_post_action_delay:
+            psi_post_action_delay_exceeded = True
+        else:
+            psi_post_action_delay_exceeded = False
+
+        if psi_debug:
+            log('sigterm_psi_exceeded: {}, sigkill_psi_exceeded: {}, ps'
+                'i_post_action_delay_exceeded: {}'.format(
+                    sigterm_psi_exceeded,
+                    sigkill_psi_exceeded,
+                    psi_post_action_delay_exceeded))
+
+        if sigkill_psi_exceeded and psi_post_action_delay_exceeded:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigkill_psi ({})'.format(
-                avg10, sigkill_psi)
-            implement_corrective_action(SIGKILL)
+            mem_info = 'PSI avg value ({}) > sigkill_psi_threshold ({})'.format(
+                psi_avg_value, sigkill_psi_threshold)
+
+            # implement_corrective_action(SIGKILL)
+            print('implement!')
+
             psi_t0 = time()
             continue
 
-        if avg10 >= sigterm_psi and time() - psi_t0 >= psi_avg10_sleep_time:
+        if sigterm_psi_exceeded and psi_post_action_delay_exceeded:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigterm_psi ({})'.format(
-                avg10, sigterm_psi)
-            implement_corrective_action(SIGTERM)
+            mem_info = 'PSI avg value ({}) > sigterm_psi_threshold ({})'.format(
+                psi_avg_value, sigterm_psi_threshold)
+
+            # implement_corrective_action(SIGTERM)
+            print('implement!')
+
             psi_t0 = time()
             continue
 
@@ -2183,7 +2205,7 @@ while True:
             # Output available mem sizes
             if swap_total == 0 and mem_used_zram == 0:
                 log('{}MemAvail: {} M, {} %{}'.format(
-                    avg_value,
+                    psi_avg_string,
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
                     speed_info
@@ -2192,7 +2214,7 @@ while True:
 
             elif swap_total > 0 and mem_used_zram == 0:
                 log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %{}'.format(
-                    avg_value,
+                    psi_avg_string,
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
                     human(swap_free, swap_len),
@@ -2204,7 +2226,7 @@ while True:
             else:
                 log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
                     'UsedZram: {} M, {} %{}'.format(
-                        avg_value,
+                        psi_avg_string,
                         human(mem_available, mem_len),
                         just_percent_mem(mem_available / mem_total),
                         human(swap_free, swap_len),
