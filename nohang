@@ -2085,7 +2085,7 @@ mlockall()
 
 
 # if print_proc_table:
-     find_victim(print_proc_table)
+    # find_victim(print_proc_table)
 
 log('Monitoring started!')
 
