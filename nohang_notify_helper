@@ -1,7 +1,21 @@
 #!/usr/bin/env python3
 
-from os import listdir, path
+from os import listdir, path, remove
 from subprocess import Popen, TimeoutExpired
+from sys import argv
+
+
+# print('Starting nohang_notify_helper')
+
+# print(argv)
+
+# print(len(argv))
+
+split_by = '#' * 16
+
+uid = argv[2]
+
+t000 = argv[4]
 
 wait_time = 10
 
@@ -23,7 +37,13 @@ def rfile(path):
         return f.read()
 
 
-a1, a2 = rfile('/dev/shm/nohang_notify').split('\x00')
+path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
+    uid, t000
+)
+
+title, body = rfile(path_to_cache).split(split_by)
+
+remove(path_to_cache)
 
 
 def re_pid_environ(pid):
@@ -109,7 +129,7 @@ list_len = len(list_with_envs)
 if list_len > 0:
 
     for i in list_with_envs:
-        print('Send GUI notification:', a1, a2, i)
+        print('Send GUI notification:', title, body, i)
 
     # iterating over logged-in users
     for i in list_with_envs:
@@ -127,8 +147,8 @@ if list_len > 0:
                 'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
                 'notify-send',
                 '--icon=dialog-warning',
-                a1,
-                a2
+                title,
+                body
             ]) as proc:
                 try:
                     proc.wait(timeout=wait_time)
@@ -140,6 +160,6 @@ if list_len > 0:
 else:
     print(
         'Not send GUI notification: [',
-        a1,
-        a2,
+        title,
+        body,
         ']. Nobody logged-in with GUI. Nothing to do.')

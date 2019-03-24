@@ -277,12 +277,6 @@ def check_mem():
     return int(rline1('/proc/meminfo').split(':')[1][:-4])
 
 
-def write(text):
-    file = '/dev/shm/nohang_notify'
-    with open(file, 'w') as f:
-        f.write(text)
-
-
 def check_mem_and_swap():
     """find mem_available, swap_total, swap_free"""
     with open('/proc/meminfo') as f:
@@ -616,13 +610,14 @@ def send_notify_warn():
 
     t0 = time()
 
-    title = 'Low memoy'
+    title = 'Low memory'
     body = 'MemAvail: {}%\nSwapFree: {}%'.format(
         round(mem_available / mem_total * 100),
         round(swap_free / (swap_total + 0.1) * 100)
     )
-    write('{}\x00{}'.format(title, body))
-    os.system(notify_helper_path + ' &')
+
+    send_notification(title, body)
+
     t1 = time()
 
     print('t:', t1 - t0)
@@ -647,8 +642,7 @@ def send_notify(signal, name, pid):
         )
     )
 
-    write('{}\x00{}'.format(title, body))
-    os.system(notify_helper_path + ' &')
+    send_notification(title, body)
 
     '''
     if root:
@@ -669,16 +663,14 @@ def send_notify_etc(pid, name, command):
     pid: str process pid
     """
     title = 'Freeze prevention'
-    body = 'Victim is {}[{}]\nExecute the command:\n<b>{}</b>'.format(
-        name.replace('&', '*'),
+    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the command:\n<b>{}</b>'.format(
         pid,
+        name.replace('&', '*'),
         command.replace('&', '*')
     )
 
-    # write() -> wrinte_notify(title, body)
+    send_notification(title, body)
 
-    write('{}\x00{}'.format(title, body))
-    os.system(notify_helper_path + ' &')
     '''
     if root:
         # send notification to all active users with notify-send
@@ -687,6 +679,28 @@ def send_notify_etc(pid, name, command):
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
     '''
+
+
+def send_notification(title, body):
+    """
+    """
+    split_by = '#' * 16
+
+    t000 = time()
+
+    path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
+        str(self_uid), t000
+    )
+
+    text = '{}{}{}'.format(title, split_by, body)
+
+    with open(path_to_cache, 'w') as f:
+        f.write(text)
+        os.chmod(path_to_cache, 0o600)
+
+    cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
+
+    os.system(cmd)
 
 
 def sleep_after_send_signal(signal):
@@ -1176,14 +1190,14 @@ def implement_corrective_action(signal):
 
                     y = dick['v']
 
-                    print(y[3] - x[3])
+                    #print(y[3] - x[3])
 
                     if x[0] == y[0] and x[1] == y[1] and x[2] == y[2]:
-                        print('совпадение имени, пид, сигнала')
+                        #print('совпадение имени, пид, сигнала')
 
                         # сохр в словаре первре совпавшее время
                         dt = y[3] - x[3]
-                        print(dt, 'dt')
+                        #print(dt, 'dt')
                         if dt < delay_after_same_notify:
                             notif = False
 
@@ -2132,7 +2146,8 @@ while True:
             mem_info = 'PSI avg value ({}) > sigkill_psi_threshold ({})'.format(
                 psi_avg_value, sigkill_psi_threshold)
 
-            implement_corrective_action(SIGKILL)
+            # implement_corrective_action(SIGKILL)
+            print('implement!')
 
             psi_t0 = time()
             continue
@@ -2142,7 +2157,8 @@ while True:
             mem_info = 'PSI avg value ({}) > sigterm_psi_threshold ({})'.format(
                 psi_avg_value, sigterm_psi_threshold)
 
-            implement_corrective_action(SIGTERM)
+            # implement_corrective_action(SIGTERM)
+            print('implement!')
 
             psi_t0 = time()
             continue
