@@ -231,7 +231,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
         - [x] Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
-        - [ ] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
+        - [x] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
         - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
