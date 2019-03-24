@@ -2094,9 +2094,12 @@ stdout.flush()
 
 ##########################################################################
 
+
+psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
+
+
 if psi_support and not ignore_psi:
     psi_t0 = time()
-    psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
 
 
 if print_mem_check_results:
