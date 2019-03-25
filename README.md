@@ -40,8 +40,9 @@ The tools listed above may work at the same time on one computer.
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.
 - Impact on the badness of processes via matching their
     - names,
+    - cgroups,
     - cmdlines and
-    - eUIDs
+    - euids
     with specified regular expressions
 - If the name of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
     - `sysmemctl restart foo`
@@ -211,7 +212,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
         - [x] Fixed process crash before performing corrective actions if Python 3.4 or lower are used to interpret nohang
     - [x] Improve output:
-        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
+        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `CGroup`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
         - [x] Added memory report interval
         - [x] Added delta memory info (the rate of change of available memory)
         - [x] Print statistics on corrective actions after each corrective action
@@ -224,24 +225,24 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
         - [x] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
-        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `name`, `cmdline` and `euid` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup`, `Cmdline` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [x] Reduced memory usage:
         - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
         - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Improve poll rate algorithm
-    - [x] Fixed Makefile for installation on CentOS 7.
+    - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Added `post_kill_exe` option (the ability to run any command after killing the victim)
     - [x] Added `warning_exe` option (the ability to run any command instead of GUI low memory warnings)
-    - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
-    - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
+    - [x] Improved victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
+    - [x] Improved limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Added `oom-sort`
     - [x] Removed self-defense options from the config, use systemd unit scheduling instead
     - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Added initial support for `PSI`
-    - [ ] Improve user input validation
-    - [ ] Improve documentation
+    - [x] Improved user input validation
+    - [x] Improved documentation
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release

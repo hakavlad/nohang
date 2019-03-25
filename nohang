@@ -7,7 +7,8 @@ from time import sleep, time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit, version
 from signal import SIGKILL, SIGTERM
-
+from re import search
+from sre_constants import error as invalid_re
 
 start_time = time()
 
@@ -62,7 +63,28 @@ separate_log = False  # will be overwritten after parse config
 # define functions
 
 
+def valid_re(reg_exp):
+    """Validate regular expression.
+    """
+    try:
+        search(reg_exp, '')
+    except invalid_re:
+        log('Invalid config: invalid regexp: {}'.format(reg_exp))
+        exit(1)
+
+
+def pid_to_cgroup(pid):
+    """
+    """
+    with open('/proc/' + pid + '/cgroup') as f:
+        for line in f:
+            if line.startswith('1:'):
+                return '/' + line.partition('/')[2][:-1]
+
+
 def func_print_proc_table():
+    """
+    """
     print_proc_table = True
     find_victim(print_proc_table)
     exit()
@@ -770,6 +792,12 @@ def pid_to_badness(pid):
                 if search(re_tup[1], name) is not None:
                     badness += int(re_tup[0])
 
+        if re_match_cgroup:
+            cgroup = pid_to_cgroup(pid)
+            for re_tup in cgroup_re_list:
+                if search(re_tup[1], cgroup) is not None:
+                    badness += int(re_tup[0])
+
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
             for re_tup in cmdline_re_list:
@@ -819,7 +847,7 @@ def find_victim(_print_proc_table):
     if _print_proc_table:
         log('=============================================================='
             '=================')
-        log('    PID  badness  Name                  eUID  cmdline')
+        log('    PID  badness  Name                  eUID  CGroup')
         log('-------  -------  --------------- ----------  -----------'
             '----------------------')
 
@@ -835,8 +863,10 @@ def find_victim(_print_proc_table):
                 str(badness).rjust(7),
                 pid_to_name(pid).ljust(15),
                 pid_to_uid(pid).rjust(10),
-                pid_to_cmdline(pid)
+                # pid_to_cmdline(pid)
                 # pid_to_realpath(pid)
+                pid_to_cgroup(pid)
+                # ''
             )
             )
 
@@ -1035,6 +1065,8 @@ def find_victim_info(pid, victim_badness, name):
 
     victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
 
+    victim_cgroup = pid_to_cgroup(pid)
+
     victim_info = 'Victim information (found in {} ms):' \
         '\n  Name:     {}' \
         '\n  State:    {}' \
@@ -1047,6 +1079,7 @@ def find_victim_info(pid, victim_badness, name):
         '\n  VmSize:   {} MiB' \
         '\n  VmRSS:    {} MiB {}' \
         '\n  VmSwap:   {} MiB' \
+        '\n  CGroup:   {}' \
         '\n  Realpath: {}' \
         '\n  Cmdline:  {}' \
         '\n  Lifetime: {}'.format(
@@ -1063,6 +1096,7 @@ def find_victim_info(pid, victim_badness, name):
             str(vm_rss).rjust(len_vm),
             detailed_rss_info,
             str(vm_swap).rjust(len_vm),
+            victim_cgroup,
             realpath,
             cmdline,
             victim_lifetime)
@@ -1473,11 +1507,19 @@ config_dict = dict()
 processname_re_list = []
 cmdline_re_list = []
 uid_re_list = []
+cgroup_re_list = []
+
+
 
 # dictionary with names and commands for the parameter
 # execute_the_command
 # тут тоже список нужен, а не словарь
 etc_dict = dict()
+
+
+
+
+
 
 
 try:
@@ -1494,7 +1536,16 @@ try:
 
             if not a and not b and not c and not d and not etc:
                 a = line.partition('=')
-                config_dict[a[0].strip()] = a[2].strip()
+
+
+                key = a[0].strip()
+                value = a[2].strip()
+
+                if key not in config_dict:
+                    config_dict[key] = value
+                else:
+                    print('ERROR: config key duplication: {}'.format(key))
+                    exit(1)
 
             if etc:
                 a = line[4:].split('///')
@@ -1506,20 +1557,37 @@ try:
                     exit(1)
                 etc_dict[etc_name] = etc_command
 
-            # NEED VALIDATION!
             if line.startswith('@PROCESSNAME_RE'):
-                a = line.partition('@PROCESSNAME_RE')[
-                    2].strip(' \n').partition('///')
-                processname_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+                a = line.partition(
+                    '@PROCESSNAME_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                cgroup_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@CMDLINE_RE'):
-                a = line.partition('@CMDLINE_RE')[2].strip(
-                    ' \n').partition('///')
-                cmdline_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+                a = line.partition(
+                    '@CMDLINE_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                cgroup_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@UID_RE'):
-                a = line.partition('@UID_RE')[2].strip(' \n').partition('///')
-                uid_re_list.append((a[0].strip(' '), a[2].strip(' ')))
+                a = line.partition(
+                    '@UID_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                cgroup_re_list.append((badness_adj, reg_exp))
+
+            if line.startswith('@CGROUP_RE'):
+                a = line.partition(
+                    '@CGROUP_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                cgroup_re_list.append((badness_adj, reg_exp))
 
 except PermissionError:
     errprint('PermissionError', conf_err_mess)
@@ -1564,11 +1632,12 @@ ignore_psi = conf_parse_bool('ignore_psi')
 regex_matching = conf_parse_bool('regex_matching')
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
 re_match_uid = conf_parse_bool('re_match_uid')
+re_match_cgroup = conf_parse_bool('re_match_cgroup')
 
 
-if regex_matching or re_match_cmdline or re_match_uid:
+if regex_matching or re_match_cmdline or re_match_uid or re_match_cgroup:
     from re import search
-    import sre_constants
+    from sre_constants import error as invalid_re
 
 (mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
  ) = calculate_percent('mem_min_sigterm')
