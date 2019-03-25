@@ -196,15 +196,6 @@ You can also enable `separate_log` in the config to logging in `/var/log/nohang/
 
 - Awful documentation.
 
-## Nohang don't help you
-
-if you run
-```bash
-$ while true; do setsid tail /dev/zero; done
-```
-
-(although with some settings nohang can even handle it)
-
 ## Contribution
 
 Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, feature requests and any questions are welcome.
