@@ -19,8 +19,8 @@ install:
 	install -m0644 ./nohang.logrotate $(DESTDIR)/$(PREFIX)/etc/logrotate.d/nohang
 
 	install -d $(DESTDIR)/$(PREFIX)/usr/share/man/man1
-	gzip -k -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
-	gzip -k -c oom-sort.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-sort.1.gz
+	gzip -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
+	gzip -c oom-sort.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-sort.1.gz
 
 	install -d $(DESTDIR)/$(PREFIX)/lib/systemd/system
 	install -m0644 ./nohang.service $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
