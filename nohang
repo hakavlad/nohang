@@ -610,17 +610,24 @@ def send_notify_warn():
 
     t0 = time()
 
-    title = 'Low memory'
-    body = 'MemAvail: {}%\nSwapFree: {}%'.format(
-        round(mem_available / mem_total * 100),
-        round(swap_free / (swap_total + 0.1) * 100)
-    )
+    if check_warning_exe:
 
-    send_notification(title, body)
+        print('Warning threshold exceeded')
+        print('Execute the command: {}'.format(warning_exe))
+        err = os.system(warning_exe)
+        print('Exit code: {}'.format(err))
+
+    else:
+
+        title = 'Low memory'
+        body = 'MemAvail: {}%\nSwapFree: {}%'.format(
+            round(mem_available / mem_total * 100),
+            round(swap_free / (swap_total + 0.1) * 100)
+        )
+        send_notification(title, body)
 
     t1 = time()
-
-    print('t:', t1 - t0)
+    print('Warning duration:', t1 - t0)
 
 
 def send_notify(signal, name, pid):
@@ -1366,7 +1373,7 @@ print_proc_table_flag = False
 
 if len(argv) == 1:
     if os.path.exists('./nohang.conf'):
-        config = cd = os.getcwd() + '/nohang.conf'
+        config = os.getcwd() + '/nohang.conf'
     else:
         config = '/etc/nohang/nohang.conf'
 elif len(argv) == 2:
@@ -1380,7 +1387,7 @@ elif len(argv) == 2:
     elif argv[1] == '--print-proc-table' or argv[1] == '--ppt':
         print_proc_table_flag = True
         if os.path.exists('./nohang.conf'):
-            config = cd = os.getcwd() + '/nohang.conf'
+            config = os.getcwd() + '/nohang.conf'
         else:
             config = '/etc/nohang/nohang.conf'
     else:
@@ -1805,6 +1812,17 @@ else:
     exit(1)
 
 
+if 'warning_exe' in config_dict:
+    warning_exe = config_dict['warning_exe']
+    if warning_exe != '':
+        check_warning_exe = True
+    else:
+        check_warning_exe = False
+else:
+    errprint('warning_exe is not in config\nExit')
+    exit(1)
+
+
 print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
 
@@ -1979,6 +1997,7 @@ else:
 
 ##########################################################################
 
+# outdated section, need fixes
 
 if print_config:
 
@@ -2085,7 +2104,7 @@ mlockall()
 
 
 # if print_proc_table:
-    # find_victim(print_proc_table)
+# find_victim(print_proc_table)
 
 log('Monitoring started!')
 
@@ -2365,7 +2384,6 @@ while True:
             if warn_timer > min_time_between_warnings:
                 t0 = time()
                 send_notify_warn()
-                # caused log err
                 log(str(time() - t0) + ' | send notify warning time')
                 warn_timer = 0
 

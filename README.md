@@ -240,7 +240,8 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Improve poll rate algorithm
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
-    - [x] Added `post_kill_exe` option
+    - [x] Added `post_kill_exe` option (the ability to run any command after killing the victim)
+    - [x] Added `warning_exe` option (the ability to run any command instead of GUI low memory warnings)
     - [x] Improve victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improve limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
