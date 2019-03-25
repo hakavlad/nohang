@@ -41,6 +41,7 @@ The tools listed above may work at the same time on one computer.
 - Impact on the badness of processes via matching their
     - names,
     - cgroups,
+    - realpathes,
     - cmdlines and
     - euids
     with specified regular expressions

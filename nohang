@@ -798,6 +798,18 @@ def pid_to_badness(pid):
                 if search(re_tup[1], cgroup) is not None:
                     badness += int(re_tup[0])
 
+
+        if re_match_realpath:
+            realpath = pid_to_realpath(pid)
+            for re_tup in realpath_re_list:
+                if search(re_tup[1], realpath) is not None:
+                    badness += int(re_tup[0])
+
+
+
+
+
+
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
             for re_tup in cmdline_re_list:
@@ -1508,6 +1520,7 @@ processname_re_list = []
 cmdline_re_list = []
 uid_re_list = []
 cgroup_re_list = []
+realpath_re_list = []
 
 
 
@@ -1589,6 +1602,20 @@ try:
                 valid_re(reg_exp)
                 cgroup_re_list.append((badness_adj, reg_exp))
 
+            if line.startswith('@REALPATH_RE'):
+                a = line.partition(
+                    '@REALPATH_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                realpath_re_list.append((badness_adj, reg_exp))
+
+
+
+
+
+
+
 except PermissionError:
     errprint('PermissionError', conf_err_mess)
     exit(1)
@@ -1633,11 +1660,13 @@ regex_matching = conf_parse_bool('regex_matching')
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
 re_match_uid = conf_parse_bool('re_match_uid')
 re_match_cgroup = conf_parse_bool('re_match_cgroup')
+re_match_realpath = conf_parse_bool('re_match_realpath')
 
 
-if regex_matching or re_match_cmdline or re_match_uid or re_match_cgroup:
-    from re import search
-    from sre_constants import error as invalid_re
+# if regex_matching or re_match_cmdline or re_match_uid or re_match_cgroup
+# or re_match_realpath:
+#     from re import search
+#     from sre_constants import error as invalid_re
 
 (mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
  ) = calculate_percent('mem_min_sigterm')
