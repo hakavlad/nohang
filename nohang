@@ -480,6 +480,7 @@ def zram_stat(zram_id):
     return disksize, mem_used_total  # BYTES, str
 
 
+'''
 def pid_to_name(pid):
     """
     Get process name by pid.
@@ -501,6 +502,22 @@ def pid_to_name(pid):
             f.seek(6)
             return f.read(15).decode(
                 'utf-8', 'ignore').partition('\n')[0]
+'''
+
+
+def pid_to_name(pid):
+    """
+    """
+    try:
+        with open('/proc/' + pid + '/comm', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore')[:-1]
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
+
+
+
 
 
 def pid_to_ppid(pid):
@@ -798,17 +815,11 @@ def pid_to_badness(pid):
                 if search(re_tup[1], cgroup) is not None:
                     badness += int(re_tup[0])
 
-
         if re_match_realpath:
             realpath = pid_to_realpath(pid)
             for re_tup in realpath_re_list:
                 if search(re_tup[1], realpath) is not None:
                     badness += int(re_tup[0])
-
-
-
-
-
 
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
@@ -878,6 +889,7 @@ def find_victim(_print_proc_table):
                 # pid_to_cmdline(pid)
                 # pid_to_realpath(pid)
                 pid_to_cgroup(pid)
+                # pid_to_name(pid)
                 # ''
             )
             )
