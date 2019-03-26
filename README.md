@@ -226,7 +226,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
         - [x] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
-        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup`, `Cmdline` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup`, `cmdline`, `realpath` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [x] Reduced memory usage:
         - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
