@@ -41,7 +41,11 @@ path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
     uid, t000
 )
 
-title, body = rfile(path_to_cache).split(split_by)
+try:
+    title, body = rfile(path_to_cache).split(split_by)
+except FileNotFoundError:
+    print('nohang_notify_helper: FileNotFoundError')
+    exit(1)
 
 remove(path_to_cache)
 
@@ -75,7 +79,7 @@ def re_pid_environ(pid):
 
                 if i.startswith('HOME='):
                     # exclude Display Manager's user
-                    if i.startswith('HOME=/var'):
+                    if i.startswith('HOME=/var') or i.startswith('HOME=/root'):
                         return None
 
             try:

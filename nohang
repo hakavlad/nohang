@@ -43,7 +43,7 @@ else:
     root = False
 
 
-notify_helper_path = '/usr/sbin/nohang_notify_helper'
+notify_helper_path = './nohang_notify_helper'
 
 
 victim_dict = dict()
@@ -61,6 +61,23 @@ separate_log = False  # will be overwritten after parse config
 ##########################################################################
 
 # define functions
+
+
+
+
+
+def exe(cmd):
+    """
+    """
+    log('Execute the command: {}'.format(cmd))
+    t0 = time()
+    err = os.system(cmd)
+    dt = time() - t0
+    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
+    return err
+
+
+
 
 
 def valid_re(reg_exp):
@@ -652,9 +669,7 @@ def send_notify_warn():
     if check_warning_exe:
 
         print('Warning threshold exceeded')
-        print('Execute the command: {}'.format(warning_exe))
-        err = os.system(warning_exe)
-        print('Exit code: {}'.format(err))
+        exe(warning_exe)
 
     else:
 
@@ -746,7 +761,7 @@ def send_notification(title, body):
 
     cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
 
-    os.system(cmd)
+    exe(cmd)
 
 
 def sleep_after_send_signal(signal):
@@ -1177,13 +1192,27 @@ def implement_corrective_action(signal):
                 'ion:\n  MemAvailable'
                 ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
-            exit_status = os.system(etc_dict[name].replace(
-                '$PID', pid).replace('$NAME', pid_to_name(pid)))
 
-            if exit_status == 0:
-                exit_status = '0'
-            else:
-                exit_status = '{}'.format(exit_status)
+
+            cmd = etc_dict[name].replace('$PID', pid).replace(
+                '$NAME', pid_to_name(pid))
+
+
+            exit_status = exe(cmd)
+
+
+
+
+
+
+
+            exit_status = str(exit_status)
+
+
+
+
+
+
 
             response_time = time() - time0
 
@@ -1237,10 +1266,10 @@ def implement_corrective_action(signal):
                     cmd = post_kill_exe.replace('$PID', pid).replace(
                         '$NAME', pid_to_name(pid))
 
-                    print('exe:', cmd)
-                    err = os.system(cmd)
+                    log('Execute post_kill_exe')
 
-                    print('post_kill_exe exit status:', err)
+                    exe(cmd)
+
 
                 if gui_notifications:
 
@@ -1476,8 +1505,8 @@ for s in mem_list:
     mem_list_names.append(s.split(':')[0])
 
 if mem_list_names[2] != 'MemAvailable':
-    errprint('Your Linux kernel is too old, Linux 3.14+ requied\nExit')
-    exit(1)
+    errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied\nExit')
+    # exit(1)
 
 swap_total_index = mem_list_names.index('SwapTotal')
 swap_free_index = swap_total_index + 1
