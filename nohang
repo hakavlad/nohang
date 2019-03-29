@@ -43,7 +43,10 @@ else:
     root = False
 
 
-notify_helper_path = './nohang_notify_helper'
+if os.path.exists('./nohang_notify_helper'):
+    notify_helper_path = './nohang_notify_helper'
+else:
+    notify_helper_path = '/usr/sbin/nohang_notify_helper'
 
 
 victim_dict = dict()
