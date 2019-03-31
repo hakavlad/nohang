@@ -906,8 +906,8 @@ def find_victim(_print_proc_table):
                 pid_to_name(pid).ljust(15),
                 pid_to_uid(pid).rjust(10),
                 # pid_to_cmdline(pid)
-                # pid_to_realpath(pid)
-                pid_to_cgroup(pid)
+                pid_to_realpath(pid)
+                # pid_to_cgroup(pid)
                 # pid_to_name(pid)
                 # ''
             )
@@ -1509,7 +1509,7 @@ for s in mem_list:
     mem_list_names.append(s.split(':')[0])
 
 if mem_list_names[2] != 'MemAvailable':
-    errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied\nExit')
+    errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied')
     # exit(1)
 
 swap_total_index = mem_list_names.index('SwapTotal')
