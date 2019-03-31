@@ -61,12 +61,16 @@ stat_dict = dict()
 separate_log = False  # will be overwritten after parse config
 
 
+with open('/proc/self/cgroup') as f:
+    # Find cgroup-line position in /proc/*/cgroup file."""
+    for cgroup_index, line in enumerate(f):
+        if ':name=' in line:
+            break
+
+
 ##########################################################################
 
 # define functions
-
-
-
 
 
 def exe(cmd):
@@ -78,9 +82,6 @@ def exe(cmd):
     dt = time() - t0
     log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
     return err
-
-
-
 
 
 def valid_re(reg_exp):
@@ -97,8 +98,8 @@ def pid_to_cgroup(pid):
     """
     """
     with open('/proc/' + pid + '/cgroup') as f:
-        for line in f:
-            if line.startswith('1:'):
+        for n, line in enumerate(f):
+            if n == cgroup_index:
                 return '/' + line.partition('/')[2][:-1]
 
 

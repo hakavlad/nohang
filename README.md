@@ -232,6 +232,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
         - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
     - [x] Improve poll rate algorithm
+    - [x] Fixed crash at startup due to `UnicodeDecodeError` on some systems
     - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Added `post_kill_exe` option (the ability to run any command after killing the victim)
