@@ -140,11 +140,11 @@ The program can be configured by editing the [config file](https://github.com/ha
 2. Response on PSI memory metrics
 3. The frequency of checking the level of available memory (and CPU usage)
 4. The prevention of killing innocent victims
-5. Impact on the badness of processes via matching their names, cmdlines and UIDs with regular expressions
+5. Impact on the badness of processes via matching their names, cgroups, realpaths, cmdlines and UIDs with certain regular expressions
 6. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
 7. GUI notifications:
    - notifications of corrective actions taken
-   - low memory warnings
+   - low memory warnings (or executing certain command instead)
 8. Verbosity
 9. Misc
 
