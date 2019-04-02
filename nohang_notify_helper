@@ -1,40 +1,77 @@
 #!/usr/bin/env python3
 
-from os import listdir, path, remove
-from subprocess import Popen, TimeoutExpired
-from sys import argv
-
 
 # print('Starting nohang_notify_helper')
 
-# print(argv)
 
-# print(len(argv))
+def write(path, string):
+    """
+    """
+    with open(path, 'w') as f:
+        f.write(string)
 
-split_by = '#' * 16
 
-uid = argv[2]
+try:
+    write('/proc/self/oom_score_adj', '0')
+except Exception:
+    pass
 
-t000 = argv[4]
 
-wait_time = 10
-
-display_env = 'DISPLAY='
-dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
-user_env = 'USER='
+try:
+    from os import listdir, path, remove
+    from subprocess import Popen, TimeoutExpired
+    from sys import argv
+except OSError:
+    exit(1)
 
 
 def rline1(path):
     """read 1st line from path."""
-    with open(path) as f:
-        for line in f:
-            return line
+    try:
+        with open(path) as f:
+            for line in f:
+                return line
+    except OSError:
+        exit(1)
 
 
 def rfile(path):
     """read file."""
     with open(path) as f:
         return f.read()
+
+
+with open('/proc/meminfo') as f:
+    for line in f:
+        if line.startswith('SwapTotal'):
+            swap_total = int(line.split(':')[1][:-4])
+            if swap_total > 0:
+                wait_time = 5
+            else:
+                wait_time = 0.5
+
+
+print('nohang_notify_helper: wait_time:', wait_time)
+
+
+# print(argv)
+
+
+# print(len(argv))
+
+
+split_by = '#' * 16
+
+
+uid = argv[2]
+
+
+t000 = argv[4]
+
+
+display_env = 'DISPLAY='
+dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
+user_env = 'USER='
 
 
 path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
@@ -158,9 +195,13 @@ if list_len > 0:
                     proc.wait(timeout=wait_time)
                 except TimeoutExpired:
                     proc.kill()
-                    print('TimeoutExpired: notify user:' + username)
+                    print('TimeoutExpired: notify user: ' + username)
         except BlockingIOError:
             print('nohang_notify_helper: BlockingIOError')
+        except OSError:
+            print('nohang_notify_helper: OSError')
+        except Exception:
+            print('nohang_notify_helper: CANNOT SPAWN NOTIFY-SEND PROCESS')
 else:
     print(
         'Not send GUI notification: [',

@@ -52,8 +52,6 @@ else:
 victim_dict = dict()
 
 
-# extra_process_table_info = None/cmdline/realpath #  (todo)
-
 # will store corrective actions stat
 stat_dict = dict()
 
@@ -62,7 +60,7 @@ separate_log = False  # will be overwritten after parse config
 
 
 with open('/proc/self/cgroup') as f:
-    # Find cgroup-line position in /proc/*/cgroup file."""
+    # Find cgroup-line position in /proc/*/cgroup file.
     for cgroup_index, line in enumerate(f):
         if ':name=' in line:
             break
@@ -73,12 +71,35 @@ with open('/proc/self/cgroup') as f:
 # define functions
 
 
+def write(path, string):
+    """
+    """
+    with open(path, 'w') as f:
+        f.write(string)
+
+
+def write_self_oom_score_adj(new_value):
+    """
+    """
+    if root:
+        write('/proc/self/oom_score_adj', new_value)
+
+
+self_oom_score_adj_min = '-900'
+self_oom_score_adj_max = '-9'
+
+
+write_self_oom_score_adj(self_oom_score_adj_min)
+
+
 def exe(cmd):
     """
     """
     log('Execute the command: {}'.format(cmd))
     t0 = time()
+    write_self_oom_score_adj(self_oom_score_adj_max)
     err = os.system(cmd)
+    write_self_oom_score_adj(self_oom_score_adj_min)
     dt = time() - t0
     log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
     return err
@@ -97,10 +118,13 @@ def valid_re(reg_exp):
 def pid_to_cgroup(pid):
     """
     """
-    with open('/proc/' + pid + '/cgroup') as f:
-        for n, line in enumerate(f):
-            if n == cgroup_index:
-                return '/' + line.partition('/')[2][:-1]
+    try:
+        with open('/proc/' + pid + '/cgroup') as f:
+            for n, line in enumerate(f):
+                if n == cgroup_index:
+                    return '/' + line.partition('/')[2][:-1]
+    except FileNotFoundError:
+        return ''
 
 
 def func_print_proc_table():
@@ -114,11 +138,23 @@ def func_print_proc_table():
 def log(*msg):
     """
     """
-    print(*msg)
+    try:
+        print(*msg)
+    except OSError:
+        sleep(0.01)
+        pass
+        # print('OSError in print(*msg)')
+
     if separate_log:
         # need fix: TypeError: not all arguments converted during string
         # formatting
-        info(*msg)
+
+        try:
+            info(*msg)
+        except OSError:
+            sleep(0.01)
+            pass
+            # print('OSError in info(*msg)')
 
 
 def print_version():
@@ -207,7 +243,7 @@ def uptime():
 
 
 def pid_to_starttime(pid):
-    """
+    """ handle FNF error!
     """
     try:
         starttime = rline1('/proc/' + pid + '/stat').rpartition(')')[
@@ -224,8 +260,11 @@ def pid_to_starttime(pid):
 
 def get_victim_id(pid):
     """victim_id is starttime + pid"""
-    return rline1('/proc/' + pid + '/stat').rpartition(
-        ')')[2].split(' ')[20] + pid
+    try:
+        return rline1('/proc/' + pid + '/stat').rpartition(
+            ')')[2].split(' ')[20] + pid
+    except FileNotFoundError:
+        return ''
 
 
 def errprint(*text):
@@ -259,7 +298,7 @@ def mlockall():
 
 
 def pid_to_state(pid):
-    """
+    """ Handle FNF error! (BTW it already handled in find_victim_info())
     """
     return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
@@ -501,31 +540,6 @@ def zram_stat(zram_id):
     return disksize, mem_used_total  # BYTES, str
 
 
-'''
-def pid_to_name(pid):
-    """
-    Get process name by pid.
-
-    pid: str pid of required process
-    returns string process_name
-    """
-    try:
-        with open('/proc/' + pid + '/status') as f:
-            f.seek(6)
-            for line in f:
-                return line[:-1]
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
-        return ''
-    except UnicodeDecodeError:
-        with open('/proc/' + pid + '/status', 'rb') as f:
-            f.seek(6)
-            return f.read(15).decode(
-                'utf-8', 'ignore').partition('\n')[0]
-'''
-
-
 def pid_to_name(pid):
     """
     """
@@ -536,9 +550,6 @@ def pid_to_name(pid):
         return ''
     except ProcessLookupError:
         return ''
-
-
-
 
 
 def pid_to_ppid(pid):
@@ -591,8 +602,11 @@ def pid_to_cmdline(pid):
     pid: str pid of required process
     returns string cmdline
     """
-    with open('/proc/' + pid + '/cmdline') as f:
-        return f.read().replace('\x00', ' ').rstrip()
+    try:
+        with open('/proc/' + pid + '/cmdline') as f:
+            return f.read().replace('\x00', ' ').rstrip()
+    except FileNotFoundError:
+        return ''
 
 
 def pid_to_realpath(pid):
@@ -613,6 +627,8 @@ def pid_to_uid(pid):
         with open('/proc/' + pid + '/status', 'rb') as f:
             f_list = f.read().decode('utf-8', 'ignore').split('\n')
             return f_list[uid_index].split('\t')[2]
+    except FileNotFoundError:
+        return ''
 
 
 def send_notify_warn():
@@ -666,13 +682,12 @@ def send_notify_warn():
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
     '''
-    #os.system('echo --- \ - $(sleep 5) - ')
 
-    t0 = time()
+    # os.system('echo --- \ - $(sleep 5) - ')
+
+    print('Warning threshold exceeded')
 
     if check_warning_exe:
-
-        print('Warning threshold exceeded')
         exe(warning_exe)
 
     else:
@@ -683,9 +698,6 @@ def send_notify_warn():
             round(swap_free / (swap_total + 0.1) * 100)
         )
         send_notification(title, body)
-
-    t1 = time()
-    print('Warning duration:', t1 - t0)
 
 
 def send_notify(signal, name, pid):
@@ -728,11 +740,9 @@ def send_notify_etc(pid, name, command):
     pid: str process pid
     """
     title = 'Freeze prevention'
-    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the command:\n<b>{}</b>'.format(
-        pid,
-        name.replace('&', '*'),
-        command.replace('&', '*')
-    )
+    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the co' \
+        'mmand:\n<b>{}</b>'.format(
+            pid, name.replace('&', '*'), command.replace('&', '*'))
 
     send_notification(title, body)
 
@@ -759,9 +769,14 @@ def send_notification(title, body):
 
     text = '{}{}{}'.format(title, split_by, body)
 
-    with open(path_to_cache, 'w') as f:
-        f.write(text)
-        os.chmod(path_to_cache, 0o600)
+    try:
+        with open(path_to_cache, 'w') as f:
+            f.write(text)
+            os.chmod(path_to_cache, 0o600)
+    except OSError:
+        log('OSError while send notification '
+            '(No space left on device: /dev/shm)')
+        return None
 
     cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
 
@@ -882,14 +897,34 @@ def find_victim(_print_proc_table):
     non_decimal_list = get_non_decimal_pids()
 
     for i in non_decimal_list:
-        pid_list.remove(i)
+        if i in pid_list:  # ????????????????????????????????????????????
+            pid_list.remove(i)
 
     pid_badness_list = []
 
     if _print_proc_table:
+
+        if extra_table_info == 'None':
+            extra_table_title = ''
+
+        elif extra_table_info == 'cgroup':
+            extra_table_title = 'CGroup'
+
+        elif extra_table_info == 'cmdline':
+            extra_table_title = 'cmdline'
+
+        elif extra_table_info == 'realpath':
+            extra_table_title = 'realpath'
+
+        elif extra_table_info == 'All':
+            extra_table_title = '[CGroup] [CmdLine] [RealPath]'
+        else:
+            extra_table_title = ''
+
         log('=============================================================='
             '=================')
-        log('    PID  badness  Name                  eUID  CGroup')
+        log('    PID  badness  Name                  eUID  {}'.format(
+            extra_table_title))
         log('-------  -------  --------------- ----------  -----------'
             '----------------------')
 
@@ -900,18 +935,39 @@ def find_victim(_print_proc_table):
             continue
 
         if _print_proc_table:
+
+            if extra_table_info == 'None':
+                extra_table_line = ''
+
+            elif extra_table_info == 'cgroup':
+                extra_table_line = pid_to_cgroup(pid)
+
+            elif extra_table_info == 'cmdline':
+                extra_table_line = pid_to_cmdline(pid)
+
+            elif extra_table_info == 'realpath':
+                extra_table_line = pid_to_realpath(pid)
+
+            elif extra_table_info == 'All':
+                extra_table_line = '[CG: {}] [CL: {}] [RP: {}]'.format(
+                    pid_to_cgroup(pid),
+                    pid_to_cmdline(pid),
+                    pid_to_realpath(pid)
+                )
+            else:
+                extra_table_line = ''
+
             log('{}  {}  {} {}  {}'.format(
                 pid.rjust(7),
                 str(badness).rjust(7),
                 pid_to_name(pid).ljust(15),
+                # сейчас ищем уид, а надо всего побольше, и состояние памяти.
+                # Написать безопасную фцию для нахождения для каждого процесса:
                 pid_to_uid(pid).rjust(10),
-                # pid_to_cmdline(pid)
-                pid_to_realpath(pid)
-                # pid_to_cgroup(pid)
-                # pid_to_name(pid)
-                # ''
-            )
-            )
+                # Name, PPID, State, VmSize, VmRSS, VmSwap, Threads - на основе
+                # find victim info.
+                extra_table_line)
+                )
 
         pid_badness_list.append((pid, badness))
 
@@ -946,10 +1002,15 @@ def find_victim(_print_proc_table):
     return pid, victim_badness, victim_name
 
 
+def find_status_for_proc_table(pid):
+    """
+    """
+    pass
+
+
 def find_victim_info(pid, victim_badness, name):
     """
     """
-
     status0 = time()
 
     try:
@@ -1085,6 +1146,8 @@ def find_victim_info(pid, victim_badness, name):
 
     try:
         realpath = os.path.realpath('/proc/' + pid + '/exe')
+        victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
+        victim_cgroup = pid_to_cgroup(pid)
     except FileNotFoundError:
         print('The victim died in the search process: FileNotFoundError')
         update_stat_dict_and_print(
@@ -1105,10 +1168,6 @@ def find_victim_info(pid, victim_badness, name):
                 shmem_rss)
     else:
         detailed_rss_info = ''
-
-    victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
-
-    victim_cgroup = pid_to_cgroup(pid)
 
     victim_info = 'Victim information (found in {} ms):' \
         '\n  Name:     {}' \
@@ -1145,7 +1204,6 @@ def find_victim_info(pid, victim_badness, name):
             victim_lifetime)
 
     return victim_info
-
 
 
 # для дедупликации уведомлений
@@ -1196,27 +1254,12 @@ def implement_corrective_action(signal):
                 'ion:\n  MemAvailable'
                 ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
 
-
-
             cmd = etc_dict[name].replace('$PID', pid).replace(
                 '$NAME', pid_to_name(pid))
 
-
             exit_status = exe(cmd)
 
-
-
-
-
-
-
             exit_status = str(exit_status)
-
-
-
-
-
-
 
             response_time = time() - time0
 
@@ -1274,7 +1317,6 @@ def implement_corrective_action(signal):
 
                     exe(cmd)
 
-
                 if gui_notifications:
 
                     # min delay after same notification
@@ -1288,14 +1330,14 @@ def implement_corrective_action(signal):
 
                     y = dick['v']
 
-                    #print(y[3] - x[3])
+                    # print(y[3] - x[3])
 
                     if x[0] == y[0] and x[1] == y[1] and x[2] == y[2]:
-                        #print('совпадение имени, пид, сигнала')
+                        # print('совпадение имени, пид, сигнала')
 
                         # сохр в словаре первре совпавшее время
                         dt = y[3] - x[3]
-                        #print(dt, 'dt')
+                        # print(dt, 'dt')
                         if dt < delay_after_same_notify:
                             notif = False
 
@@ -1315,7 +1357,10 @@ def implement_corrective_action(signal):
                 key = 'ProcessLookupError (the victim died in the se' \
                       'arch process): '
 
-            log(preventing_oom_message)
+            try:
+                log(preventing_oom_message)
+            except UnboundLocalError:
+                preventing_oom_message = key
 
             update_stat_dict_and_print(key)
 
@@ -1388,7 +1433,10 @@ def sleep_after_check_mem():
             )
         )
 
-    stdout.flush()
+    try:
+        stdout.flush()
+    except OSError:  # OSError: [Errno 105] No buffer space available
+        pass
 
     try:
         sleep(t)
@@ -1568,16 +1616,10 @@ cgroup_re_list = []
 realpath_re_list = []
 
 
-
 # dictionary with names and commands for the parameter
 # execute_the_command
 # тут тоже список нужен, а не словарь
 etc_dict = dict()
-
-
-
-
-
 
 
 try:
@@ -1594,7 +1636,6 @@ try:
 
             if not a and not b and not c and not d and not etc:
                 a = line.partition('=')
-
 
                 key = a[0].strip()
                 value = a[2].strip()
@@ -1656,11 +1697,6 @@ try:
                 realpath_re_list.append((badness_adj, reg_exp))
 
 
-
-
-
-
-
 except PermissionError:
     errprint('PermissionError', conf_err_mess)
     exit(1)
@@ -1689,8 +1725,8 @@ except FileNotFoundError:
 # check for all necessary parameters
 # validation of all parameters
 psi_debug = conf_parse_bool('psi_debug')
-
-
+print_total_stat = conf_parse_bool('print_total_stat')
+print_proc_table = conf_parse_bool('print_proc_table')
 forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
 print_victim_info = conf_parse_bool('print_victim_info')
 print_config = conf_parse_bool('print_config')
@@ -1966,8 +2002,17 @@ else:
     exit(1)
 
 
-print_total_stat = conf_parse_bool('print_total_stat')
-print_proc_table = conf_parse_bool('print_proc_table')
+if 'extra_table_info' in config_dict:
+    extra_table_info = config_dict['extra_table_info']
+    if (extra_table_info != 'None' and extra_table_info != 'cgroup' and
+        extra_table_info != 'cmdline' and extra_table_info != 'realpath' and
+            extra_table_info != 'All'):
+        errprint('Invalid config: invalid extra_table_info value\nExit')
+        exit(1)
+else:
+    errprint('Invalid config: extra_table_info is not in config\nExit')
+    exit(1)
+
 
 separate_log = conf_parse_bool('separate_log')
 
@@ -2308,8 +2353,9 @@ while True:
 
         if sigkill_psi_exceeded and psi_post_action_delay_exceeded:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigkill_psi_threshold ({})'.format(
-                psi_avg_value, sigkill_psi_threshold)
+            mem_info = 'PSI avg value ({}) > sigkill_psi_thresh' \
+                'old ({})'.format(
+                    psi_avg_value, sigkill_psi_threshold)
 
             implement_corrective_action(SIGKILL)
 
@@ -2318,8 +2364,8 @@ while True:
 
         if sigterm_psi_exceeded and psi_post_action_delay_exceeded:
             time0 = time()
-            mem_info = 'PSI avg value ({}) > sigterm_psi_threshold ({})'.format(
-                psi_avg_value, sigterm_psi_threshold)
+            mem_info = 'PSI avg value ({}) > sigterm_psi_thre' \
+                'shold ({})'.format(psi_avg_value, sigterm_psi_threshold)
 
             implement_corrective_action(SIGTERM)
 
@@ -2437,7 +2483,7 @@ while True:
         time0 = time()
 
         mem_info = 'Hard threshold exceeded\nMemory status that requ' \
-                   'ires corrective actions:' \
+            'ires corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigkill [{} MiB, {} %]'.format(
@@ -2451,6 +2497,7 @@ while True:
                 swap_sigkill_pc)
 
         implement_corrective_action(SIGKILL)
+
         psi_t0 = time()
         continue
 
@@ -2468,6 +2515,7 @@ while True:
                 percent(zram_max_sigkill_kb / mem_total))
 
         implement_corrective_action(SIGKILL)
+
         psi_t0 = time()
         continue
 
@@ -2478,7 +2526,7 @@ while True:
         time0 = time()
 
         mem_info = 'Soft threshold exceeded\nMemory status that requi' \
-                   'res corrective actions:' \
+            'res corrective actions:' \
             '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
             'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
             'p_min_sigterm [{} MiB, {} %]'.format(
@@ -2494,6 +2542,7 @@ while True:
                 swap_sigterm_pc)
 
         implement_corrective_action(SIGTERM)
+
         psi_t0 = time()
         continue
 
@@ -2502,7 +2551,7 @@ while True:
         time0 = time()
 
         mem_info = 'Soft threshold exceeded\nMemory status that requ' \
-                   'ires corrective actions:' \
+            'ires corrective actions:' \
             '\n  MemUsedZram [{} MiB, {} %] >= ' \
             'zram_max_sigterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
@@ -2525,9 +2574,7 @@ while True:
             warn_time_now = time()
             warn_timer += warn_time_delta
             if warn_timer > min_time_between_warnings:
-                t0 = time()
                 send_notify_warn()
-                log(str(time() - t0) + ' | send notify warning time')
                 warn_timer = 0
 
     # SLEEP BETWEEN MEM CHECKS
