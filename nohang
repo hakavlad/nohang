@@ -1494,10 +1494,12 @@ def calculate_percent(arg_key):
 
         else:
             print('Invalid {} units in config.\n Exit'.format(arg_key))
+            exit(1)
             mem_min_percent = None
 
     else:
         print('{} not in config\nExit'.format(arg_key))
+        exit(1)
         mem_min_percent = None
 
     return mem_min_kb, mem_min_mb, mem_min_percent
