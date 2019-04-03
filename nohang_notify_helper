@@ -48,7 +48,7 @@ with open('/proc/meminfo') as f:
             if swap_total > 0:
                 wait_time = 5
             else:
-                wait_time = 0.5
+                wait_time = 1
 
 
 print('nohang_notify_helper: wait_time:', wait_time)

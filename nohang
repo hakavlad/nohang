@@ -486,7 +486,7 @@ def rline1(path):
         # print('UDE rline1', path)
         with open(path, 'rb') as f:
             return f.read(999).decode(
-                'utf-8', 'ignore').split('\n')[0]
+                'utf-8', 'ignore').split('\n')[0]  ## use partition()!
 
 
 def kib_to_mib(num):
@@ -713,7 +713,7 @@ def send_notify(signal, name, pid):
     # wait for memory release after corrective action
     # may be useful if free memory was about 0 immediately after
     # corrective action
-    sleep(0.01)
+    sleep(0.05)
 
     title = 'Freeze prevention'
     body = '<b>{}</b> [{}] <b>{}</b>'.format(
@@ -1237,11 +1237,14 @@ def implement_corrective_action(signal):
 
             # todo: make new func
             m = check_mem_and_swap()
-            ma = round(int(m[0]) / 1024.0, 1)
-            sf = round(int(m[2]) / 1024.0, 1)
+            ma = int(m[0]) / 1024.0
+            sf = int(m[2]) / 1024.0
             log('Memory status before implementing a corrective act'
                 'ion:\n  MemAvailable'
-                ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
+                ': {} MiB, SwapFree: {} MiB'.format(
+                    round(ma, 1), round(sf, 1)
+                    )
+                )
 
             cmd = etc_dict[name].replace('$PID', pid).replace(
                 '$NAME', pid_to_name(pid))
@@ -1279,11 +1282,14 @@ def implement_corrective_action(signal):
             try:
 
                 m = check_mem_and_swap()
-                ma = round(int(m[0]) / 1024.0)
-                sf = round(int(m[2]) / 1024.0)
-                log('Memory status before implementing a correct'
-                    'ive action:\n  MemAvailable'
-                    ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
+                ma = int(m[0]) / 1024.0
+                sf = int(m[2]) / 1024.0
+                log('Memory status before implementing a corrective act'
+                    'ion:\n  MemAvailable'
+                    ': {} MiB, SwapFree: {} MiB'.format(
+                        round(ma, 1), round(sf, 1)
+                        )
+                    )
 
                 os.kill(int(pid), signal)
                 response_time = time() - time0
