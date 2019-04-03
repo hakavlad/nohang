@@ -115,18 +115,6 @@ def valid_re(reg_exp):
         exit(1)
 
 
-def pid_to_cgroup(pid):
-    """
-    """
-    try:
-        with open('/proc/' + pid + '/cgroup') as f:
-            for n, line in enumerate(f):
-                if n == cgroup_index:
-                    return '/' + line.partition('/')[2][:-1]
-    except FileNotFoundError:
-        return ''
-
-
 def func_print_proc_table():
     """
     """
@@ -236,10 +224,19 @@ def test():
     exit()
 
 
-def uptime():
+##########################################################################
+
+
+def pid_to_cgroup(pid):
     """
     """
-    return float(rline1('/proc/uptime').split(' ')[0])
+    try:
+        with open('/proc/' + pid + '/cgroup') as f:
+            for n, line in enumerate(f):
+                if n == cgroup_index:
+                    return '/' + line.partition('/')[2][:-1]
+    except FileNotFoundError:
+        return ''
 
 
 def pid_to_starttime(pid):
@@ -265,6 +262,257 @@ def get_victim_id(pid):
             ')')[2].split(' ')[20] + pid
     except FileNotFoundError:
         return ''
+
+
+def pid_to_state(pid):
+    """ Handle FNF error! (BTW it already handled in find_victim_info())
+    """
+    return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
+
+
+def pid_to_name(pid):
+    """
+    """
+    try:
+        with open('/proc/' + pid + '/comm', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore')[:-1]
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
+
+
+def pid_to_ppid(pid):
+    """
+    """
+    try:
+        with open('/proc/' + pid + '/status') as f:
+            for n, line in enumerate(f):
+                if n is ppid_index:
+                    return line.split('\t')[1].strip()
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f_list = f.read().decode('utf-8', 'ignore').split('\n')
+            for i in range(len(f_list)):
+                if i is ppid_index:
+                    return f_list[i].split('\t')[1]
+
+
+def pid_to_ancestry(pid, max_ancestry_depth=1):
+    """
+    """
+    if max_ancestry_depth == 1:
+        ppid = pid_to_ppid(pid)
+        pname = pid_to_name(ppid)
+        return '\n  PPID:     {} ({})'.format(ppid, pname)
+    if max_ancestry_depth == 0:
+        return ''
+    anc_list = []
+    for i in range(max_ancestry_depth):
+        ppid = pid_to_ppid(pid)
+        pname = pid_to_name(ppid)
+        anc_list.append((ppid, pname))
+        if ppid == '1':
+            break
+        pid = ppid
+    a = ''
+    for i in anc_list:
+        a = a + ' <= PID {} ({})'.format(i[0], i[1])
+    return '\n  Ancestry: ' + a[4:]
+
+
+def pid_to_cmdline(pid):
+    """
+    Get process cmdline by pid.
+
+    pid: str pid of required process
+    returns string cmdline
+    """
+    try:
+        with open('/proc/' + pid + '/cmdline') as f:
+            return f.read().replace('\x00', ' ').rstrip()
+    except FileNotFoundError:
+        return ''
+
+
+def pid_to_realpath(pid):
+    try:
+        return os.path.realpath('/proc/' + pid + '/exe')
+    except FileNotFoundError:
+        return ''
+
+
+def pid_to_uid(pid):
+    """return euid"""
+    try:
+        with open('/proc/' + pid + '/status') as f:
+            for n, line in enumerate(f):
+                if n is uid_index:
+                    return line.split('\t')[2]
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f_list = f.read().decode('utf-8', 'ignore').split('\n')
+            return f_list[uid_index].split('\t')[2]
+    except FileNotFoundError:
+        return ''
+
+
+def pid_to_badness(pid):
+    """Find and modify badness (if it needs)."""
+
+    try:
+
+        oom_score = int(rline1('/proc/' + pid + '/oom_score'))
+        badness = oom_score
+
+        if decrease_oom_score_adj:
+            oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
+            if badness > oom_score_adj_max and oom_score_adj > 0:
+                badness = badness - oom_score_adj + oom_score_adj_max
+
+        if regex_matching:
+            name = pid_to_name(pid)
+            for re_tup in processname_re_list:
+                if search(re_tup[1], name) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_cgroup:
+            cgroup = pid_to_cgroup(pid)
+            for re_tup in cgroup_re_list:
+                if search(re_tup[1], cgroup) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_realpath:
+            realpath = pid_to_realpath(pid)
+            for re_tup in realpath_re_list:
+                if search(re_tup[1], realpath) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_cmdline:
+            cmdline = pid_to_cmdline(pid)
+            for re_tup in cmdline_re_list:
+                if search(re_tup[1], cmdline) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_uid:
+            uid = pid_to_uid(pid)
+            for re_tup in uid_re_list:
+                if search(re_tup[1], uid) is not None:
+                    badness += int(re_tup[0])
+
+        if forbid_negative_badness:
+            if badness < 0:
+                badness = 0
+
+        return badness, oom_score
+
+    except FileNotFoundError:
+        return None, None
+    except ProcessLookupError:
+        return None, None
+
+
+def pid_to_status(pid):
+    """
+    """
+
+    try:
+
+        with open('/proc/' + pid + '/status') as f:
+
+            for n, line in enumerate(f):
+
+                if n is 0:
+                    name = line.split('\t')[1][:-1]
+
+                if n is state_index:
+                    state = line.split('\t')[1][0]
+                    continue
+
+                if n is ppid_index:
+                    ppid = line.split('\t')[1][:-1]
+                    continue
+
+                if n is uid_index:
+                    uid = line.split('\t')[2]
+                    continue
+
+                if n is vm_size_index:
+                    vm_size = kib_to_mib(int(line.split('\t')[1][:-4]))
+                    continue
+
+                if n is vm_rss_index:
+                    vm_rss = kib_to_mib(int(line.split('\t')[1][:-4]))
+                    continue
+
+                if n is vm_swap_index:
+                    vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
+                    break
+
+        return name, state, ppid, uid, vm_size, vm_rss, vm_swap
+
+    except UnicodeDecodeError:
+        return pid_to_status2(pid)
+
+    except FileNotFoundError:
+        return None
+
+    except ProcessLookupError:
+        return None
+
+
+def pid_to_status2(pid):
+    """
+    """
+    try:
+
+        with open('/proc/' + pid + '/status', 'rb') as f:
+            f_list = f.read().decode('utf-8', 'ignore').split('\n')
+
+            for i in range(len(f_list)):
+
+                if i is 0:
+                    name = f_list[i].split('\t')[1]
+
+                if i is state_index:
+                    state = f_list[i].split('\t')[1][0]
+
+                if i is ppid_index:
+                    ppid = f_list[i].split('\t')[1]
+
+                if i is uid_index:
+                    uid = f_list[i].split('\t')[2]
+
+                if i is vm_size_index:
+                    vm_size = kib_to_mib(
+                        int(f_list[i].split('\t')[1][:-3]))
+
+                if i is vm_rss_index:
+                    vm_rss = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
+
+                if i is vm_swap_index:
+                    vm_swap = kib_to_mib(int(f_list[i].split('\t')[1][:-3]))
+
+        return name, state, ppid, uid, vm_size, vm_rss, vm_swap
+
+    except FileNotFoundError:
+        return None
+
+    except ProcessLookupError:
+        return None
+
+
+##########################################################################
+
+
+def uptime():
+    """
+    """
+    return float(rline1('/proc/uptime').split(' ')[0])
 
 
 def errprint(*text):
@@ -295,12 +543,6 @@ def mlockall():
             log('All memory locked with MCL_CURRENT | MCL_FUTURE')
     else:
         log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
-
-
-def pid_to_state(pid):
-    """ Handle FNF error! (BTW it already handled in find_victim_info())
-    """
-    return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
 
 def update_stat_dict_and_print(key):
@@ -486,7 +728,7 @@ def rline1(path):
         # print('UDE rline1', path)
         with open(path, 'rb') as f:
             return f.read(999).decode(
-                'utf-8', 'ignore').split('\n')[0]  ## use partition()!
+                'utf-8', 'ignore').split('\n')[0]  # use partition()!
 
 
 def kib_to_mib(num):
@@ -540,97 +782,6 @@ def zram_stat(zram_id):
     return disksize, mem_used_total  # BYTES, str
 
 
-def pid_to_name(pid):
-    """
-    """
-    try:
-        with open('/proc/' + pid + '/comm', 'rb') as f:
-            return f.read().decode('utf-8', 'ignore')[:-1]
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
-        return ''
-
-
-def pid_to_ppid(pid):
-    """
-    """
-    try:
-        with open('/proc/' + pid + '/status') as f:
-            for n, line in enumerate(f):
-                if n is ppid_index:
-                    return line.split('\t')[1].strip()
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
-        return ''
-    except UnicodeDecodeError:
-        with open('/proc/' + pid + '/status', 'rb') as f:
-            f_list = f.read().decode('utf-8', 'ignore').split('\n')
-            for i in range(len(f_list)):
-                if i is ppid_index:
-                    return f_list[i].split('\t')[1]
-
-
-def pid_to_ancestry(pid, max_ancestry_depth=1):
-    """
-    """
-    if max_ancestry_depth == 1:
-        ppid = pid_to_ppid(pid)
-        pname = pid_to_name(ppid)
-        return '\n  PPID:     {} ({})'.format(ppid, pname)
-    if max_ancestry_depth == 0:
-        return ''
-    anc_list = []
-    for i in range(max_ancestry_depth):
-        ppid = pid_to_ppid(pid)
-        pname = pid_to_name(ppid)
-        anc_list.append((ppid, pname))
-        if ppid == '1':
-            break
-        pid = ppid
-    a = ''
-    for i in anc_list:
-        a = a + ' <= PID {} ({})'.format(i[0], i[1])
-    return '\n  Ancestry: ' + a[4:]
-
-
-def pid_to_cmdline(pid):
-    """
-    Get process cmdline by pid.
-
-    pid: str pid of required process
-    returns string cmdline
-    """
-    try:
-        with open('/proc/' + pid + '/cmdline') as f:
-            return f.read().replace('\x00', ' ').rstrip()
-    except FileNotFoundError:
-        return ''
-
-
-def pid_to_realpath(pid):
-    try:
-        return os.path.realpath('/proc/' + pid + '/exe')
-    except FileNotFoundError:
-        return ''
-
-
-def pid_to_uid(pid):
-    """return euid"""
-    try:
-        with open('/proc/' + pid + '/status') as f:
-            for n, line in enumerate(f):
-                if n is uid_index:
-                    return line.split('\t')[2]
-    except UnicodeDecodeError:
-        with open('/proc/' + pid + '/status', 'rb') as f:
-            f_list = f.read().decode('utf-8', 'ignore').split('\n')
-            return f_list[uid_index].split('\t')[2]
-    except FileNotFoundError:
-        return ''
-
-
 def send_notify_warn():
     """
     Look for process with maximum 'badness' and warn user with notification.
@@ -682,7 +833,6 @@ def send_notify_warn():
         # send notification to user that runs this nohang
         notify_send_wait(title, body)
     '''
-
 
     print('Warning threshold exceeded')
 
@@ -813,61 +963,6 @@ def get_non_decimal_pids():
     return non_decimal_list
 
 
-def pid_to_badness(pid):
-    """Find and modify badness (if it needs)."""
-
-    try:
-
-        oom_score = int(rline1('/proc/' + pid + '/oom_score'))
-        badness = oom_score
-
-        if decrease_oom_score_adj:
-            oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
-            if badness > oom_score_adj_max and oom_score_adj > 0:
-                badness = badness - oom_score_adj + oom_score_adj_max
-
-        if regex_matching:
-            name = pid_to_name(pid)
-            for re_tup in processname_re_list:
-                if search(re_tup[1], name) is not None:
-                    badness += int(re_tup[0])
-
-        if re_match_cgroup:
-            cgroup = pid_to_cgroup(pid)
-            for re_tup in cgroup_re_list:
-                if search(re_tup[1], cgroup) is not None:
-                    badness += int(re_tup[0])
-
-        if re_match_realpath:
-            realpath = pid_to_realpath(pid)
-            for re_tup in realpath_re_list:
-                if search(re_tup[1], realpath) is not None:
-                    badness += int(re_tup[0])
-
-        if re_match_cmdline:
-            cmdline = pid_to_cmdline(pid)
-            for re_tup in cmdline_re_list:
-                if search(re_tup[1], cmdline) is not None:
-                    badness += int(re_tup[0])
-
-        if re_match_uid:
-            uid = pid_to_uid(pid)
-            for re_tup in uid_re_list:
-                if search(re_tup[1], uid) is not None:
-                    badness += int(re_tup[0])
-
-        if forbid_negative_badness:
-            if badness < 0:
-                badness = 0
-
-        return badness, oom_score
-
-    except FileNotFoundError:
-        return None, None
-    except ProcessLookupError:
-        return None, None
-
-
 def find_victim(_print_proc_table):
     """
     Find the process with highest badness and its badness adjustment
@@ -910,20 +1005,31 @@ def find_victim(_print_proc_table):
         else:
             extra_table_title = ''
 
-        log('=============================================================='
-            '=================')
-        log('    PID  badness  Name                  eUID  {}'.format(
+        log('====================================================================================================================')
+        log('    PID     PPID  badness  oom_score  oom_score_adj        eUID  S  VmSize  VmRSS  VmSwap  Name             {}'.format(
             extra_table_title))
-        log('-------  -------  --------------- ----------  -----------'
-            '----------------------')
+        log('-------  -------  -------  ---------  -------------  ----------  -  ------  -----  ------  ---------------  --------')
 
     for pid in pid_list:
 
         badness = pid_to_badness(pid)[0]
+
         if badness is None:
             continue
 
         if _print_proc_table:
+
+            try:
+                oom_score = rline1('/proc/' + pid + '/oom_score')
+                oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
+            except FileNotFoundError:
+                continue
+
+            if pid_to_status(pid) is None:
+                continue
+            else:
+                name, state, ppid, uid, vm_size, vm_rss, vm_swap = pid_to_status(
+                    pid)
 
             if extra_table_info == 'None':
                 extra_table_line = ''
@@ -946,17 +1052,21 @@ def find_victim(_print_proc_table):
             else:
                 extra_table_line = ''
 
-            log('{}  {}  {} {}  {}'.format(
+            log('{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}'.format(
                 pid.rjust(7),
+                ppid.rjust(7),
                 str(badness).rjust(7),
-                pid_to_name(pid).ljust(15),
-                # сейчас ищем уид, а надо всего побольше, и состояние памяти.
-                # Написать безопасную фцию для нахождения для каждого процесса:
-                pid_to_uid(pid).rjust(10),
-                # Name, PPID, State, VmSize, VmRSS, VmSwap, Threads - на основе
-                # find victim info.
-                extra_table_line)
-                )
+                oom_score.rjust(9),
+                oom_score_adj.rjust(13),
+                uid.rjust(10),
+                state,
+                str(vm_size).rjust(6),
+                str(vm_rss).rjust(5),
+                str(vm_swap).rjust(6),
+                name.ljust(15),
+                extra_table_line
+            )
+            )
 
         pid_badness_list.append((pid, badness))
 
@@ -975,8 +1085,7 @@ def find_victim(_print_proc_table):
     victim_name = pid_to_name(pid)
 
     if _print_proc_table:
-        log('============================================================'
-            '===================')
+        log('====================================================================================================================')
 
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'
@@ -989,12 +1098,6 @@ def find_victim(_print_proc_table):
     )
 
     return pid, victim_badness, victim_name
-
-
-def find_status_for_proc_table(pid):
-    """
-    """
-    pass
 
 
 def find_victim_info(pid, victim_badness, name):
@@ -1243,7 +1346,7 @@ def implement_corrective_action(signal):
                 'ion:\n  MemAvailable'
                 ': {} MiB, SwapFree: {} MiB'.format(
                     round(ma, 1), round(sf, 1)
-                    )
+                )
                 )
 
             cmd = etc_dict[name].replace('$PID', pid).replace(
@@ -1281,15 +1384,21 @@ def implement_corrective_action(signal):
 
             try:
 
-                m = check_mem_and_swap()
-                ma = int(m[0]) / 1024.0
-                sf = int(m[2]) / 1024.0
+                mem_available, swap_total, swap_free = check_mem_and_swap()
+
+                ma_mib = int(mem_available) / 1024.0
+                sf_mib = int(swap_free) / 1024.0
                 log('Memory status before implementing a corrective act'
                     'ion:\n  MemAvailable'
                     ': {} MiB, SwapFree: {} MiB'.format(
-                        round(ma, 1), round(sf, 1)
-                        )
+                        round(ma_mib, 1), round(sf_mib, 1)
                     )
+                    )
+
+                if (mem_available <= mem_min_sigkill_kb and
+                        swap_free <= swap_min_sigkill_kb):
+                    log('Hard threshold exceeded')
+                    signal = SIGKILL
 
                 os.kill(int(pid), signal)
                 response_time = time() - time0
@@ -1300,8 +1409,7 @@ def implement_corrective_action(signal):
                     '\n  Send {} to the victim; {}'.format(
                         sig_dict[signal], send_result)
 
-                key = 'Send {} to {}'.format(
-                    sig_dict[signal], name)
+                key = 'Send {} to {}'.format(sig_dict[signal], name)
 
                 if signal is SIGKILL and post_kill_exe != '':
 
