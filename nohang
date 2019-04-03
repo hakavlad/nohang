@@ -683,7 +683,6 @@ def send_notify_warn():
         notify_send_wait(title, body)
     '''
 
-    # os.system('echo --- \ - $(sleep 5) - ')
 
     print('Warning threshold exceeded')
 
@@ -693,10 +692,12 @@ def send_notify_warn():
     else:
 
         title = 'Low memory'
+
         body = 'MemAvail: {}%\nSwapFree: {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100)
         )
+
         send_notification(title, body)
 
 
@@ -708,6 +709,12 @@ def send_notify(signal, name, pid):
     name: str process name
     pid: str process pid
     """
+
+    # wait for memory release after corrective action
+    # may be useful if free memory was about 0 immediately after
+    # corrective action
+    sleep(0.01)
+
     title = 'Freeze prevention'
     body = '<b>{}</b> [{}] <b>{}</b>'.format(
         notify_sig_dict[signal],
@@ -720,15 +727,6 @@ def send_notify(signal, name, pid):
     )
 
     send_notification(title, body)
-
-    '''
-    if root:
-        # send notification to all active users with notify-send
-        notify_helper(title, body)
-    else:
-        # send notification to user that runs this nohang
-        notify_send_wait(title, body)
-    '''
 
 
 def send_notify_etc(pid, name, command):
@@ -745,15 +743,6 @@ def send_notify_etc(pid, name, command):
             pid, name.replace('&', '*'), command.replace('&', '*'))
 
     send_notification(title, body)
-
-    '''
-    if root:
-        # send notification to all active users with notify-send
-        notify_helper(title, body)
-    else:
-        # send notification to user that runs this nohang
-        notify_send_wait(title, body)
-    '''
 
 
 def send_notification(title, body):
@@ -1248,8 +1237,8 @@ def implement_corrective_action(signal):
 
             # todo: make new func
             m = check_mem_and_swap()
-            ma = round(int(m[0]) / 1024.0)
-            sf = round(int(m[2]) / 1024.0)
+            ma = round(int(m[0]) / 1024.0, 1)
+            sf = round(int(m[2]) / 1024.0, 1)
             log('Memory status before implementing a corrective act'
                 'ion:\n  MemAvailable'
                 ': {} MiB, SwapFree: {} MiB'.format(ma, sf))
