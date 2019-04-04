@@ -125,7 +125,7 @@ optional arguments:
   -h, --help            show this help message and exit
   -v, --version         print version
   -t, --test            print some tests
-  --ppt, --print-proc-table
+  -p, --print-proc-table
                         print table of processes with their badness values
   -c CONFIG, --config CONFIG
                         path to the config file, default values:
