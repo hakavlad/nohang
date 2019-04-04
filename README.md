@@ -208,7 +208,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
     - [x] Added new CLI options:
         - [x] -v, --version
         - [x] -t, --test
-        - [x] --ppt, --print-proc-table
+        - [x] -p, --print-proc-table
     - [x] Possible process crashes are fixed:
         - [x] Fixed crash at startup due to `UnicodeDecodeError` on some systems
         - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
