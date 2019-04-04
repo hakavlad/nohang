@@ -3,6 +3,40 @@
 # интерактивный oom-trigger
 
 
+
+from ctypes import CDLL
+
+
+
+
+def mlockall():
+    """Lock all memory to prevent swapping nohang process."""
+
+    MCL_CURRENT = 1
+    MCL_FUTURE = 2
+    MCL_ONFAULT = 4
+
+    libc = CDLL('libc.so.6', use_errno=True)
+
+    result = libc.mlockall(
+        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
+    )
+    if result != 0:
+        result = libc.mlockall(
+            MCL_CURRENT | MCL_FUTURE
+        )
+        if result != 0:
+            log('Cannot lock all memory')
+        else:
+            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
+    else:
+        log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+
+
+mlockall()
+
+
+
 from memco import *
 
 # печать показателей на этапах работы
@@ -105,7 +139,7 @@ def lim2avail():
             'Вы ввели не целое положительное число'
             )
         return 0
-    
+
     if n == 0:
         print(
             'Вы ввели не целое положительное число'

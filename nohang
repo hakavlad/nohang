@@ -13,13 +13,13 @@ from sre_constants import error as invalid_re
 start_time = time()
 
 
-help_mess = """usage: nohang [-h] [-v] [-t] [--ppt] [-c CONFIG]
+help_mess = """usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         print version
   -t, --test            print some tests
-  --ppt, --print-proc-table
+  -p, --print-proc-table
                         print table of processes with their badness values
   -c CONFIG, --config CONFIG
                         path to the config file, default values:
@@ -1628,7 +1628,7 @@ elif len(argv) == 2:
         print_version()
     elif argv[1] == '--test' or argv[1] == '-t':
         test()
-    elif argv[1] == '--print-proc-table' or argv[1] == '--ppt':
+    elif argv[1] == '--print-proc-table' or argv[1] == '-p':
         print_proc_table_flag = True
         if os.path.exists('./nohang.conf'):
             config = os.getcwd() + '/nohang.conf'
