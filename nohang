@@ -85,8 +85,8 @@ def write_self_oom_score_adj(new_value):
         write('/proc/self/oom_score_adj', new_value)
 
 
-self_oom_score_adj_min = '-900'
-self_oom_score_adj_max = '-9'
+self_oom_score_adj_min = '-600'
+self_oom_score_adj_max = '-6'
 
 
 write_self_oom_score_adj(self_oom_score_adj_min)
@@ -339,6 +339,20 @@ def pid_to_cmdline(pid):
         return ''
 
 
+def pid_to_environ(pid):
+    """
+    Get process environ by pid.
+
+    pid: str pid of required process
+    returns string environ
+    """
+    try:
+        with open('/proc/' + pid + '/environ') as f:
+            return f.read().replace('\x00', ' ').rstrip()
+    except FileNotFoundError:
+        return ''
+
+
 def pid_to_realpath(pid):
     try:
         return os.path.realpath('/proc/' + pid + '/exe')
@@ -396,6 +410,12 @@ def pid_to_badness(pid):
             cmdline = pid_to_cmdline(pid)
             for re_tup in cmdline_re_list:
                 if search(re_tup[1], cmdline) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_environ:
+            environ = pid_to_environ(pid)
+            for re_tup in environ_re_list:
+                if search(re_tup[1], environ) is not None:
                     badness += int(re_tup[0])
 
         if re_match_uid:
@@ -456,7 +476,7 @@ def pid_to_status(pid):
         return name, state, ppid, uid, vm_size, vm_rss, vm_swap
 
     except UnicodeDecodeError:
-        return pid_to_status2(pid)
+        return pid_to_status_unicode(pid)
 
     except FileNotFoundError:
         return None
@@ -464,8 +484,11 @@ def pid_to_status(pid):
     except ProcessLookupError:
         return None
 
+    except ValueError:
+        return None
 
-def pid_to_status2(pid):
+
+def pid_to_status_unicode(pid):
     """
     """
     try:
@@ -503,6 +526,9 @@ def pid_to_status2(pid):
         return None
 
     except ProcessLookupError:
+        return None
+
+    except ValueError:
         return None
 
 
@@ -997,6 +1023,14 @@ def find_victim(_print_proc_table):
         elif extra_table_info == 'cmdline':
             extra_table_title = 'cmdline'
 
+
+        elif extra_table_info == 'environ':
+            extra_table_title = 'environ'
+
+
+
+
+
         elif extra_table_info == 'realpath':
             extra_table_title = 'realpath'
 
@@ -1039,6 +1073,9 @@ def find_victim(_print_proc_table):
 
             elif extra_table_info == 'cmdline':
                 extra_table_line = pid_to_cmdline(pid)
+
+            elif extra_table_info == 'environ':
+                extra_table_line = pid_to_environ(pid)
 
             elif extra_table_info == 'realpath':
                 extra_table_line = pid_to_realpath(pid)
@@ -1153,6 +1190,7 @@ def find_victim_info(pid, victim_badness, name):
                     break
 
         cmdline = pid_to_cmdline(pid)
+        environ = pid_to_environ(pid)
         oom_score = rline1('/proc/' + pid + '/oom_score')
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
@@ -1276,6 +1314,7 @@ def find_victim_info(pid, victim_badness, name):
         '\n  CGroup:   {}' \
         '\n  Realpath: {}' \
         '\n  Cmdline:  {}' \
+        '\n  Environ:  {}' \
         '\n  Lifetime: {}'.format(
             round((time() - status0) * 1000),
             name,
@@ -1293,6 +1332,7 @@ def find_victim_info(pid, victim_badness, name):
             victim_cgroup,
             realpath,
             cmdline,
+            environ,
             victim_lifetime)
 
     return victim_info
@@ -1716,6 +1756,8 @@ config_dict = dict()
 
 processname_re_list = []
 cmdline_re_list = []
+environ_re_list = []
+
 uid_re_list = []
 cgroup_re_list = []
 realpath_re_list = []
@@ -1761,13 +1803,16 @@ try:
                     exit(1)
                 etc_dict[etc_name] = etc_command
 
+
+
+
             if line.startswith('@PROCESSNAME_RE'):
                 a = line.partition(
                     '@PROCESSNAME_RE')[2].strip(' \n').partition('///')
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_re_list.append((badness_adj, reg_exp))
+                processname_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@CMDLINE_RE'):
                 a = line.partition(
@@ -1775,7 +1820,7 @@ try:
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_re_list.append((badness_adj, reg_exp))
+                cmdline_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@UID_RE'):
                 a = line.partition(
@@ -1783,7 +1828,7 @@ try:
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_re_list.append((badness_adj, reg_exp))
+                uid_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@CGROUP_RE'):
                 a = line.partition(
@@ -1800,6 +1845,16 @@ try:
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
                 realpath_re_list.append((badness_adj, reg_exp))
+
+            if line.startswith('@ENVIRON_RE'):
+                a = line.partition(
+                    '@ENVIRON_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                environ_re_list.append((badness_adj, reg_exp))
+
+
 
 
 except PermissionError:
@@ -1819,9 +1874,16 @@ except FileNotFoundError:
     exit(1)
 
 
-# print(processname_re_list)
-# print(cmdline_re_list)
-# print(uid_re_list)
+print(processname_re_list)
+print(cmdline_re_list)
+print(uid_re_list)
+print(environ_re_list)
+print(realpath_re_list)
+
+
+
+
+
 
 ##########################################################################
 
@@ -1847,6 +1909,12 @@ re_match_cmdline = conf_parse_bool('re_match_cmdline')
 re_match_uid = conf_parse_bool('re_match_uid')
 re_match_cgroup = conf_parse_bool('re_match_cgroup')
 re_match_realpath = conf_parse_bool('re_match_realpath')
+re_match_environ = conf_parse_bool('re_match_environ')
+
+
+
+
+
 
 
 # if regex_matching or re_match_cmdline or re_match_uid or re_match_cgroup
@@ -2110,10 +2178,10 @@ else:
 if 'extra_table_info' in config_dict:
     extra_table_info = config_dict['extra_table_info']
     if (extra_table_info != 'None' and extra_table_info != 'cgroup' and
-        extra_table_info != 'cmdline' and extra_table_info != 'realpath' and
-            extra_table_info != 'All'):
-        errprint('Invalid config: invalid extra_table_info value\nExit')
-        exit(1)
+        extra_table_info != 'cmdline' and    extra_table_info != 'environ' and
+        extra_table_info != 'realpath' and extra_table_info != 'All'):
+            errprint('Invalid config: invalid extra_table_info value\nExit')
+            exit(1)
 else:
     errprint('Invalid config: extra_table_info is not in config\nExit')
     exit(1)
