@@ -1023,13 +1023,8 @@ def find_victim(_print_proc_table):
         elif extra_table_info == 'cmdline':
             extra_table_title = 'cmdline'
 
-
         elif extra_table_info == 'environ':
             extra_table_title = 'environ'
-
-
-
-
 
         elif extra_table_info == 'realpath':
             extra_table_title = 'realpath'
@@ -1803,9 +1798,6 @@ try:
                     exit(1)
                 etc_dict[etc_name] = etc_command
 
-
-
-
             if line.startswith('@PROCESSNAME_RE'):
                 a = line.partition(
                     '@PROCESSNAME_RE')[2].strip(' \n').partition('///')
@@ -1855,8 +1847,6 @@ try:
                 environ_re_list.append((badness_adj, reg_exp))
 
 
-
-
 except PermissionError:
     errprint('PermissionError', conf_err_mess)
     exit(1)
@@ -1874,15 +1864,11 @@ except FileNotFoundError:
     exit(1)
 
 
-print(processname_re_list)
-print(cmdline_re_list)
-print(uid_re_list)
-print(environ_re_list)
-print(realpath_re_list)
-
-
-
-
+# print(processname_re_list)
+# print(cmdline_re_list)
+# print(uid_re_list)
+# print(environ_re_list)
+# print(realpath_re_list)
 
 
 ##########################################################################
@@ -1910,11 +1896,6 @@ re_match_uid = conf_parse_bool('re_match_uid')
 re_match_cgroup = conf_parse_bool('re_match_cgroup')
 re_match_realpath = conf_parse_bool('re_match_realpath')
 re_match_environ = conf_parse_bool('re_match_environ')
-
-
-
-
-
 
 
 # if regex_matching or re_match_cmdline or re_match_uid or re_match_cgroup
@@ -2178,10 +2159,10 @@ else:
 if 'extra_table_info' in config_dict:
     extra_table_info = config_dict['extra_table_info']
     if (extra_table_info != 'None' and extra_table_info != 'cgroup' and
-        extra_table_info != 'cmdline' and    extra_table_info != 'environ' and
-        extra_table_info != 'realpath' and extra_table_info != 'All'):
-            errprint('Invalid config: invalid extra_table_info value\nExit')
-            exit(1)
+        extra_table_info != 'cmdline' and extra_table_info != 'environ' and
+            extra_table_info != 'realpath' and extra_table_info != 'All'):
+        errprint('Invalid config: invalid extra_table_info value\nExit')
+        exit(1)
 else:
     errprint('Invalid config: extra_table_info is not in config\nExit')
     exit(1)
