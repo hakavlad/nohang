@@ -1034,10 +1034,12 @@ def find_victim(_print_proc_table):
         else:
             extra_table_title = ''
 
-        log('====================================================================================================================')
-        log('    PID     PPID  badness  oom_score  oom_score_adj        eUID  S  VmSize  VmRSS  VmSwap  Name             {}'.format(
+        hr = '#' * 115
+
+        log(hr)
+        log('#    PID     PPID  badness  oom_score  oom_score_adj        eUID  S  VmSize  VmRSS  VmSwap  Name             {}'.format(
             extra_table_title))
-        log('-------  -------  -------  ---------  -------------  ----------  -  ------  -----  ------  ---------------  --------')
+        log('#-------  -------  -------  ---------  -------------  ----------  -  ------  -----  ------  ---------------  --------')
 
     for pid in pid_list:
 
@@ -1084,7 +1086,7 @@ def find_victim(_print_proc_table):
             else:
                 extra_table_line = ''
 
-            log('{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}'.format(
+            log('#{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}'.format(
                 pid.rjust(7),
                 ppid.rjust(7),
                 str(badness).rjust(7),
@@ -1117,7 +1119,7 @@ def find_victim(_print_proc_table):
     victim_name = pid_to_name(pid)
 
     if _print_proc_table:
-        log('====================================================================================================================')
+        log(hr)
 
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'

@@ -42,6 +42,7 @@ The tools listed above may work at the same time on one computer.
     - names,
     - cgroups,
     - realpathes,
+    - environs,
     - cmdlines and
     - euids
     with specified regular expressions
