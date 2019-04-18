@@ -166,21 +166,90 @@ $ oom-sort
  <summary>Output like follow</summary>
 
 ```
-oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
---------- ------------- ----- ----- --------------- -------- -------- -------
-      314           300  1000   991 chromium            84 M      0 M /usr/lib/chromium/chromium --type=renderer --field-trial-handle=868244496792098610,5765419126773948943,131072 --service-pipe-token=14782672631740123203 --lang=ru --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-client-side-phishing-detection --enable-offline-auto-reload --enable-offline-auto-reload-visible-only --num-raster-threads=1 --service-request-channel-token=14782672631740123203 --renderer-client-id=4 --no-v8-untrusted-code-mitigations --shared-files=v8_context_snapshot_data:100,v8_natives_data:101
-      307           300  1000  1124 chromium            44 M      0 M /usr/lib/chromium/chromium --type=renderer --field-trial-handle=868244496792098610,5765419126773948943,131072 --service-pipe-token=10276223625123198448 --lang=ru --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-client-side-phishing-detection --enable-offline-auto-reload --enable-offline-auto-reload-visible-only --num-raster-threads=1 --service-request-channel-token=10276223625123198448 --renderer-client-id=6 --no-v8-untrusted-code-mitigations --shared-files=v8_context_snapshot_data:100,v8_natives_data:101
-      217           200  1000   962 chromium            99 M      0 M /usr/lib/chromium/chromium --type=gpu-process --field-trial-handle=868244496792098610,5765419126773948943,131072 --user-data-dir=/tmp/tmp.TJ91B6F0zB --disable-breakpad --gpu-preferences=KAAAAAAAAACAAABAAQAAAAAAAAAAAGAAAAAAAAEAAAAIAAAAAAAAAAgAAAAAAAAA --user-data-dir=/tmp/tmp.TJ91B6F0zB --service-request-channel-token=2848128951654484113
-      202           200  1000  1032 chromium            16 M      0 M /usr/lib/chromium/chromium --type=-broker
-       43             0  1000   736 firefox-esr        251 M      0 M /usr/lib/firefox-esr/firefox-esr
-       21             0  1000   914 chromium           124 M      0 M /usr/lib/chromium/chromium --show-component-extension-options --ignore-gpu-blacklist --no-default-browser-check --disable-pings --media-router=0 --enable-remote-extensions --user-data-dir=/tmp/tmp.TJ91B6F0zB
-       17             0  1000   844 Web Content        103 M      0 M /usr/lib/firefox-esr/plugin-container -greomni /usr/lib/firefox-esr/omni.ja -appomni /usr/lib/firefox-esr/browser/omni.ja -appdir /usr/lib/firefox-esr/browser 736 true tab
-       16             0  1000 31555 dolphin             95 M      0 M dolphin
-       15             0     0   863 Xorg                92 M      0 M /usr/lib/xorg/Xorg :0 -seat seat0 -auth /var/run/lightdm/root/:0 -nolisten tcp vt7 -novtswitch
-        8             0   110   860 tor                 50 M      0 M /usr/bin/tor --defaults-torrc /usr/share/tor/tor-service-defaults-torrc -f /etc/tor/torrc --RunAsDaemon 0
-        8             0  1000   918 chromium            48 M      0 M /usr/lib/chromium/chromium --type=zygote --user-data-dir=/tmp/tmp.TJ91B6F0zB
-        7             0  1000  1106 mate-panel          43 M      0 M mate-panel
-        6             0  1000  1157 wnck-applet         35 M      0 M /usr/lib/mate-panel/wnck-applet
+oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
+--------- ------------- ---- ----- --------------- ------- -------- -------
+       23             0    0   964 Xorg               58 M     22 M /usr/libexec/Xorg -background none :0 vt01 -nolisten tcp -novtswitch -auth /var/run/lxdm/lxdm-:0.auth
+       13             0 1000  1365 pcmanfm            38 M     10 M pcmanfm --desktop --profile LXDE
+       10             0 1000  1408 dnfdragora-upda     9 M     27 M /usr/bin/python3 /bin/dnfdragora-updater
+        5             0    0   822 firewalld           0 M     19 M /usr/bin/python3 /usr/sbin/firewalld --nofork --nopid
+        5             0 1000  1364 lxpanel            18 M      2 M lxpanel --profile LXDE
+        5             0 1000  1685 nm-applet           6 M     12 M nm-applet
+        5             0 1000  1862 lxterminal         16 M      2 M lxterminal
+        4             0  996   890 polkitd             8 M      6 M /usr/lib/polkit-1/polkitd --no-debug
+        4             0 1000  1703 pnmixer             6 M     11 M pnmixer
+        3             0    0   649 systemd-journal    10 M      1 M /usr/lib/systemd/systemd-journald
+        3             0 1000  1360 openbox             9 M      2 M openbox --config-file /home/user/.config/openbox/lxde-rc.xml
+        3             0 1000  1363 notification-da     3 M     10 M /usr/libexec/notification-daemon
+        2             0 1000  1744 clipit              5 M      3 M clipit
+        2             0 1000  2619 python3             9 M      0 M python3 /bin/oom-sort
+        1             0    0   809 rsyslogd            3 M      3 M /usr/sbin/rsyslogd -n
+        1             0    0   825 udisksd             2 M      2 M /usr/libexec/udisks2/udisksd
+        1             0    0   873 sssd_nss            4 M      1 M /usr/libexec/sssd/sssd_nss --uid 0 --gid 0 --logger=files
+        1             0    0   876 systemd-logind      2 M      2 M /usr/lib/systemd/systemd-logind
+        1             0    0   907 abrt-dump-journ     2 M      1 M /usr/bin/abrt-dump-journal-oops -fxtD
+        1             0    0   920 NetworkManager      3 M      2 M /usr/sbin/NetworkManager --no-daemon
+        1             0 1000  1115 systemd             4 M      1 M /usr/lib/systemd/systemd --user
+        1             0 1000  1118 (sd-pam)            0 M      5 M (sd-pam)
+        1             0 1000  1366 xscreensaver        5 M      0 M xscreensaver -no-splash
+        1             0 1000  1851 gvfsd-trash         3 M      1 M /usr/libexec/gvfsd-trash --spawner :1.6 /org/gtk/gvfs/exec_spaw/0
+        1             0 1000  1969 gvfsd-metadata      6 M      0 M /usr/libexec/gvfsd-metadata
+        1             0 1000  2262 bash                5 M      0 M bash
+        0         -1000    0   675 systemd-udevd       0 M      4 M /usr/lib/systemd/systemd-udevd
+        0         -1000    0   787 auditd              0 M      1 M /sbin/auditd
+        0             0    0   807 ModemManager        0 M      1 M /usr/sbin/ModemManager
+        0             0    0   808 smartd              0 M      1 M /usr/sbin/smartd -n -q never
+        0             0    0   810 alsactl             0 M      0 M /usr/sbin/alsactl -s -n 19 -c -E ALSA_CONFIG_PATH=/etc/alsa/alsactl.conf --initfile=/lib/alsa/init/00main rdaemon
+        0             0    0   811 mcelog              0 M      0 M /usr/sbin/mcelog --ignorenodev --daemon --foreground
+        0             0  172   813 rtkit-daemon        0 M      0 M /usr/libexec/rtkit-daemon
+        0             0    0   814 VBoxService         0 M      1 M /usr/sbin/VBoxService -f
+        0             0    0   817 rngd                0 M      1 M /sbin/rngd -f
+        0          -900   81   818 dbus-daemon         3 M      0 M /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+        0             0    0   823 irqbalance          0 M      0 M /usr/sbin/irqbalance --foreground
+        0             0   70   824 avahi-daemon        0 M      0 M avahi-daemon: running [linux.local]
+        0             0    0   826 sssd                0 M      2 M /usr/sbin/sssd -i --logger=files
+        0             0  995   838 chronyd             1 M      0 M /usr/sbin/chronyd
+        0             0    0   849 gssproxy            0 M      1 M /usr/sbin/gssproxy -D
+        0             0    0   866 abrtd               0 M      2 M /usr/sbin/abrtd -d -s
+        0             0   70   870 avahi-daemon        0 M      0 M avahi-daemon: chroot helper
+        0             0    0   871 sssd_be             0 M      2 M /usr/libexec/sssd/sssd_be --domain implicit_files --uid 0 --gid 0 --logger=files
+        0             0    0   875 accounts-daemon     0 M      1 M /usr/libexec/accounts-daemon
+        0             0    0   906 abrt-dump-journ     1 M      2 M /usr/bin/abrt-dump-journal-core -D -T -f -e
+        0             0    0   908 abrt-dump-journ     1 M      2 M /usr/bin/abrt-dump-journal-xorg -fxtD
+        0             0    0   950 crond               2 M      1 M /usr/sbin/crond -n
+        0             0    0   951 atd                 0 M      0 M /usr/sbin/atd -f
+        0             0    0   953 lxdm-binary         0 M      0 M /usr/sbin/lxdm-binary
+        0             0    0  1060 dhclient            0 M      2 M /sbin/dhclient -d -q -sf /usr/libexec/nm-dhcp-helper -pf /var/run/dhclient-enp0s3.pid -lf /var/lib/NetworkManager/dhclient-939eab05-4796-3792-af24-9f76cf53ca7f-enp0s3.lease -cf /var/lib/NetworkManager/dhclient-enp0s3.conf enp0s3
+        0             0    0  1105 lxdm-session        0 M      1 M /usr/libexec/lxdm-session
+        0             0 1000  1123 pulseaudio          0 M      3 M /usr/bin/pulseaudio --daemonize=no
+        0             0 1000  1124 lxsession           1 M      2 M /usr/bin/lxsession -s LXDE -e LXDE
+        0             0 1000  1134 dbus-daemon         2 M      0 M /usr/bin/dbus-daemon --session --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
+        0             0 1000  1215 imsettings-daem     0 M      1 M /usr/libexec/imsettings-daemon
+        0             0 1000  1218 gvfsd               3 M      1 M /usr/libexec/gvfsd
+        0             0 1000  1223 gvfsd-fuse          0 M      1 M /usr/libexec/gvfsd-fuse /run/user/1000/gvfs -f -o big_writes
+        0             0 1000  1309 VBoxClient          0 M      0 M /usr/bin/VBoxClient --display
+        0             0 1000  1310 VBoxClient          0 M      0 M /usr/bin/VBoxClient --clipboard
+        0             0 1000  1311 VBoxClient          0 M      0 M /usr/bin/VBoxClient --draganddrop
+        0             0 1000  1312 VBoxClient          0 M      0 M /usr/bin/VBoxClient --display
+        0             0 1000  1313 VBoxClient          1 M      0 M /usr/bin/VBoxClient --clipboard
+        0             0 1000  1316 VBoxClient          0 M      0 M /usr/bin/VBoxClient --seamless
+        0             0 1000  1318 VBoxClient          0 M      0 M /usr/bin/VBoxClient --seamless
+        0             0 1000  1320 VBoxClient          0 M      0 M /usr/bin/VBoxClient --draganddrop
+        0             0 1000  1334 ssh-agent           0 M      0 M /usr/bin/ssh-agent /bin/sh -c exec -l bash -c "/usr/bin/startlxde"
+        0             0 1000  1362 lxpolkit            0 M      1 M lxpolkit
+        0             0 1000  1370 lxclipboard         0 M      1 M lxclipboard
+        0             0 1000  1373 ssh-agent           0 M      1 M /usr/bin/ssh-agent -s
+        0             0 1000  1485 agent               0 M      1 M /usr/libexec/geoclue-2.0/demos/agent
+        0             0 1000  1751 menu-cached         0 M      1 M /usr/libexec/menu-cache/menu-cached /run/user/1000/menu-cached-:0
+        0             0 1000  1780 at-spi-bus-laun     0 M      1 M /usr/libexec/at-spi-bus-launcher
+        0             0 1000  1786 dbus-daemon         1 M      0 M /usr/bin/dbus-daemon --config-file=/usr/share/defaults/at-spi2/accessibility.conf --nofork --print-address 3
+        0             0 1000  1792 at-spi2-registr     1 M      1 M /usr/libexec/at-spi2-registryd --use-gnome-session
+        0             0 1000  1840 gvfs-udisks2-vo     0 M      2 M /usr/libexec/gvfs-udisks2-volume-monitor
+        0             0 1000  1863 gnome-pty-helpe     1 M      0 M gnome-pty-helper
+        0             0 1000  1864 bash                0 M      1 M bash
+        0             0    0  1899 sudo                0 M      1 M sudo -i
+        0             0    0  1901 bash                0 M      1 M -bash
+        0             0    0  1953 oomd_bin            0 M      0 M oomd_bin -f /sys/fs/cgroup/unified
+        0          -600    0  2562 python3            10 M      0 M python3 /usr/sbin/nohang --config /etc/nohang/nohang.conf
 ```
 </details>
 
