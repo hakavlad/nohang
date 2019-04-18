@@ -151,10 +151,6 @@ The program can be configured by editing the [config file](https://github.com/ha
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
-
-
-
-
 ## Print table of processes with their badness values
 
 Run `sudo nohang -p` to see table of prosesses with their badness, oom_scores, names, UIDs etc.
@@ -289,7 +285,7 @@ $ oom-sort
 ```
 
 <details>
- <summary>Output like follow</summary>
+ <summary>Output example</summary>
 
 ```
 oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
