@@ -160,7 +160,8 @@ Just read the description of the parameters and edit the values. Please restart 
 Run `sudo nohang -p` to see table of prosesses with their badness, oom_scores, names, UIDs etc.
 
 <details>
- <summary>`sudo nohang -p` output example</summary>
+ <summary>Output example</summary>
+
 ```
 Config: /etc/nohang/nohang.conf
 ###################################################################################################################
