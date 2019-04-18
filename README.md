@@ -197,9 +197,12 @@ See also `man journalctl`.
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
 
-## Known problems
+## Known issues
 
-- Awful documentation.
+- Awful documentation
+- Non-optimal default settings (I do not know which settings are optimal for most users; you need a configuration for better experience)
+- No installation option for non-systemd users
+- No deb/rpm packages
 
 ## Contribution
 
