@@ -162,7 +162,8 @@ Usage:
 $ oom-sort
 ```
 
-Output like follow:
+<details>
+ <summary>Output like follow</summary>
 
 ```
 oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
@@ -181,6 +182,7 @@ oom_score oom_score_adj   Uid   Pid Name             VmRSS   VmSwap   cmdline
         7             0  1000  1106 mate-panel          43 M      0 M mate-panel
         6             0  1000  1157 wnck-applet         35 M      0 M /usr/lib/mate-panel/wnck-applet
 ```
+</details>
 
 Kthreads, zombies and Pid 1 will not be displayed.
 
