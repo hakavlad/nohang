@@ -152,6 +152,131 @@ The program can be configured by editing the [config file](https://github.com/ha
 Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 
 
+
+
+
+## Print table of processes with their badness values
+
+Run `sudo nohang -p` to see table of prosesses with their badness, oom_scores, names, UIDs etc.
+
+<details>
+ <summary>`sudo nohang -p` output example</summary>
+```
+Config: /etc/nohang/nohang.conf
+###################################################################################################################
+#    PID     PPID  badness  oom_score  oom_score_adj        eUID  S  VmSize  VmRSS  VmSwap  Name             CGroup
+#-------  -------  -------  ---------  -------------  ----------  -  ------  -----  ------  ---------------  --------
+#    336        1        1          1              0           0  S      85     25       0  systemd-journal  /system.slice/systemd-journald.service
+#    383        1        0          0          -1000           0  S      46      5       0  systemd-udevd    /system.slice/systemd-udevd.service
+#    526     2238        7          7              0        1000  S     840     96       0  kate             /user.slice/user-1000.slice/session-7.scope
+#    650        1        3          3              0        1000  S     760     50       0  kate             /user.slice/user-1000.slice/session-7.scope
+#    731        1        0          0              0         100  S     126      4       0  systemd-timesyn  /system.slice/systemd-timesyncd.service
+#    756        1        0          0              0         105  S     181      3       0  rtkit-daemon     /system.slice/rtkit-daemon.service
+#    759        1        0          0              0           0  S     277      7       0  accounts-daemon  /system.slice/accounts-daemon.service
+#    761        1        0          0              0           0  S     244      3       0  rsyslogd         /system.slice/rsyslog.service
+#    764        1        0          0           -900         108  S      45      5       0  dbus-daemon      /system.slice/dbus.service
+#    805        1        0          0              0           0  S      46      5       0  systemd-logind   /system.slice/systemd-logind.service
+#    806        1        0          0              0           0  S      35      3       0  irqbalance       /system.slice/irqbalance.service
+#    813        1        0          0              0           0  S      29      3       0  cron             /system.slice/cron.service
+#    814        1       11         11              0           0  S     176    160       0  memlockd         /system.slice/memlockd.service
+#    815        1        0          0            -10           0  S      32      9       0  python3          /fork.slice/fork-bomb.slice/fork-bomb-killer.slice/fork-bomb-killer.service
+#    823        1        0          0              0           0  S      25      4       0  smartd           /system.slice/smartd.service
+#    826        1        0          0              0         113  S      46      3       0  avahi-daemon     /system.slice/avahi-daemon.service
+#    850      826        0          0              0         113  S      46      0       0  avahi-daemon     /system.slice/avahi-daemon.service
+#    868        1        0          0              0           0  S     281      8       0  polkitd          /system.slice/polkit.service
+#    903        1        1          1              0           0  S    4094     16       0  stunnel4         /system.slice/stunnel4.service
+#    940        1        0          0           -600           0  S      39     10       0  python3          /nohang.slice/nohang.service
+#   1014        1        0          0              0          13  S      22      2       0  obfs-local       /system.slice/obfs-local.service
+#   1015        1        0          0              0        1000  S      36      4       0  ss-local         /system.slice/ss-local.service
+#   1023        1        0          0              0         116  S      33      2       0  dnscrypt-proxy   /system.slice/dnscrypt-proxy.service
+#   1029        1        1          1              0         119  S    4236     16       0  privoxy          /system.slice/privoxy.service
+#   1035        1        0          0              0           0  S     355      6       0  lightdm          /system.slice/lightdm.service
+#   1066        1        0          0              0           0  S      45      7       0  wpa_supplicant   /system.slice/wpa_supplicant.service
+#   1178        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty1.service
+#   1294        1        0          0          -1000           0  S       4      1       0  watchdog         /system.slice/watchdog.service
+#   1632        1        1          1              0        1000  S    1391     22       0  pulseaudio       /user.slice/user-1000.slice/session-2.scope
+#   1689     1632        0          0              0        1000  S     125      5       0  gconf-helper     /user.slice/user-1000.slice/session-2.scope
+#   1711        1        0          0              0           0  S     367      8       0  udisksd          /system.slice/udisks2.service
+#   1819        1        0          0              0           0  S     304      8       0  upowerd          /system.slice/upower.service
+#   1879        1        0          0              0        1000  S      64      7       0  systemd          /user.slice/user-1000.slice/user@1000.service/init.scope
+#   1880     1879        0          0              0        1000  S     229      2       0  (sd-pam)         /user.slice/user-1000.slice/user@1000.service/init.scope
+#   1888        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty2.service
+#   1889        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty3.service
+#   1890        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty4.service
+#   1891        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty5.service
+#   1892        1        0          0              0           0  S      14      2       0  agetty           /system.slice/system-getty.slice/getty@tty6.service
+#   1893     1035       14         14              0           0  R     623    208       0  Xorg             /system.slice/lightdm.service
+#   1904        1        0          0              0         111  S      64      7       0  systemd          /user.slice/user-111.slice/user@111.service/init.scope
+#   1905     1904        0          0              0         111  S     229      2       0  (sd-pam)         /user.slice/user-111.slice/user@111.service/init.scope
+#   1916     1904        0          0              0         111  S      44      3       0  dbus-daemon      /user.slice/user-111.slice/user@111.service/dbus.service
+#   1920        1        0          0              0         111  S     215      5       0  at-spi2-registr  /user.slice/user-111.slice/session-c2.scope
+#   1922     1904        0          0              0         111  S     278      6       0  gvfsd            /user.slice/user-111.slice/user@111.service/gvfs-daemon.service
+#   1935     1035        0          0              0           0  S     238      6       0  lightdm          /user.slice/user-1000.slice/session-7.scope
+#   1942        1        0          0              0        1000  S     210      9       0  gnome-keyring-d  /user.slice/user-1000.slice/session-7.scope
+#   1944     1935        1          1              0        1000  S     411     21       0  mate-session     /user.slice/user-1000.slice/session-7.scope
+#   1952     1879        0          0              0        1000  S      45      5       0  dbus-daemon      /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   1981     1944        0          0              0        1000  S      11      0       0  ssh-agent        /user.slice/user-1000.slice/session-7.scope
+#   1984     1879        0          0              0        1000  S     278      6       0  gvfsd            /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#   1990     1879        0          0              0        1000  S     341      5       0  at-spi-bus-laun  /user.slice/user-1000.slice/user@1000.service/at-spi-dbus-bus.service
+#   1995     1990        0          0              0        1000  S      44      4       0  dbus-daemon      /user.slice/user-1000.slice/user@1000.service/at-spi-dbus-bus.service
+#   1997     1879        0          0              0        1000  S     215      5       0  at-spi2-registr  /user.slice/user-1000.slice/user@1000.service/at-spi-dbus-bus.service
+#   2000     1879        0          0              0        1000  S     184      5       0  dconf-service    /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2009     1944        2          2              0        1000  S    1308     35       0  mate-settings-d  /user.slice/user-1000.slice/session-7.scope
+#   2013     1944        2          2              0        1000  S     436     32       0  marco            /user.slice/user-1000.slice/session-7.scope
+#   2024     1944        4          4              0        1000  S    1258     55       0  caja             /user.slice/user-1000.slice/session-7.scope
+#   2032        1        1          1              0        1000  S     333     18       0  msd-locate-poin  /user.slice/user-1000.slice/session-7.scope
+#   2033     1879        0          0              0        1000  S     348     11       0  gvfs-udisks2-vo  /user.slice/user-1000.slice/user@1000.service/gvfs-udisks2-volume-monitor.service
+#   2036     1944        1          1              0        1000  S     331     17       0  polkit-mate-aut  /user.slice/user-1000.slice/session-7.scope
+#   2038     1944        5          5              0        1000  S     682     78       0  mate-panel       /user.slice/user-1000.slice/session-7.scope
+#   2041     1944        2          2              0        1000  S     514     31       0  nm-applet        /user.slice/user-1000.slice/session-7.scope
+#   2046     1944        1          1              0        1000  S     495     25       0  mate-power-mana  /user.slice/user-1000.slice/session-7.scope
+#   2047     1944        2          2              0        1000  S     692     32       0  mate-volume-con  /user.slice/user-1000.slice/session-7.scope
+#   2049     1944        3          3              0        1000  S     548     44       0  mate-screensave  /user.slice/user-1000.slice/session-7.scope
+#   2059     1879        0          0              0        1000  S     263      5       0  gvfs-goa-volume  /user.slice/user-1000.slice/user@1000.service/gvfs-goa-volume-monitor.service
+#   2076     1879        0          0              0        1000  S     352      7       0  gvfsd-trash      /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#   2077     1879        0          0              0        1000  S     362      7       0  gvfs-afc-volume  /user.slice/user-1000.slice/user@1000.service/gvfs-afc-volume-monitor.service
+#   2087     1879        0          0              0        1000  S     263      5       0  gvfs-mtp-volume  /user.slice/user-1000.slice/user@1000.service/gvfs-mtp-volume-monitor.service
+#   2093     1879        0          0              0        1000  S     275      6       0  gvfs-gphoto2-vo  /user.slice/user-1000.slice/user@1000.service/gvfs-gphoto2-volume-monitor.service
+#   2106     1879        3          3              0        1000  S     544     42       0  wnck-applet      /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2108     1879        1          1              0        1000  S     396     21       0  notification-ar  /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2112     1879        1          1              0        1000  S     499     25       0  mate-sensors-ap  /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2113     1879        1          1              0        1000  S     390     21       0  mate-brightness  /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2114     1879        1          1              0        1000  S     534     22       0  mate-multiload-  /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2118     1879        2          2              0        1000  S     547     29       0  clock-applet     /user.slice/user-1000.slice/user@1000.service/dbus.service
+#   2152     1879        1          1              0        1000  S     218     22       0  gvfsd-metadata   /user.slice/user-1000.slice/user@1000.service/gvfs-metadata.service
+#   2206        1        3          3              0         110  S     106     48       0  tor              /system.slice/system-tor.slice/tor@default.service
+#   2229        1        3          3              0        1000  S     999     42       0  kactivitymanage  /user.slice/user-1000.slice/session-7.scope
+#   2238        1        0          0              0        1000  S     150      9       0  kdeinit5         /user.slice/user-1000.slice/session-7.scope
+#   2239     2238        3          3              0        1000  S     648     41       0  klauncher        /user.slice/user-1000.slice/session-7.scope
+#   3959        1        1          1              0           0  S     615     18       0  NetworkManager   /system.slice/NetworkManager.service
+#   3977     3959        0          0              0           0  S      20      4       0  dhclient         /system.slice/NetworkManager.service
+#   5626     1879        0          0              0        1000  S     355      7       0  gvfsd-network    /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#   5637     1879        1          1              0        1000  S     623     14       0  gvfsd-smb-brows  /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#   6296     1879        0          0              0        1000  S     435      7       0  gvfsd-dnssd      /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#  11129     1879        3          3              0        1000  S     597     42       0  kded5            /user.slice/user-1000.slice/user@1000.service/dbus.service
+#  11136     1879        2          2              0        1000  S     639     39       0  kuiserver5       /user.slice/user-1000.slice/user@1000.service/dbus.service
+#  11703     1879        3          3              0        1000  S     500     45       0  mate-system-mon  /user.slice/user-1000.slice/user@1000.service/dbus.service
+#  16798     1879        0          0              0        1000  S     346     10       0  gvfsd-http       /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+#  18133        1        3          3              0        1000  S     760     49       0  kate             /user.slice/user-1000.slice/session-7.scope
+#  18144     2038        1          1              0        1000  S     301     23       0  lxterminal       /user.slice/user-1000.slice/session-7.scope
+#  18147    18144        0          0              0        1000  S      14      2       0  gnome-pty-helpe  /user.slice/user-1000.slice/session-7.scope
+#  18148    18144        1          1              0        1000  S      42     26       0  bash             /user.slice/user-1000.slice/session-7.scope
+#  18242     2238        1          1              0        1000  S     194     14       0  file.so          /user.slice/user-1000.slice/session-7.scope
+#  18246    18148        0          0              0           0  S      54      4       0  sudo             /user.slice/user-1000.slice/session-7.scope
+#  19003        1        0          0              0           0  S     310     12       0  packagekitd      /system.slice/packagekit.service
+#  26993     2038       91         91              0        1000  S    3935   1256       0  firefox-esr      /user.slice/user-1000.slice/session-7.scope
+#  27275    26993      121        121              0        1000  S    3957   1684       0  Web Content      /user.slice/user-1000.slice/session-7.scope
+#  30374        1        1          1              0        1000  S     167     14       0  VBoxXPCOMIPCD    /user.slice/user-1000.slice/session-7.scope
+#  30380        1        2          2              0        1000  S     958     27       0  VBoxSVC          /user.slice/user-1000.slice/session-7.scope
+#  30549    30380       86         86              0        1000  S    5332   1192       0  VirtualBox       /user.slice/user-1000.slice/session-7.scope
+#  30875        1        1          1              0        1000  S     345     26       0  leafpad          /user.slice/user-1000.slice/session-7.scope
+#  32689        1        7          7              0        1000  S     896     99       0  dolphin          /user.slice/user-1000.slice/session-7.scope
+###################################################################################################################
+Process with highest badness (found in 55 ms):
+  PID: 27275, Name: Web Content, badness: 121
+```
+</details>
+
 ## oom-sort
 
 `oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info.
