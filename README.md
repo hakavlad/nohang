@@ -153,7 +153,7 @@ Just read the description of the parameters and edit the values. Please restart 
 
 ## Print table of processes with their badness values
 
-Run `sudo nohang -p` to see table of prosesses with their badness, oom_scores, names, UIDs etc.
+Run `sudo nohang -p` to see the table of prosesses with their badness values, oom_scores, names, UIDs etc.
 
 <details>
  <summary>Output example</summary>
