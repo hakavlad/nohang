@@ -337,7 +337,7 @@ def pid_to_ancestry(pid, max_ancestry_depth=1):
     if max_ancestry_depth == 1:
         ppid = pid_to_ppid(pid)
         pname = pid_to_name(ppid)
-        return '\n  PPID:     {} ({})'.format(ppid, pname)
+        return '\n  PPID:      {} ({})'.format(ppid, pname)
     if max_ancestry_depth == 0:
         return ''
     anc_list = []
@@ -351,7 +351,7 @@ def pid_to_ancestry(pid, max_ancestry_depth=1):
     a = ''
     for i in anc_list:
         a = a + ' <= PID {} ({})'.format(i[0], i[1])
-    return '\n  Ancestry: ' + a[4:]
+    return '\n  Ancestry:  ' + a[4:]
 
 
 def pid_to_cmdline(pid):
