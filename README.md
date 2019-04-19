@@ -40,7 +40,8 @@ The tools listed above may work at the same time on one computer.
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.
 - Impact on the badness of processes via matching their
     - names,
-    - cgroups,
+    - cgroup_v1,
+    - cgroup_v2,
     - realpathes,
     - environs,
     - cmdlines and
@@ -411,7 +412,7 @@ Please create [issues](https://github.com/hakavlad/nohang/issues). Use cases, fe
         - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
         - [x] Fixed process crash before performing corrective actions if Python 3.4 or lower are used to interpret nohang
     - [x] Improve output:
-        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `CGroup`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
+        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `CGroup_v1`, `CGroup_v2`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
         - [x] Added memory report interval
         - [x] Added delta memory info (the rate of change of available memory)
         - [x] Print statistics on corrective actions after each corrective action
