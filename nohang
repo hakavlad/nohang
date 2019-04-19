@@ -59,11 +59,24 @@ stat_dict = dict()
 separate_log = False  # will be overwritten after parse config
 
 
-with open('/proc/self/cgroup') as f:
-    # Find cgroup-line position in /proc/*/cgroup file.
-    for cgroup_index, line in enumerate(f):
-        if ':name=' in line:
-            break
+def find_cgroup_indexes():
+    """ Find cgroup-line positions in /proc/*/cgroup file.
+    """
+
+    cgroup_v1_index = None
+    cgroup_v2_index = None
+
+    with open('/proc/self/cgroup') as f:
+        for index, line in enumerate(f):
+            if ':name=' in line:
+                cgroup_v1_index = index
+            if line.startswith('0::'):
+                cgroup_v2_index = index
+
+    return cgroup_v1_index, cgroup_v2_index
+
+
+cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 
 
 ##########################################################################
@@ -227,14 +240,30 @@ def test():
 ##########################################################################
 
 
-def pid_to_cgroup(pid):
+def pid_to_cgroup_v1(pid):
     """
     """
+    cgroup_v1 = ''
     try:
         with open('/proc/' + pid + '/cgroup') as f:
-            for n, line in enumerate(f):
-                if n == cgroup_index:
-                    return '/' + line.partition('/')[2][:-1]
+            for index, line in enumerate(f):
+                if index == cgroup_v1_index:
+                    cgroup_v1 = '/' + line.partition('/')[2][:-1]
+        return cgroup_v1
+    except FileNotFoundError:
+        return ''
+
+
+def pid_to_cgroup_v2(pid):
+    """
+    """
+    cgroup_v2 = ''
+    try:
+        with open('/proc/' + pid + '/cgroup') as f:
+            for index, line in enumerate(f):
+                if index == cgroup_v2_index:
+                    cgroup_v2 = line[3:-1]
+        return cgroup_v2
     except FileNotFoundError:
         return ''
 
@@ -394,10 +423,16 @@ def pid_to_badness(pid):
                 if search(re_tup[1], name) is not None:
                     badness += int(re_tup[0])
 
-        if re_match_cgroup:
-            cgroup = pid_to_cgroup(pid)
-            for re_tup in cgroup_re_list:
-                if search(re_tup[1], cgroup) is not None:
+        if re_match_cgroup_v1:
+            cgroup_v1 = pid_to_cgroup_v1(pid)
+            for re_tup in cgroup_v1_re_list:
+                if search(re_tup[1], cgroup_v1) is not None:
+                    badness += int(re_tup[0])
+
+        if re_match_cgroup_v2:
+            cgroup_v2 = pid_to_cgroup_v2(pid)
+            for re_tup in cgroup_v2_re_list:
+                if search(re_tup[1], cgroup_v2) is not None:
                     badness += int(re_tup[0])
 
         if re_match_realpath:
@@ -1017,8 +1052,11 @@ def find_victim(_print_proc_table):
         if extra_table_info == 'None':
             extra_table_title = ''
 
-        elif extra_table_info == 'cgroup':
-            extra_table_title = 'CGroup'
+        elif extra_table_info == 'cgroup_v1':
+            extra_table_title = 'CGroup_v1'
+
+        elif extra_table_info == 'cgroup_v2':
+            extra_table_title = 'CGroup_v2'
 
         elif extra_table_info == 'cmdline':
             extra_table_title = 'cmdline'
@@ -1059,14 +1097,17 @@ def find_victim(_print_proc_table):
             if pid_to_status(pid) is None:
                 continue
             else:
-                name, state, ppid, uid, vm_size, vm_rss, vm_swap = pid_to_status(
-                    pid)
+                (name, state, ppid, uid, vm_size, vm_rss,
+                 vm_swap) = pid_to_status(pid)
 
             if extra_table_info == 'None':
                 extra_table_line = ''
 
-            elif extra_table_info == 'cgroup':
-                extra_table_line = pid_to_cgroup(pid)
+            elif extra_table_info == 'cgroup_v1':
+                extra_table_line = pid_to_cgroup_v1(pid)
+
+            elif extra_table_info == 'cgroup_v2':
+                extra_table_line = pid_to_cgroup_v2(pid)
 
             elif extra_table_info == 'cmdline':
                 extra_table_line = pid_to_cmdline(pid)
@@ -1187,7 +1228,6 @@ def find_victim_info(pid, victim_badness, name):
                     break
 
         cmdline = pid_to_cmdline(pid)
-        environ = pid_to_environ(pid)
         oom_score = rline1('/proc/' + pid + '/oom_score')
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
@@ -1274,7 +1314,9 @@ def find_victim_info(pid, victim_badness, name):
     try:
         realpath = os.path.realpath('/proc/' + pid + '/exe')
         victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
-        victim_cgroup = pid_to_cgroup(pid)
+        victim_cgroup_v1 = pid_to_cgroup_v1(pid)
+        victim_cgroup_v2 = pid_to_cgroup_v2(pid)
+
     except FileNotFoundError:
         print('The victim died in the search process: FileNotFoundError')
         update_stat_dict_and_print(
@@ -1297,22 +1339,22 @@ def find_victim_info(pid, victim_badness, name):
         detailed_rss_info = ''
 
     victim_info = 'Victim information (found in {} ms):' \
-        '\n  Name:     {}' \
-        '\n  State:    {}' \
-        '\n  PID:      {}' \
+        '\n  Name:      {}' \
+        '\n  State:     {}' \
+        '\n  PID:       {}' \
         '{}' \
-        '\n  EUID:     {}' \
-        '\n  badness:  {}, ' \
+        '\n  EUID:      {}' \
+        '\n  badness:   {}, ' \
         'oom_score:  {}, ' \
         'oom_score_adj:  {}' \
-        '\n  VmSize:   {} MiB' \
-        '\n  VmRSS:    {} MiB {}' \
-        '\n  VmSwap:   {} MiB' \
-        '\n  CGroup:   {}' \
-        '\n  Realpath: {}' \
-        '\n  Cmdline:  {}' \
-        '\n  Environ:  {}' \
-        '\n  Lifetime: {}'.format(
+        '\n  VmSize:    {} MiB' \
+        '\n  VmRSS:     {} MiB {}' \
+        '\n  VmSwap:    {} MiB' \
+        '\n  CGroup_v1: {}' \
+        '\n  CGroup_v2: {}' \
+        '\n  Realpath:  {}' \
+        '\n  Cmdline:   {}' \
+        '\n  Lifetime:  {}'.format(
             round((time() - status0) * 1000),
             name,
             state,
@@ -1326,10 +1368,10 @@ def find_victim_info(pid, victim_badness, name):
             str(vm_rss).rjust(len_vm),
             detailed_rss_info,
             str(vm_swap).rjust(len_vm),
-            victim_cgroup,
+            victim_cgroup_v1,
+            victim_cgroup_v2,
             realpath,
             cmdline,
-            environ,
             victim_lifetime)
 
     return victim_info
@@ -1754,11 +1796,10 @@ config_dict = dict()
 processname_re_list = []
 cmdline_re_list = []
 environ_re_list = []
-
 uid_re_list = []
-cgroup_re_list = []
+cgroup_v1_re_list = []
+cgroup_v2_re_list = []
 realpath_re_list = []
-
 
 # dictionary with names and commands for the parameter
 # execute_the_command
@@ -1824,13 +1865,21 @@ try:
                 valid_re(reg_exp)
                 uid_re_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@CGROUP_RE'):
+            if line.startswith('@CGROUP_V1_RE'):
                 a = line.partition(
-                    '@CGROUP_RE')[2].strip(' \n').partition('///')
+                    '@CGROUP_V1_RE')[2].strip(' \n').partition('///')
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_re_list.append((badness_adj, reg_exp))
+                cgroup_v1_re_list.append((badness_adj, reg_exp))
+
+            if line.startswith('@CGROUP_V2_RE'):
+                a = line.partition(
+                    '@CGROUP_V2_RE')[2].strip(' \n').partition('///')
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                cgroup_v2_re_list.append((badness_adj, reg_exp))
 
             if line.startswith('@REALPATH_RE'):
                 a = line.partition(
@@ -1871,6 +1920,8 @@ except FileNotFoundError:
 # print(uid_re_list)
 # print(environ_re_list)
 # print(realpath_re_list)
+# print(cgroup_v1_re_list)
+# print(cgroup_v2_re_list)
 
 
 ##########################################################################
@@ -1895,7 +1946,8 @@ ignore_psi = conf_parse_bool('ignore_psi')
 regex_matching = conf_parse_bool('regex_matching')
 re_match_cmdline = conf_parse_bool('re_match_cmdline')
 re_match_uid = conf_parse_bool('re_match_uid')
-re_match_cgroup = conf_parse_bool('re_match_cgroup')
+re_match_cgroup_v1 = conf_parse_bool('re_match_cgroup_v1')
+re_match_cgroup_v2 = conf_parse_bool('re_match_cgroup_v2')
 re_match_realpath = conf_parse_bool('re_match_realpath')
 re_match_environ = conf_parse_bool('re_match_environ')
 
@@ -2160,9 +2212,14 @@ else:
 
 if 'extra_table_info' in config_dict:
     extra_table_info = config_dict['extra_table_info']
-    if (extra_table_info != 'None' and extra_table_info != 'cgroup' and
-        extra_table_info != 'cmdline' and extra_table_info != 'environ' and
-            extra_table_info != 'realpath' and extra_table_info != 'All'):
+    if (extra_table_info != 'None' and
+        extra_table_info != 'cgroup_v1' and
+        extra_table_info != 'cgroup_v2' and
+        extra_table_info != 'cmdline' and
+        extra_table_info != 'environ' and
+        extra_table_info != 'realpath' and
+            extra_table_info != 'All'):
+
         errprint('Invalid config: invalid extra_table_info value\nExit')
         exit(1)
 else:
