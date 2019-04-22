@@ -6,11 +6,14 @@ from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit, version
-from signal import SIGKILL, SIGTERM
+from signal import (signal,
+                    SIGKILL, SIGTERM, SIGINT, SIGQUIT,
+                    SIGHUP, SIGABRT, SIGSEGV, SIGBUS)
 from re import search
 from sre_constants import error as invalid_re
 
 start_time = time()
+
 
 
 help_mess = """usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
@@ -82,6 +85,16 @@ cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 ##########################################################################
 
 # define functions
+
+
+
+def signal_handler(sig, frame):
+    log('Got signal {}'.format(sig))
+    update_stat_dict_and_print(None)
+    log('Exit')
+    stdout.flush()
+    exit()
+
 
 
 def write(path, string):
@@ -607,14 +620,21 @@ def mlockall():
 def update_stat_dict_and_print(key):
     """
     """
-    if key not in stat_dict:
 
-        stat_dict.update({key: 1})
 
-    else:
 
-        new_value = stat_dict[key] + 1
-        stat_dict.update({key: new_value})
+
+    if key is not None:
+
+        if key not in stat_dict:
+
+            stat_dict.update({key: 1})
+
+        else:
+
+            new_value = stat_dict[key] + 1
+            stat_dict.update({key: new_value})
+
 
     if print_total_stat:
 
@@ -1655,11 +1675,7 @@ def sleep_after_check_mem():
     except OSError:  # OSError: [Errno 105] No buffer space available
         pass
 
-    try:
-        sleep(t)
-    except KeyboardInterrupt:
-        exit(1)
-
+    sleep(t)
 
 def calculate_percent(arg_key):
     """
@@ -2652,6 +2668,17 @@ if print_mem_check_results:
 
     # init mem report interval
     report0 = 0
+
+
+
+signal(SIGTERM, signal_handler)
+signal(SIGINT, signal_handler)
+signal(SIGQUIT, signal_handler)
+signal(SIGHUP, signal_handler)
+signal(SIGABRT, signal_handler)
+signal(SIGSEGV, signal_handler)
+signal(SIGBUS, signal_handler)
+
 
 
 while True:
