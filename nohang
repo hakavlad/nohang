@@ -143,7 +143,6 @@ def log(*msg):
         print(*msg)
     except OSError:
         sleep(0.01)
-        pass
         # print('OSError in print(*msg)')
 
     if separate_log:
@@ -154,7 +153,6 @@ def log(*msg):
             info(*msg)
         except OSError:
             sleep(0.01)
-            pass
             # print('OSError in info(*msg)')
 
 
@@ -626,7 +624,7 @@ def update_stat_dict_and_print(key):
         for i in stat_dict:
             stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
 
-        print(stats_msg)
+        log(stats_msg)
 
 
 def find_psi_metrics_value(psi_path, psi_metrics):
@@ -895,7 +893,7 @@ def send_notify_warn():
         notify_send_wait(title, body)
     '''
 
-    print('Warning threshold exceeded')
+    log('Warning threshold exceeded')
 
     if check_warning_exe:
         exe(warning_exe)
@@ -991,7 +989,7 @@ def sleep_after_send_signal(signal):
     """
     if signal is SIGKILL:
         if print_sleep_periods:
-            print('  sleep', min_delay_after_sigkill)
+            log('  sleep {}'.format(min_delay_after_sigkill))
         sleep(min_delay_after_sigkill)
     else:
         if print_sleep_periods:
@@ -1120,7 +1118,7 @@ def find_victim(_print_proc_table):
 
             elif extra_table_info == 'All':
                 extra_table_line = '[CG: {}] [CL: {}] [RP: {}]'.format(
-                    pid_to_cgroup(pid),
+                    pid_to_cgroup_v1(pid),
                     pid_to_cmdline(pid),
                     pid_to_realpath(pid)
                 )
@@ -1164,7 +1162,7 @@ def find_victim(_print_proc_table):
     if _print_proc_table:
         log(hr)
 
-    log('Found {} processes with exists realpath'.format(real_proc_num))
+    log('Found {} processes with existing realpaths'.format(real_proc_num))
 
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'
@@ -1237,12 +1235,12 @@ def find_victim_info(pid, victim_badness, name):
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
     except FileNotFoundError:
-        print('The victim died in the search process: FileNotFoundError')
+        log('The victim died in the search process: FileNotFoundError')
         update_stat_dict_and_print(
             'The victim died in the search process: FileNotFoundError')
         return None
     except ProcessLookupError:
-        print('The victim died in the search process: ProcessLookupError')
+        log('The victim died in the search process: ProcessLookupError')
         update_stat_dict_and_print(
             'The victim died in the search process: ProcessLookupError')
         return None
@@ -1292,22 +1290,22 @@ def find_victim_info(pid, victim_badness, name):
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
     except IndexError:
-        print('The victim died in the search process: IndexError')
+        log('The victim died in the search process: IndexError')
         update_stat_dict_and_print(
             'The victim died in the search process: IndexError')
         return None
     except ValueError:
-        print('The victim died in the search process: ValueError')
+        log('The victim died in the search process: ValueError')
         update_stat_dict_and_print(
             'The victim died in the search process: ValueError')
         return None
     except FileNotFoundError:
-        print('The victim died in the search process: FileNotFoundError')
+        log('The victim died in the search process: FileNotFoundError')
         update_stat_dict_and_print(
             'The victim died in the search process: FileNotFoundError')
         return None
     except ProcessLookupError:
-        print('The victim died in the search process: ProcessLookupError')
+        log('The victim died in the search process: ProcessLookupError')
         update_stat_dict_and_print(
             'The victim died in the search process: ProcessLookupError')
         return None
@@ -1428,11 +1426,11 @@ def implement_corrective_action(signal):
             cgroup_v1 = pid_to_cgroup_v1(pid)
             service = ''
             cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
-            print(cgroup_v1_tail)
+            # log(cgroup_v1_tail)
             if cgroup_v1_tail.endswith('.service'):
                 service = cgroup_v1_tail
-            print('$SERVICE:', [service])
-            print('ИЩЕМ СОВПАДЕНИЯ ДЛЯ МЯГКИХ ДЕЙСТВИЙ')
+            # print('$SERVICE:', [service])
+            # print('ИЩЕМ СОВПАДЕНИЯ ДЛЯ МЯГКИХ ДЕЙСТВИЙ')
             # итерируемся по списку кортежей
             for i in soft_actions_list:
                 unit = i[0]
@@ -1442,9 +1440,10 @@ def implement_corrective_action(signal):
                     u = cgroup_v1
                 regexp = i[1]
                 command = i[2]
-                print([u, regexp, command])
+                # print([u, regexp, command])
                 if search(regexp, u) is not None:
-                    print('СОВПАДЕНИЕ НАЙДЕНО')
+                    log("Regexp '{}' matches with {} '{}'".format(regexp, unit, u))
+                    # print('СОВПАДЕНИЕ НАЙДЕНО')
                     soft_match = True
                     break
 
@@ -1483,9 +1482,9 @@ def implement_corrective_action(signal):
                     exit_status,
                     round(response_time * 1000))
 
-            print(etc_info)
+            log(etc_info)
 
-            key = "Run the command '{}'".format(command)
+            key = "Run the command '{}'".format(cmd)
             update_stat_dict_and_print(key)
 
             if gui_notifications:
@@ -1591,7 +1590,7 @@ def implement_corrective_action(signal):
                 min_badness,
                 round(response_time * 1000))
 
-        print(victim_badness_is_too_small)
+        log(victim_badness_is_too_small)
 
         # update stat_dict
         key = 'victim badness < min_badness'
@@ -1642,7 +1641,7 @@ def sleep_after_check_mem():
 
     if print_sleep_periods:
 
-        print(
+        log(
             'Sleep {} sec (t_mem={}, t_swap={}, t_zram={})'.format(
                 round(t, 2),
                 round(t_mem, 2),
@@ -1711,12 +1710,12 @@ def calculate_percent(arg_key):
             mem_min_percent = mem_min_kb / mem_total * 100
 
         else:
-            print('Invalid {} units in config.\n Exit'.format(arg_key))
+            log('Invalid {} units in config.\n Exit'.format(arg_key))
             exit(1)
             mem_min_percent = None
 
     else:
-        print('{} not in config\nExit'.format(arg_key))
+        log('{} not in config\nExit'.format(arg_key))
         exit(1)
         mem_min_percent = None
 
@@ -1818,8 +1817,7 @@ except ValueError:
 ##########################################################################
 
 
-print('Config:', config)
-# todo: log it
+log('Config: ' + config)
 
 
 ##########################################################################
@@ -1870,7 +1868,7 @@ try:
                 if key not in config_dict:
                     config_dict[key] = value
                 else:
-                    print('ERROR: config key duplication: {}'.format(key))
+                    log('ERROR: config key duplication: {}'.format(key))
                     exit(1)
 
             if etc:
@@ -2037,14 +2035,14 @@ else:
 # print(cgroup_v2_re_list)
 
 
-print(soft_actions_list)
+# print(soft_actions_list)
 
 if soft_actions_list == []:
     soft_actions = False
 else:
     soft_actions = True
 
-print('soft_actions:', soft_actions)
+# print('soft_actions:', soft_actions)
 
 ##########################################################################
 
