@@ -1145,6 +1145,8 @@ def find_victim(_print_proc_table):
 
         pid_badness_list.append((pid, badness))
 
+    real_proc_num = len(pid_badness_list)
+
     # Make list of (pid, badness) tuples, sorted by 'badness' values
     # print(pid_badness_list)
     pid_tuple_list = sorted(
@@ -1162,6 +1164,8 @@ def find_victim(_print_proc_table):
     if _print_proc_table:
         log(hr)
 
+    log('Found {} processes with exists realpath'.format(real_proc_num))
+
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'
         'me: {}, badness: {}'.format(
@@ -1171,6 +1175,7 @@ def find_victim(_print_proc_table):
             victim_badness
         )
     )
+
 
     return pid, victim_badness, victim_name
 
@@ -1413,9 +1418,37 @@ def implement_corrective_action(signal):
                     )
                     signal = SIGKILL
 
-        if execute_the_command and signal is SIGTERM and name in etc_dict:
+        soft_match = False
 
-            command = etc_dict[name]
+        if soft_actions and signal is SIGTERM:
+            # если мягкий порог И список мягких не пуст:
+            # итерируемся по списку, ища мэтчинги. Есть совпадения - выполн
+            # команду и выход из цикла.
+            name = pid_to_name(pid)
+            cgroup_v1 = pid_to_cgroup_v1(pid)
+            service = ''
+            cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
+            print(cgroup_v1_tail)
+            if cgroup_v1_tail.endswith('.service'):
+                service = cgroup_v1_tail
+            print('$SERVICE:', [service])
+            print('ИЩЕМ СОВПАДЕНИЯ ДЛЯ МЯГКИХ ДЕЙСТВИЙ')
+            # итерируемся по списку кортежей
+            for i in soft_actions_list:
+                unit = i[0]
+                if unit == 'name':
+                    u = name
+                else:
+                    u = cgroup_v1
+                regexp = i[1]
+                command = i[2]
+                print([u, regexp, command])
+                if search(regexp, u) is not None:
+                    print('СОВПАДЕНИЕ НАЙДЕНО')
+                    soft_match = True
+                    break
+
+        if soft_match:
 
             # todo: make new func
             m = check_mem_and_swap()
@@ -1428,8 +1461,13 @@ def implement_corrective_action(signal):
                 )
                 )
 
-            cmd = etc_dict[name].replace('$PID', pid).replace(
-                '$NAME', pid_to_name(pid))
+            cmd = command.replace(
+                '$PID',
+                pid).replace(
+                '$NAME',
+                pid_to_name(pid)).replace(
+                '$SERVICE',
+                service)
 
             exit_status = exe(cmd)
 
@@ -1438,14 +1476,12 @@ def implement_corrective_action(signal):
             response_time = time() - time0
 
             etc_info = 'Implement a corrective act' \
-                       'ion:\n  Run the command: {}' \
-                       '\n  Exit status: {}; total response ' \
-                       'time: {} ms'.format(
-                           command.replace(
-                               '$PID', pid).replace(
-                               '$NAME', pid_to_name(pid)),
-                           exit_status,
-                           round(response_time * 1000))
+                'ion:\n  Run the command: {}' \
+                '\n  Exit status: {}; total response ' \
+                'time: {} ms'.format(
+                    cmd,
+                    exit_status,
+                    round(response_time * 1000))
 
             print(etc_info)
 
@@ -1699,6 +1735,7 @@ if len(argv) == 1:
         config = os.getcwd() + '/nohang.conf'
     else:
         config = '/etc/nohang/nohang.conf'
+
 elif len(argv) == 2:
     if argv[1] == '--help' or argv[1] == '-h':
         print(help_mess)
@@ -1716,12 +1753,14 @@ elif len(argv) == 2:
     else:
         errprint('Unknown option: {}'.format(argv[1]))
         exit(1)
+
 elif len(argv) == 3:
     if argv[1] == '--config' or argv[1] == '-c':
         config = argv[2]
     else:
         errprint('Unknown option: {}'.format(argv[1]))
         exit(1)
+
 else:
     errprint('Invalid CLI input: too many options')
     exit(1)
@@ -1794,8 +1833,6 @@ print('Config:', config)
 config_dict = dict()
 
 processname_re_list = []
-
-
 cmdline_re_list = []
 environ_re_list = []
 uid_re_list = []
@@ -1803,12 +1840,14 @@ cgroup_v1_re_list = []
 cgroup_v2_re_list = []
 realpath_re_list = []
 
-# dictionary with names and commands for the parameter
-# execute_the_command
-# тут тоже список нужен, а не словарь
-etc_dict = dict()
+soft_actions_list = []
 
 
+# separator for optional parameters (that starts with @)
+opt_separator = '///'
+
+
+# stupid conf parsing, need refactoring
 try:
     with open(config) as f:
 
@@ -1819,9 +1858,10 @@ try:
             c = line.startswith('\t')
             d = line.startswith(' ')
 
-            etc = line.startswith('$ETC')
+            etc = line.startswith('@SOFT_ACTION_RE_NAME')
+            etc2 = line.startswith('@SOFT_ACTION_RE_CGROUP_V1')
 
-            if not a and not b and not c and not d and not etc:
+            if not a and not b and not c and not d and not etc and not etc2:
                 a = line.partition('=')
 
                 key = a[0].strip()
@@ -1834,18 +1874,48 @@ try:
                     exit(1)
 
             if etc:
-                a = line[4:].split('///')
-                etc_name = a[0].strip()
-                etc_command = a[1].strip()
-                if len(etc_name) > 15:
-                    errprint('Invalid config, the length of the process '
-                             'name must not exceed 15 characters\nExit')
-                    exit(1)
-                etc_dict[etc_name] = etc_command
+
+                # это остаток строки без первого ключа. Содержит: регулярка ///
+                # команда
+                a = line.partition('@SOFT_ACTION_RE_NAME')[
+                    2].partition(opt_separator)
+
+                a1 = 'name'
+
+                a2 = a[0].strip()
+                valid_re(a2)
+
+                a3 = a[2].strip()
+
+                zzz = (a1, a2, a3)
+
+                # print(zzz)
+
+                soft_actions_list.append(zzz)
+
+            if etc2:
+
+                # это остаток строки без первого ключа. Содержит: регулярка ///
+                # команда
+                a = line.partition('@SOFT_ACTION_RE_CGROUP_V1')[
+                    2].partition(opt_separator)
+
+                a1 = 'cgroup_v1'
+
+                a2 = a[0].strip()
+                valid_re(a2)
+
+                a3 = a[2].strip()
+
+                zzz = (a1, a2, a3)
+
+                # print(zzz)
+
+                soft_actions_list.append(zzz)
 
             if line.startswith('@PROCESSNAME_RE'):
                 a = line.partition(
-                    '@PROCESSNAME_RE')[2].strip(' \n').partition('///')
+                    '@PROCESSNAME_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1853,7 +1923,7 @@ try:
 
             if line.startswith('@CMDLINE_RE'):
                 a = line.partition(
-                    '@CMDLINE_RE')[2].strip(' \n').partition('///')
+                    '@CMDLINE_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1861,7 +1931,7 @@ try:
 
             if line.startswith('@UID_RE'):
                 a = line.partition(
-                    '@UID_RE')[2].strip(' \n').partition('///')
+                    '@UID_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1869,7 +1939,7 @@ try:
 
             if line.startswith('@CGROUP_V1_RE'):
                 a = line.partition(
-                    '@CGROUP_V1_RE')[2].strip(' \n').partition('///')
+                    '@CGROUP_V1_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1877,7 +1947,7 @@ try:
 
             if line.startswith('@CGROUP_V2_RE'):
                 a = line.partition(
-                    '@CGROUP_V2_RE')[2].strip(' \n').partition('///')
+                    '@CGROUP_V2_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1885,7 +1955,7 @@ try:
 
             if line.startswith('@REALPATH_RE'):
                 a = line.partition(
-                    '@REALPATH_RE')[2].strip(' \n').partition('///')
+                    '@REALPATH_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1893,7 +1963,7 @@ try:
 
             if line.startswith('@ENVIRON_RE'):
                 a = line.partition(
-                    '@ENVIRON_RE')[2].strip(' \n').partition('///')
+                    '@ENVIRON_RE')[2].strip(' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
@@ -1915,7 +1985,6 @@ except IndexError:
 except FileNotFoundError:
     errprint('FileNotFoundError', conf_err_mess)
     exit(1)
-
 
 
 if processname_re_list == []:
@@ -1959,10 +2028,6 @@ else:
     re_match_cgroup_v2 = True
 
 
-
-
-
-
 # print(processname_re_list)
 # print(cmdline_re_list)
 # print(uid_re_list)
@@ -1971,6 +2036,15 @@ else:
 # print(cgroup_v1_re_list)
 # print(cgroup_v2_re_list)
 
+
+print(soft_actions_list)
+
+if soft_actions_list == []:
+    soft_actions = False
+else:
+    soft_actions = True
+
+print('soft_actions:', soft_actions)
 
 ##########################################################################
 
@@ -1989,7 +2063,6 @@ print_sleep_periods = conf_parse_bool('print_sleep_periods')
 gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
-execute_the_command = conf_parse_bool('execute_the_command')
 ignore_psi = conf_parse_bool('ignore_psi')
 
 
@@ -2365,6 +2438,11 @@ if max_sleep_time < min_sleep_time:
 
 
 if print_proc_table_flag:
+
+    if not root:
+        log('WARNING: effective UID != 0; euid={}; processes with other e'
+            'uids will be invisible for nohang'.format(self_uid))
+
     func_print_proc_table()
 
 
@@ -2494,11 +2572,6 @@ if print_config:
 
     print('\n5. The execution of a specific command instead of sen'
           'ding the\nSIGTERM signal\n')
-    print('execute_the_command:       {}'.format(execute_the_command))
-    if execute_the_command:
-        print('\nPROCESS NAME     COMMAND TO EXECUTE')
-        for key in etc_dict:
-            print('{}  {}'.format(key.ljust(15), etc_dict[key]))
 
     print('\n6. GUI notifications:\n- OOM prevention results and\n- low m'
           'emory warnings\n')
@@ -2553,6 +2626,9 @@ mlockall()
 
 ##########################################################################
 
+if not root:
+    log('WARNING: effective UID != 0; euid={}; processes with other e'
+        'uids will be invisible for nohang'.format(self_uid))
 
 # if print_proc_table:
 # find_victim(print_proc_table)
@@ -2561,9 +2637,7 @@ log('Monitoring started!')
 
 stdout.flush()
 
-
 ##########################################################################
-
 
 psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
 

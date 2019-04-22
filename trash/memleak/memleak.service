@@ -1,0 +1,9 @@
+[Unit]
+Description=Memory leak daemon
+After=sysinit.target
+
+[Service]
+ExecStart=/usr/sbin/memleak
+
+[Install]
+WantedBy=multi-user.target
