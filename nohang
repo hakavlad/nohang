@@ -15,7 +15,6 @@ from sre_constants import error as invalid_re
 start_time = time()
 
 
-
 help_mess = """usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
 
 optional arguments:
@@ -87,14 +86,23 @@ cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 # define functions
 
 
+def self_rss():
+    """
+    """
+    return pid_to_status(self_pid)[5]
 
-def signal_handler(sig, frame):
-    log('Got signal {}'.format(sig))
+
+def print_self_rss():
+    """
+    """
+    log('Self RSS: {} MiB'.format(self_rss()))
+
+
+def signal_handler(signum, frame):
+    log('Got signal {}'.format(signum))
     update_stat_dict_and_print(None)
     log('Exit')
-    stdout.flush()
     exit()
-
 
 
 def write(path, string):
@@ -621,9 +629,6 @@ def update_stat_dict_and_print(key):
     """
     """
 
-
-
-
     if key is not None:
 
         if key not in stat_dict:
@@ -634,7 +639,6 @@ def update_stat_dict_and_print(key):
 
             new_value = stat_dict[key] + 1
             stat_dict.update({key: new_value})
-
 
     if print_total_stat:
 
@@ -816,7 +820,7 @@ def kib_to_mib(num):
 
 
 def percent(num):
-    """Interprete mum as percentage."""
+    """Interprete num as percentage."""
     return round(num * 100, 1)
 
 
@@ -1193,7 +1197,6 @@ def find_victim(_print_proc_table):
             victim_badness
         )
     )
-
 
     return pid, victim_badness, victim_name
 
@@ -1676,6 +1679,7 @@ def sleep_after_check_mem():
         pass
 
     sleep(t)
+
 
 def calculate_percent(arg_key):
     """
@@ -2644,10 +2648,14 @@ if not root:
     log('WARNING: effective UID != 0; euid={}; processes with other e'
         'uids will be invisible for nohang'.format(self_uid))
 
+
+print_self_rss()
+
+
 # if print_proc_table:
 # find_victim(print_proc_table)
 
-log('Monitoring started!')
+log('Monitoring has started!')
 
 stdout.flush()
 
@@ -2670,15 +2678,10 @@ if print_mem_check_results:
     report0 = 0
 
 
-
-signal(SIGTERM, signal_handler)
-signal(SIGINT, signal_handler)
-signal(SIGQUIT, signal_handler)
-signal(SIGHUP, signal_handler)
-signal(SIGABRT, signal_handler)
-signal(SIGSEGV, signal_handler)
-signal(SIGBUS, signal_handler)
-
+# handle signals
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGABRT, SIGSEGV, SIGBUS]
+for signum in sig_list:
+    signal(signum, signal_handler)
 
 
 while True:

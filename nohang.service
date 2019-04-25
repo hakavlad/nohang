@@ -1,5 +1,5 @@
 [Unit]
-Description=Highly configurable out of memory preventer
+Description=Highly configurable OOM prevention daemon
 After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
@@ -7,6 +7,10 @@ Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 ExecStart=/usr/sbin/nohang --config /etc/nohang/nohang.conf
 Slice=nohang.slice
 Restart=always
+KillMode=mixed
+StartLimitBurst=60
+StartLimitInterval=20
+StartLimitIntervalSec=20
 MemoryMax=50M
 TasksMax=50
 Nice=-20
