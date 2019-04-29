@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+
+import os
+from time import sleep, time
+from signal import (signal,
+                    SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGCONT, SIGUSR1, SIGUSR2,
+                    SIGHUP, SIGABRT, SIGSEGV, SIGBUS)
+from sys import argv, exit
+
+
+def mlockall():
+    """Lock all memory to prevent swapping the process."""
+
+    from ctypes import CDLL
+
+    MCL_CURRENT = 1
+    MCL_FUTURE = 2
+    MCL_ONFAULT = 4
+
+    libc = CDLL('libc.so.6', use_errno=True)
+
+    result = libc.mlockall(
+        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
+    )
+    if result != 0:
+        result = libc.mlockall(
+            MCL_CURRENT | MCL_FUTURE
+        )
+        if result != 0:
+            print('WARNING: cannot lock all memory')
+        else:
+            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
+    else:
+        print('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+
+
+
+def check_mem():
+    """find mem_available"""
+    with open('/proc/meminfo') as f:
+        for n, line in enumerate(f):
+            if n is 2:
+                mem_available = int(line.split(':')[1][:-4])
+                return mem_available
+
+
+
+
+def pid_to_name(pid):
+    """
+    """
+    try:
+        with open('/proc/' + pid + '/comm', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore')[:-1]
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
+
+
+def pid_to_state(pid):
+
+    x = rline1('/proc/' + pid + '/stat')
+
+    if ')' in x:
+        return x.rpartition(')')[2][1]
+    else:
+        return ' '
+
+
+def pid_to_rss(pid):
+    try:
+        rss = rline1('/proc/{}/statm'.format(pid)).split(' ')[1]
+    except IndexError:
+        rss = '-0'
+    return rss
+
+
+def pid_to_realpath(pid):
+    try:
+        return os.path.realpath('/proc/' + pid + '/exe')
+    except FileNotFoundError:
+        return ''
+
+
+def rline1(path):
+    """read 1st line from path."""
+    try:
+        with open(path) as f:
+            for line in f:
+                return line[:-1]
+    except UnicodeDecodeError:
+        with open(path, 'rb') as f:
+            return f.read(999).decode(
+                'utf-8', 'ignore').split('\n')[0]  # use partition()!
+    except FileNotFoundError:
+        return 'FileNotFoundError'
+    except ProcessLookupError:
+        return 'ProcessLookupError'
+
+
+###############################################################################
+
+
+mlockall()
+
+
+pid = argv[1]
+name = pid_to_name(pid)
+rss0 = float(pid_to_rss(pid))
+ma = check_mem()
+
+
+print('PID:', pid)
+print('Name:', name)
+print('RSS at startup: {} (100.0 %)'.format(int(rss0)))
+print('MemAvail:', ma)
+
+send_signal = SIGKILL
+
+
+
+os.kill(int(pid), SIGCONT)
+
+
+
+
+os.kill(int(pid), send_signal)
+t0 = time()
+
+
+while True:
+    rpe = os.path.exists('/proc/{}/exe'.format(pid))
+    rss = pid_to_rss(pid)
+    pe = os.path.exists('/proc/{}'.format(pid))
+    t1 = time()
+    d = t1 - t0
+    state = pid_to_state(pid)
+    ma = check_mem()
+
+    if pe is False:
+        exit()
+
+    print('RP: {}  |  RSS: {} ({} %)  |  State: {}  |  time: {}  |  MemAvail: {}'.format(
+        rpe, rss, round(float(rss) / (rss0 + 0.0001) * 100, 1), state, round(d, 4), ma
+        )
+    )
+
+    # sleep(0.0001)

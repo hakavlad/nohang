@@ -4,6 +4,21 @@
 
 from memco import *
 
+from signal import signal, SIGTERM
+from time import sleep
+
+
+
+def signal_handler(signum, frame):
+    print('Got signal {}'.format(signum))
+    #sleep(1)
+    exit()
+
+
+signal(SIGTERM, signal_handler)
+
+
+
 # печать показателей на этапах работы
 def print_mem():
 

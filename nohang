@@ -206,6 +206,10 @@ def test():
     print(uptime())
 
     print(hr)
+    print("os.uname()")
+    print(os.uname())
+
+    print(hr)
     print("pid_to_starttime('self')")
     print(pid_to_starttime('self'))
 
@@ -238,17 +242,7 @@ def test():
     print("psi_mem_some_avg10()")
     print(psi_mem_some_avg10())
 
-    print(hr)
-    print("check_mem()")
-    print(check_mem())
 
-    print(hr)
-    print("os.uname()")
-    print(os.uname())
-
-    print(hr)
-    print("check_mem()")
-    print(check_mem())
 
     '''
 
@@ -618,7 +612,7 @@ def mlockall():
             MCL_CURRENT | MCL_FUTURE
         )
         if result != 0:
-            log('Cannot lock all memory')
+            log('WARNING: cannot lock all memory')
         else:
             log('All memory locked with MCL_CURRENT | MCL_FUTURE')
     else:
@@ -2638,15 +2632,21 @@ warn_timer = 0
 
 ##########################################################################
 
+
+
+
+if not root:
+    log('WARNING: effective UID != 0; euid={}; processes with other e'
+        'uids will be invisible for nohang'.format(self_uid))
+
+
+
 # Try to lock all memory
 
 mlockall()
 
 ##########################################################################
 
-if not root:
-    log('WARNING: effective UID != 0; euid={}; processes with other e'
-        'uids will be invisible for nohang'.format(self_uid))
 
 
 print_self_rss()
