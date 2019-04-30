@@ -54,6 +54,21 @@ else:
 victim_dict = dict()
 
 
+#soft_post_action_delay = 1
+# 1 - 5
+
+#hard_post_action_delay = 0.2
+# 0.2 - 1
+
+
+# it will store time of last actions
+corrective_actions_dict = dict()
+corrective_actions_dict[SIGTERM] = time()
+corrective_actions_dict[SIGKILL] = time()
+
+# print(corrective_actions_dict)
+
+
 # will store corrective actions stat
 stat_dict = dict()
 
@@ -768,7 +783,6 @@ def rline1(path):
             for line in f:
                 return line[:-1]
     except UnicodeDecodeError:
-        # print('UDE rline1', path)
         with open(path, 'rb') as f:
             return f.read(999).decode(
                 'utf-8', 'ignore').split('\n')[0]  # use partition()!
@@ -916,23 +930,6 @@ def send_notification(title, body):
     cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
 
     exe(cmd)
-
-
-def sleep_after_send_signal(signal):
-    """
-    Sleeping after signal was sent.
-
-    signal: sent signal
-    """
-    if signal is SIGKILL:
-        if print_sleep_periods:
-            log('  sleep {}'.format(min_delay_after_sigkill))
-        sleep(min_delay_after_sigkill)
-    else:
-        if print_sleep_periods:
-            log('Sleep {} sec after implementing a corrective action'.format(
-                min_delay_after_sigterm))
-        sleep(min_delay_after_sigterm)
 
 
 def get_pid_list():
@@ -1101,7 +1098,8 @@ def find_victim(_print_proc_table):
     if _print_proc_table:
         log(hr)
 
-    log('Found {} processes with existing realpaths'.format(real_proc_num))
+    log('Found {} processes with existing /proc/[pid]/exe'.format(
+        real_proc_num))
 
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'
@@ -1326,6 +1324,19 @@ def implement_corrective_action(signal):
 
     notif = True
 
+    if signal is SIGTERM:
+        dt = time() - corrective_actions_dict[SIGTERM]
+        if dt < min_delay_after_sigterm:
+            #print('  soft_post_action_delay NOT EXCEEDED')
+            sleep_after_check_mem(0.2)
+            return 0  # время задержки между действиями не истекло
+    else:
+        dt = time() - corrective_actions_dict[SIGKILL]
+        if dt < min_delay_after_sigkill:
+            #print('  hard_post_action_delay NOT EXCEEDED')
+            sleep_after_check_mem(0.2)
+            return 0  # время задержки между действиями не истекло
+
     log(mem_info)
 
     pid, victim_badness, name = find_victim(print_proc_table)
@@ -1336,7 +1347,8 @@ def implement_corrective_action(signal):
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
 
-        # kill the victim if it doesn't respond to SIGTERM
+        # kill the victim if it doesn't respond to SIGTERM    В ТЕЧЕНИЕ
+        # ЗАДАНГНОГО ВРЕМЕНИ
         if signal is SIGTERM:
             victim_id = get_victim_id(pid)
             if victim_id not in victim_dict:
@@ -1345,12 +1357,12 @@ def implement_corrective_action(signal):
                 if time() - victim_dict[
                         victim_id] > max_post_sigterm_victim_lifetime:
                     print(
-                        '\nmax_post_sigterm_victim_lifetime excee'
+                        'max_post_sigterm_victim_lifetime excee'
                         'ded: the victim will get SIGKILL'
                     )
                     signal = SIGKILL
 
-        soft_match = False
+        soft_match = False  # matching with re to customize corrective actions
 
         if soft_actions and signal is SIGTERM:
             name = pid_to_name(pid)
@@ -1514,10 +1526,45 @@ def implement_corrective_action(signal):
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-    sleep_after_send_signal(signal)
+    # sleep_after_send_signal(signal)
+
+    if signal is SIGTERM:
+        corrective_actions_dict[SIGTERM] = time()
+    else:
+        corrective_actions_dict[SIGKILL] = time()
+        corrective_actions_dict[SIGTERM] = time()
+
+    print('##################################################################')
 
 
-def sleep_after_check_mem():
+'''
+def sleep_after_send_signal(signal):
+    """
+    Sleeping after signal was sent.
+
+    signal: sent signal
+    """
+
+    #min_delay_after_sigterm = 0.01
+    #min_delay_after_sigkill = 0.01
+
+    return 0
+
+
+    if signal is SIGKILL:
+        if print_sleep_periods:
+            log('Sleep {} sec after implementing a corrective action'.format(
+                min_delay_after_sigkill))
+        sleep(min_delay_after_sigkill)
+    else:
+        if print_sleep_periods:
+            log('Sleep {} sec after implementing a corrective action'.format(
+                min_delay_after_sigterm))
+        sleep(min_delay_after_sigterm)
+'''
+
+
+def sleep_after_check_mem(k=1.0):
     """Specify sleep times depends on rates and avialable memory."""
 
     if mem_min_sigkill_kb < mem_min_sigterm_kb:
@@ -1573,7 +1620,7 @@ def sleep_after_check_mem():
     except OSError:
         pass
 
-    sleep(t)
+    sleep(t * k)
 
 
 def calculate_percent(arg_key):
@@ -1931,16 +1978,15 @@ else:
     re_match_cgroup_v2 = True
 
 
-print(processname_re_list)
-print(cmdline_re_list)
-print(uid_re_list)
-print(environ_re_list)
-print(realpath_re_list)
-print(cgroup_v1_re_list)
-print(cgroup_v2_re_list)
+# print(processname_re_list)
+# print(cmdline_re_list)
+# print(uid_re_list)
+# print(environ_re_list)
+# print(realpath_re_list)
+# print(cgroup_v1_re_list)
+# print(cgroup_v2_re_list)
 
-
-print(soft_actions_list)
+# print(soft_actions_list)
 
 if soft_actions_list == []:
     soft_actions = False
@@ -2790,6 +2836,8 @@ while True:
             if warn_timer > min_time_between_warnings:
                 send_notify_warn()
                 warn_timer = 0
+
+    # print(victim_dict)
 
     # SLEEP BETWEEN MEM CHECKS
     sleep_after_check_mem()
