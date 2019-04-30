@@ -116,13 +116,10 @@ print('Name:', name)
 print('RSS at startup: {} (100.0 %)'.format(int(rss0)))
 print('MemAvail:', ma)
 
-send_signal = SIGKILL
+send_signal = SIGTERM
 
 
-
-os.kill(int(pid), SIGCONT)
-
-
+# os.kill(int(pid), SIGCONT)
 
 
 os.kill(int(pid), send_signal)

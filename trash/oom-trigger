@@ -6,13 +6,13 @@ from memco import *
 
 from signal import signal, SIGTERM
 from time import sleep
-
+from sys import exit
 
 
 def signal_handler(signum, frame):
     print('Got signal {}'.format(signum))
-    #sleep(1)
-    exit()
+    # sleep(1)
+    # exit()
 
 
 signal(SIGTERM, signal_handler)
