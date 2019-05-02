@@ -6,11 +6,10 @@ from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit, version
-from signal import (signal,
-                    SIGKILL, SIGTERM, SIGINT, SIGQUIT,
-                    SIGHUP, SIGABRT, SIGSEGV, SIGBUS)
 from re import search
 from sre_constants import error as invalid_re
+from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
+
 
 start_time = time()
 
@@ -32,8 +31,16 @@ SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
 
 conf_err_mess = 'Invalid config. Exit.'
 
-sig_dict = {SIGKILL: 'SIGKILL',
-            SIGTERM: 'SIGTERM'}
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
+
+sig_dict = {
+    SIGKILL: 'SIGKILL',
+    SIGINT: 'SIGINT',
+    SIGQUIT: 'SIGQUIT',
+    SIGHUP: 'SIGHUP',
+    SIGTERM: 'SIGTERM'
+}
+
 
 self_pid = str(os.getpid())
 
@@ -114,10 +121,20 @@ def print_self_rss():
 
 
 def signal_handler(signum, frame):
-    log('Got signal {}'.format(signum))
+    """
+    """
+    for sig_num in sig_list:
+        signal(sig_num, signal_handler_inner)
+    log('Got the {} signal '.format(sig_dict[signum]))
     update_stat_dict_and_print(None)
     log('Exit')
     exit()
+
+
+def signal_handler_inner(signum, frame):
+    """
+    """
+    log('Got the {} signal (ignored) '.format(sig_dict[signum]))
 
 
 def write(path, string):
@@ -601,9 +618,11 @@ def mlockall():
         if result != 0:
             log('WARNING: cannot lock all memory')
         else:
-            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
+            pass
+            # log('All memory locked with MCL_CURRENT | MCL_FUTURE')
     else:
-        log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+        pass
+        # log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
 def update_stat_dict_and_print(key):
@@ -2563,7 +2582,7 @@ mlockall()
 ##########################################################################
 
 
-print_self_rss()
+# print_self_rss()
 
 
 log('Monitoring has started!')
@@ -2590,9 +2609,8 @@ if print_mem_check_results:
 
 
 # handle signals
-sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGABRT, SIGSEGV, SIGBUS]
-for signum in sig_list:
-    signal(signum, signal_handler)
+for sig_num in sig_list:
+    signal(sig_num, signal_handler)
 
 
 while True:
@@ -2836,8 +2854,6 @@ while True:
             if warn_timer > min_time_between_warnings:
                 send_notify_warn()
                 warn_timer = 0
-
-    # print(victim_dict)
 
     # SLEEP BETWEEN MEM CHECKS
     sleep_after_check_mem()
