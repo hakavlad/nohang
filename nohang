@@ -41,7 +41,6 @@ sig_dict = {
     SIGTERM: 'SIGTERM'
 }
 
-
 self_pid = str(os.getpid())
 
 self_uid = os.geteuid()
@@ -61,10 +60,10 @@ else:
 victim_dict = dict()
 
 
-#soft_post_action_delay = 1
+# soft_post_action_delay = 1
 # 1 - 5
 
-#hard_post_action_delay = 0.2
+# hard_post_action_delay = 0.2
 # 0.2 - 1
 
 
@@ -107,7 +106,7 @@ cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 
 # define functions
 
-
+'''
 def self_rss():
     """
     """
@@ -118,14 +117,28 @@ def print_self_rss():
     """
     """
     log('Self RSS: {} MiB'.format(self_rss()))
+'''
+
+
+def pid_to_rss(pid):
+    try:
+        rss = rline1('/proc/{}/statm'.format(pid)).split(' ')[1]
+    except IndexError:
+        rss = '-0'
+    except FileNotFoundError:
+        rss = '-0'
+    except ProcessLookupError:
+        rss = '-0'
+    return rss
 
 
 def signal_handler(signum, frame):
     """
     """
-    for sig_num in sig_list:
-        signal(sig_num, signal_handler_inner)
-    log('Got the {} signal '.format(sig_dict[signum]))
+    for i in sig_list:
+        signal(i, signal_handler_inner)
+    log('Signal handler called with the {} signal '.format(
+        sig_dict[signum]))
     update_stat_dict_and_print(None)
     log('Exit')
     exit()
@@ -134,7 +147,21 @@ def signal_handler(signum, frame):
 def signal_handler_inner(signum, frame):
     """
     """
-    log('Got the {} signal (ignored) '.format(sig_dict[signum]))
+    log('Signal handler called with the {} signal (ignored) '.format(
+        sig_dict[signum]))
+
+
+def exe(cmd):
+    """
+    """
+    log('Execute the command: {}'.format(cmd))
+    t0 = time()
+    write_self_oom_score_adj(self_oom_score_adj_max)
+    err = os.system(cmd)
+    write_self_oom_score_adj(self_oom_score_adj_min)
+    dt = time() - t0
+    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
+    return err
 
 
 def write(path, string):
@@ -156,19 +183,6 @@ self_oom_score_adj_max = '-6'
 
 
 write_self_oom_score_adj(self_oom_score_adj_min)
-
-
-def exe(cmd):
-    """
-    """
-    log('Execute the command: {}'.format(cmd))
-    t0 = time()
-    write_self_oom_score_adj(self_oom_score_adj_max)
-    err = os.system(cmd)
-    write_self_oom_score_adj(self_oom_score_adj_min)
-    dt = time() - t0
-    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
-    return err
 
 
 def valid_re(reg_exp):
@@ -1346,14 +1360,27 @@ def implement_corrective_action(signal):
     if signal is SIGTERM:
         dt = time() - corrective_actions_dict[SIGTERM]
         if dt < min_delay_after_sigterm:
-            #print('  soft_post_action_delay NOT EXCEEDED')
-            sleep_after_check_mem(0.2)
-            return 0  # время задержки между действиями не истекло
+            # print('  soft_post_action_delay NOT EXCEEDED')
+
+            if print_sleep_periods:
+                log('Sleep {} sec (in implement_corrective_action())'.format(
+                    over_sleep))
+
+            sleep(over_sleep)
+
+            return None  # время задержки между действиями не истекло
+
     else:
         dt = time() - corrective_actions_dict[SIGKILL]
         if dt < min_delay_after_sigkill:
-            #print('  hard_post_action_delay NOT EXCEEDED')
-            sleep_after_check_mem(0.2)
+            # print('  hard_post_action_delay NOT EXCEEDED')
+
+            if print_sleep_periods:
+                log('Sleep {} sec (in implement_corrective_action())'.format(
+                    over_sleep))
+
+            sleep(over_sleep)
+
             return 0  # время задержки между действиями не истекло
 
     log(mem_info)
@@ -1472,7 +1499,25 @@ def implement_corrective_action(signal):
                     signal = SIGKILL
 
                 os.kill(int(pid), signal)
+
                 response_time = time() - time0
+
+                sleep(0.001)
+                rp = os.path.exists('/proc/{}/exe'.format(pid))
+
+                if signal is SIGKILL or not rp:
+
+                    t0 = time()
+                    while True:
+                        sleep(0.001)
+                        rss = pid_to_rss(pid)
+                        if rss == '-0':
+                            break
+                    t1 = time()
+                    kill_duration = t1 - t0
+                    log('The victim died in {} sec'.format(
+                        round(kill_duration, 3)))
+
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
 
@@ -1525,6 +1570,11 @@ def implement_corrective_action(signal):
 
             try:
                 log(preventing_oom_message)
+                if rp:
+                    log('Seems like the victim handles signal')
+                else:
+                    log('Seems like the victim is dead or zombie')
+
             except UnboundLocalError:
                 preventing_oom_message = key
 
@@ -1545,8 +1595,6 @@ def implement_corrective_action(signal):
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-    # sleep_after_send_signal(signal)
-
     if signal is SIGTERM:
         corrective_actions_dict[SIGTERM] = time()
     else:
@@ -1556,35 +1604,16 @@ def implement_corrective_action(signal):
     print('##################################################################')
 
 
-'''
-def sleep_after_send_signal(signal):
-    """
-    Sleeping after signal was sent.
-
-    signal: sent signal
-    """
-
-    #min_delay_after_sigterm = 0.01
-    #min_delay_after_sigkill = 0.01
-
-    return 0
-
-
-    if signal is SIGKILL:
-        if print_sleep_periods:
-            log('Sleep {} sec after implementing a corrective action'.format(
-                min_delay_after_sigkill))
-        sleep(min_delay_after_sigkill)
-    else:
-        if print_sleep_periods:
-            log('Sleep {} sec after implementing a corrective action'.format(
-                min_delay_after_sigterm))
-        sleep(min_delay_after_sigterm)
-'''
-
-
-def sleep_after_check_mem(k=1.0):
+def sleep_after_check_mem():
     """Specify sleep times depends on rates and avialable memory."""
+
+    if stable_sleep:
+
+        if print_sleep_periods:
+            log('Sleep {} sec'.format(min_sleep))
+
+        sleep(min_sleep)
+        return None
 
     if mem_min_sigkill_kb < mem_min_sigterm_kb:
         mem_point = mem_available - mem_min_sigterm_kb
@@ -1616,10 +1645,10 @@ def sleep_after_check_mem(k=1.0):
     else:
         t = t_mem_zram
 
-    if t > max_sleep_time:
-        t = max_sleep_time
-    elif t < min_sleep_time:
-        t = min_sleep_time
+    if t > max_sleep:
+        t = max_sleep
+    elif t < min_sleep:
+        t = min_sleep
     else:
         pass
 
@@ -1639,7 +1668,7 @@ def sleep_after_check_mem(k=1.0):
     except OSError:
         pass
 
-    sleep(t * k)
+    sleep(t)
 
 
 def calculate_percent(arg_key):
@@ -2355,39 +2384,66 @@ else:
     exit(1)
 
 
-if 'max_sleep_time' in config_dict:
-    max_sleep_time = string_to_float_convert_test(
-        config_dict['max_sleep_time'])
-    if max_sleep_time is None:
-        errprint('Invalid max_sleep_time value, not float\nExit')
+if 'max_sleep' in config_dict:
+    max_sleep = string_to_float_convert_test(
+        config_dict['max_sleep'])
+    if max_sleep is None:
+        errprint('Invalid max_sleep value, not float\nExit')
         exit(1)
-    if max_sleep_time <= 0:
-        errprint('max_sleep_time must be positive number\nExit')
+    if max_sleep <= 0:
+        errprint('max_sleep must be positive number\nExit')
         exit(1)
 else:
-    errprint('max_sleep_time is not in config\nExit')
+    errprint('max_sleep is not in config\nExit')
     exit(1)
 
 
-if 'min_sleep_time' in config_dict:
-    min_sleep_time = string_to_float_convert_test(
-        config_dict['min_sleep_time'])
-    if min_sleep_time is None:
-        errprint('Invalid min_sleep_time value, not float\nExit')
+if 'min_sleep' in config_dict:
+    min_sleep = string_to_float_convert_test(
+        config_dict['min_sleep'])
+    if min_sleep is None:
+        errprint('Invalid min_sleep value, not float\nExit')
         exit(1)
-    if min_sleep_time <= 0:
-        errprint('min_sleep_time must be positive number\nExit')
+    if min_sleep <= 0:
+        errprint('min_sleep must be positive number\nExit')
         exit(1)
 else:
-    errprint('min_sleep_time is not in config\nExit')
+    errprint('min_sleep is not in config\nExit')
     exit(1)
 
 
-if max_sleep_time < min_sleep_time:
+if 'over_sleep' in config_dict:
+    over_sleep = string_to_float_convert_test(
+        config_dict['over_sleep'])
+    if over_sleep is None:
+        errprint('Invalid over_sleep value, not float\nExit')
+        exit(1)
+    if over_sleep <= 0:
+        errprint('over_sleep must be positive number\nExit')
+        exit(1)
+else:
+    errprint('over_sleep is not in config\nExit')
+    exit(1)
+
+
+if max_sleep < min_sleep:
     errprint(
-        'max_sleep_time value must not exceed min_sleep_time value.\nExit'
+        'max_sleep value must not exceed min_sleep value.\nExit'
     )
     exit(1)
+
+
+if min_sleep < over_sleep:
+    errprint(
+        'min_sleep value must not exceed over_sleep value.\nExit'
+    )
+    exit(1)
+
+
+if max_sleep == min_sleep:
+    stable_sleep = True
+else:
+    stable_sleep = False
 
 
 if print_proc_table_flag:
@@ -2609,8 +2665,8 @@ if print_mem_check_results:
 
 
 # handle signals
-for sig_num in sig_list:
-    signal(sig_num, signal_handler)
+for i in sig_list:
+    signal(i, signal_handler)
 
 
 while True:

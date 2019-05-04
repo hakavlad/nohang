@@ -46,9 +46,9 @@ with open('/proc/meminfo') as f:
         if line.startswith('SwapTotal'):
             swap_total = int(line.split(':')[1][:-4])
             if swap_total > 0:
-                wait_time = 5
+                wait_time = 8
             else:
-                wait_time = 1
+                wait_time = 2
 
 
 print('nohang_notify_helper: wait_time:', wait_time)
