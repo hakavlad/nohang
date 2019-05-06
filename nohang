@@ -29,6 +29,8 @@ optional arguments:
 
 SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
 
+SC_PAGESIZE = os.sysconf(os.sysconf_names['SC_PAGESIZE'])
+
 conf_err_mess = 'Invalid config. Exit.'
 
 sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
@@ -60,19 +62,12 @@ else:
 victim_dict = dict()
 
 
-# soft_post_action_delay = 1
-# 1 - 5
 
-# hard_post_action_delay = 0.2
-# 0.2 - 1
+victim_id = None
+actions_time_dict = dict()
+actions_time_dict['action_handled'] = [time(), victim_id]
+# print(actions_time_dict)
 
-
-# it will store time of last actions
-corrective_actions_dict = dict()
-corrective_actions_dict[SIGTERM] = time()
-corrective_actions_dict[SIGKILL] = time()
-
-# print(corrective_actions_dict)
 
 
 # will store corrective actions stat
@@ -122,14 +117,34 @@ def print_self_rss():
 
 def pid_to_rss(pid):
     try:
-        rss = rline1('/proc/{}/statm'.format(pid)).split(' ')[1]
+        rss = int(rline1(
+            '/proc/{}/statm'.format(pid)).split(' ')[1]) * SC_PAGESIZE
     except IndexError:
-        rss = '-0'
+        rss = None
     except FileNotFoundError:
-        rss = '-0'
+        rss = None
     except ProcessLookupError:
-        rss = '-0'
+        rss = None
     return rss
+
+
+def pid_to_vm_size(pid):
+    try:
+        vm_size = int(rline1(
+            '/proc/{}/statm'.format(pid)).partition(' ')[0]) * SC_PAGESIZE
+    except IndexError:
+        vm_size = None
+    except FileNotFoundError:
+        vm_size = None
+    except ProcessLookupError:
+        vm_size = None
+    return vm_size
+
+
+
+
+
+
 
 
 def signal_handler(signum, frame):
@@ -319,8 +334,10 @@ def get_victim_id(pid):
     """victim_id is starttime + pid"""
     try:
         return rline1('/proc/' + pid + '/stat').rpartition(
-            ')')[2].split(' ')[20] + pid
+            ')')[2].split(' ')[20] + '_pid' + pid
     except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
         return ''
 
 
@@ -1345,9 +1362,14 @@ def find_victim_info(pid, victim_badness, name):
     return victim_info
 
 
-# for warnings deduplication
-dick = dict()
-dick['v'] = [1, 2, 3, time()]
+
+
+
+
+
+
+
+
 
 
 def implement_corrective_action(signal):
@@ -1355,33 +1377,43 @@ def implement_corrective_action(signal):
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
 
-    notif = True
 
+    # выходим из фции, если для SIGTERM порога не превышено время min_delay_after_sigterm  и спим в течение over_sleep
     if signal is SIGTERM:
-        dt = time() - corrective_actions_dict[SIGTERM]
+
+        dt = time() - actions_time_dict['action_handled'][0]
+
         if dt < min_delay_after_sigterm:
-            # print('  soft_post_action_delay NOT EXCEEDED')
+            print('min_delay_after_sigterm IS NOT EXCEEDED ({} < {})'.format(
+                round(dt, 3), min_delay_after_sigterm))
 
             if print_sleep_periods:
-                log('Sleep {} sec (in implement_corrective_action())'.format(
+                log('Sleep {} sec [in implement_corrective_action()]'.format(
                     over_sleep))
 
             sleep(over_sleep)
 
             return None  # время задержки между действиями не истекло
+        else:
+            print('min_delay_after_sigterm IS EXCEEDED, it is time to action')
 
-    else:
-        dt = time() - corrective_actions_dict[SIGKILL]
-        if dt < min_delay_after_sigkill:
-            # print('  hard_post_action_delay NOT EXCEEDED')
 
-            if print_sleep_periods:
-                log('Sleep {} sec (in implement_corrective_action())'.format(
-                    over_sleep))
 
-            sleep(over_sleep)
 
-            return 0  # время задержки между действиями не истекло
+    """
+
+    При заходе в фцию проверяем права на сигтерм.  Права на сигкилл у нас всегда есть
+    (потому что идем дальше только после полн освободж памяти после смерти жертвы)
+
+    actions_time_dict[action_handled] = time()
+    actions_time_dict[veto] = True
+
+    actions_time_dict['action_handled'] = [time(), victim_id]
+
+
+
+    """
+
 
     log(mem_info)
 
@@ -1393,22 +1425,61 @@ def implement_corrective_action(signal):
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
 
+
+
+
+        # пороги могли превысиься за время поиска жертвы (поиск может занимать сотни миллисекунд)
+        mem_available, swap_total, swap_free = check_mem_and_swap()
+
+        ma_mib = int(mem_available) / 1024.0
+        sf_mib = int(swap_free) / 1024.0
+        log('Memory status before implementing a corrective act'
+            'ion:\n  MemAvailable'
+            ': {} MiB, SwapFree: {} MiB'.format(
+                round(ma_mib, 1), round(sf_mib, 1)
+            )
+            )
+
+        if (mem_available <= mem_min_sigkill_kb and
+                swap_free <= swap_min_sigkill_kb):
+            log('Hard threshold exceeded')
+            signal = SIGKILL
+
+
+
+        victim_id = get_victim_id(pid)
+
+
+
+
+
+
         # kill the victim if it doesn't respond to SIGTERM    В ТЕЧЕНИЕ
-        # ЗАДАНГНОГО ВРЕМЕНИ
+        # ЗАДАННОГО ВРЕМЕНИ
+
+        # переопределяем сигнал для старых жертв
         if signal is SIGTERM:
-            victim_id = get_victim_id(pid)
-            if victim_id not in victim_dict:
-                victim_dict.update({victim_id: time()})
-            else:
-                if time() - victim_dict[
-                        victim_id] > max_post_sigterm_victim_lifetime:
-                    print(
-                        'max_post_sigterm_victim_lifetime excee'
-                        'ded: the victim will get SIGKILL'
-                    )
+
+            if victim_id in victim_dict:
+
+                dt = time() - victim_dict[victim_id]
+
+                if dt > max_post_sigterm_victim_lifetime:
+                    print('max_post_sigterm_victim_lifetime exceeded: the victim will get SIGKILL')
                     signal = SIGKILL
 
-        soft_match = False  # matching with re to customize corrective actions
+
+
+
+
+
+
+
+
+
+
+        # matching with re to customize corrective actions
+        soft_match = False
 
         if soft_actions and signal is SIGTERM:
             name = pid_to_name(pid)
@@ -1458,6 +1529,9 @@ def implement_corrective_action(signal):
 
             response_time = time() - time0
 
+            # тут надо, как и при дефолтном действии, проверять существование жертвы, ее реакцию на действие,
+            # и время ее смерти в случае успеха, о обновление таймстемпов действия
+
             etc_info = 'Implement a corrective act' \
                 'ion:\n  Run the command: {}' \
                 '\n  Exit status: {}; total response ' \
@@ -1478,45 +1552,95 @@ def implement_corrective_action(signal):
                     command.replace('$PID', pid).replace(
                         '$NAME', pid_to_name(pid)))
 
+
+
+
+
+
+
+
         else:
 
+            # обычное действие через сигнал
             try:
 
-                mem_available, swap_total, swap_free = check_mem_and_swap()
-
-                ma_mib = int(mem_available) / 1024.0
-                sf_mib = int(swap_free) / 1024.0
-                log('Memory status before implementing a corrective act'
-                    'ion:\n  MemAvailable'
-                    ': {} MiB, SwapFree: {} MiB'.format(
-                        round(ma_mib, 1), round(sf_mib, 1)
-                    )
-                    )
-
-                if (mem_available <= mem_min_sigkill_kb and
-                        swap_free <= swap_min_sigkill_kb):
-                    log('Hard threshold exceeded')
-                    signal = SIGKILL
 
                 os.kill(int(pid), signal)
+                kill_timestamp = time()
+                response_time = kill_timestamp - time0
 
-                response_time = time() - time0
 
-                sleep(0.001)
-                rp = os.path.exists('/proc/{}/exe'.format(pid))
 
-                if signal is SIGKILL or not rp:
 
-                    t0 = time()
+
+
+
+                while True:
+                    exe_exists = os.path.exists('/proc/{}/exe'.format(pid))
+                    rss = pid_to_rss(pid)
+                    dt = time() - kill_timestamp
+                    log('Victim VmRSS: {} KiB'.format(rss))
+                    if not exe_exists or rss == 0 or dt > 0.01:
+                        #print(dt)
+                        break
+                    sleep(0.001)
+
+                if dt > 0.01:
+                    log('Timer (value = 0.01 sec) expired; seems' \
+                        ' like the victim handles signal')
+
+                    actions_time_dict['action_handled'] = [time(), get_victim_id(pid)]
+
+
+                    if victim_id not in victim_dict:  # хз как надо.
+                        victim_dict.update({victim_id: time()})
+
+
+                    # log('actions_time_dict', actions_time_dict)
+                    # log('victim_dict', victim_dict)
+
+
+
+
+                else:
+                    log('Process exited (VmRSS = 0) in {} sec'.format(
+                        round(dt, 5)))
+
+
+
+
+
+
+
+                if signal is SIGKILL or not exe_exists or rss == 0:
+
                     while True:
                         sleep(0.001)
-                        rss = pid_to_rss(pid)
-                        if rss == '-0':
+                        rss = pid_to_rss(pid)  # рсс не важен когда путь не существует. Проверяй просто существование пид.
+                        if rss is None:
                             break
                     t1 = time()
-                    kill_duration = t1 - t0
+                    kill_duration = t1 - kill_timestamp
                     log('The victim died in {} sec'.format(
                         round(kill_duration, 3)))
+
+
+                    mem_available, swap_total, swap_free = check_mem_and_swap()
+
+                    ma_mib = int(mem_available) / 1024.0
+                    sf_mib = int(swap_free) / 1024.0
+                    log('Memory status after implementing a corrective act'
+                        'ion:\n  MemAvailable'
+                        ': {} MiB, SwapFree: {} MiB'.format(
+                            round(ma_mib, 1), round(sf_mib, 1)
+                        )
+                        )
+
+
+
+
+
+
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -1537,23 +1661,7 @@ def implement_corrective_action(signal):
                     exe(cmd)
 
                 if gui_notifications:
-                    delay_after_same_notify = 1
-
-                    x = dick['v']
-
-                    dick['v'] = [signal, name, pid, time()]
-
-                    y = dick['v']
-
-                    # print(y[3] - x[3])
-
-                    if x[0] == y[0] and x[1] == y[1] and x[2] == y[2]:
-                        dt = y[3] - x[3]
-                        if dt < delay_after_same_notify:
-                            notif = False
-
-                    if notif:
-                        send_notify(signal, name, pid)
+                    send_notify(signal, name, pid)
 
             except FileNotFoundError:
                 response_time = time() - time0
@@ -1570,10 +1678,6 @@ def implement_corrective_action(signal):
 
             try:
                 log(preventing_oom_message)
-                if rp:
-                    log('Seems like the victim handles signal')
-                else:
-                    log('Seems like the victim is dead or zombie')
 
             except UnboundLocalError:
                 preventing_oom_message = key
@@ -1595,11 +1699,13 @@ def implement_corrective_action(signal):
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-    if signal is SIGTERM:
-        corrective_actions_dict[SIGTERM] = time()
-    else:
-        corrective_actions_dict[SIGKILL] = time()
-        corrective_actions_dict[SIGTERM] = time()
+        # тут надо поспать хорошенько. а может и счетчики поправить.
+        # херню несу. во-первых, внезапно может кто-то появиться c блльшим бэднес.. Далее надо минимизировать аутпут спам.
+        sleep(over_sleep)
+
+
+    # обновлять время не на каждый кил, а только на килл той жертвы, которая не отвечала на софт экшн.
+    # Вывод: ко времени действия прилагать также виктим айди.
 
     print('##################################################################')
 
@@ -2148,20 +2254,6 @@ else:
     exit(1)
 
 
-if 'min_delay_after_sigkill' in config_dict:
-    min_delay_after_sigkill = string_to_float_convert_test(
-        config_dict['min_delay_after_sigkill'])
-    if min_delay_after_sigkill is None:
-        errprint('Invalid min_delay_after_sigkill value, not float\nExit')
-        exit(1)
-    if min_delay_after_sigkill < 0:
-        errprint('min_delay_after_sigkill must be positive\nExit')
-        exit(1)
-else:
-    errprint('min_delay_after_sigkill not in config\nExit')
-    exit(1)
-
-
 if 'psi_post_action_delay' in config_dict:
     psi_post_action_delay = string_to_float_convert_test(
         config_dict['psi_post_action_delay'])
@@ -2561,7 +2653,6 @@ if print_config:
 
     print('\n3. The prevention of killing innocent victims\n')
     print('min_delay_after_sigterm:   {}'.format(min_delay_after_sigterm))
-    print('min_delay_after_sigkill:   {}'.format(min_delay_after_sigkill))
     print('min_badness:               {}'.format(min_badness))
 
     print('decrease_oom_score_adj:    {}'.format(
@@ -2911,5 +3002,18 @@ while True:
                 send_notify_warn()
                 warn_timer = 0
 
+
+
+
     # SLEEP BETWEEN MEM CHECKS
     sleep_after_check_mem()
+
+
+
+
+
+
+
+
+
+
