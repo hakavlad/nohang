@@ -2,6 +2,7 @@
 
 from ctypes import CDLL
 from time import sleep
+from sys import argv
 
 """
     Execute the command
@@ -10,7 +11,10 @@ from time import sleep
     (actual for cgroup2)
 """
 
-psi_path = '/proc/pressure/memory'
+if len(argv) > 1:
+    psi_path = argv[1]
+else:
+    psi_path = '/proc/pressure/memory'
 
 
 def mlockall():
@@ -51,8 +55,8 @@ def psi_path_to_metrics(psi_path):
     some_avg300 = some_list[3].split('=')[1]
 
     full_avg10 = full_list[1].split('=')[1]
-    full_avg60 = full_list[1].split('=')[1]
-    full_avg300 = full_list[1].split('=')[1]
+    full_avg60 = full_list[2].split('=')[1]
+    full_avg300 = full_list[3].split('=')[1]
 
     return (some_avg10, some_avg60, some_avg300,
             full_avg10, full_avg60, full_avg300)
