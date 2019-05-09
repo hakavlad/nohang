@@ -6,7 +6,7 @@ from time import sleep
 x = []
 
 while True:
-    x.append('#' * 9999999)
+    x.append('#' * 99999)
     sleep(0.1)
-    system('sleep 99 &')
+    system('sleep 9999 &')
 
