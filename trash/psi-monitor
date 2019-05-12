@@ -1,51 +1,82 @@
 #!/usr/bin/env python3
 
-from time import sleep, time
-import os
-from sys import stdout
+from ctypes import CDLL
+from time import sleep
+from sys import argv
 
-mlockall = True
+"""
+    Execute the command
+    find /sys/fs/cgroup -name memory.pressure
+    to find available memory.pressue files (except /proc/pressure/memory).
+    (actual for cgroup2)
+"""
 
-if mlockall:
-    from ctypes import CDLL
-    CDLL('libc.so.6').mlockall(3)
+if len(argv) > 1:
+    psi_path = argv[1]
+else:
+    psi_path = '/proc/pressure/memory'
 
-psi_path = '/proc/pressure/memory'
 
-psi_support = os.path.exists(psi_path)
+def mlockall():
 
-def rline1(path):
-    """read 1st line from path."""
-    with open(path) as f:
-        for line in f:
-            return line[:-1]
+    MCL_CURRENT = 1
+    MCL_FUTURE = 2
+    MCL_ONFAULT = 4
 
-def psi_mem_some_avg_total():
-    return float(rline1(psi_path).rpartition('=')[2])
+    libc = CDLL('libc.so.6', use_errno=True)
 
-avg_min_time = 1
+    result = libc.mlockall(
+        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
+    )
+    if result != 0:
+        result = libc.mlockall(
+            MCL_CURRENT | MCL_FUTURE
+        )
+        if result != 0:
+            print('WARNING: cannot lock all memory')
+        else:
+            pass
+    else:
+        pass
 
-if psi_support:
-    ta0 = time()
-    a0 = psi_mem_some_avg_total()
+
+mlockall()
+
+
+def psi_path_to_metrics(psi_path):
+
+    with open(psi_path) as f:
+        psi_list = f.readlines()
+    # print(psi_list)
+    some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
+    #print(some_list, full_list)
+    some_avg10 = some_list[1].split('=')[1]
+    some_avg60 = some_list[2].split('=')[1]
+    some_avg300 = some_list[3].split('=')[1]
+
+    full_avg10 = full_list[1].split('=')[1]
+    full_avg60 = full_list[2].split('=')[1]
+    full_avg300 = full_list[3].split('=')[1]
+
+    return (some_avg10, some_avg60, some_avg300,
+            full_avg10, full_avg60, full_avg300)
+
+
+print('Path to PSI file: {}\n'.format(psi_path))
+
+
+print('      avg10  avg60 avg300         avg10  avg60 avg300')
 
 while True:
+    (some_avg10, some_avg60, some_avg300,
+     full_avg10, full_avg60, full_avg300) = psi_path_to_metrics(psi_path)
 
-    if psi_support:
+    print('some {} {} {} | full {} {} {}'.format(
+        some_avg10.rjust(6),
+        some_avg60.rjust(6),
+        some_avg300.rjust(6),
+        full_avg10.rjust(6),
+        full_avg60.rjust(6),
+        full_avg300.rjust(6)))
 
-        ta1= time()
-        dt = ta1 - ta0
-
-        if dt >= avg_min_time:
-
-            a1 = psi_mem_some_avg_total()
-            avg = (a1 - a0) / (ta1 - ta0) / 10000
-
-            print('avg time:', round(dt, 1))
-            print('PSI mem avg:', round(avg, 2))
-            print(rline1(psi_path), '\n')
-            ta0 = ta1
-            a0 = a1
-
-    stdout.flush()
-    sleep(0.1)
+    sleep(2)
