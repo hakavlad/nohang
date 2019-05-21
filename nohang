@@ -11,92 +11,6 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 
 
-start_time = time()
-
-
-help_mess = """usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -v, --version         print version
-  -t, --test            print some tests
-  -p, --print-proc-table
-                        print table of processes with their badness values
-  -c CONFIG, --config CONFIG
-                        path to the config file, default values:
-                        ./nohang.conf, /etc/nohang/nohang.conf"""
-
-
-SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
-
-SC_PAGESIZE = os.sysconf(os.sysconf_names['SC_PAGESIZE'])
-
-conf_err_mess = 'Invalid config. Exit.'
-
-sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
-
-sig_dict = {
-    SIGKILL: 'SIGKILL',
-    SIGINT: 'SIGINT',
-    SIGQUIT: 'SIGQUIT',
-    SIGHUP: 'SIGHUP',
-    SIGTERM: 'SIGTERM'
-}
-
-self_pid = str(os.getpid())
-
-self_uid = os.geteuid()
-
-if self_uid == 0:
-    root = True
-else:
-    root = False
-
-
-if os.path.exists('./nohang_notify_helper'):
-    notify_helper_path = './nohang_notify_helper'
-else:
-    notify_helper_path = '/usr/sbin/nohang_notify_helper'
-
-
-victim_dict = dict()
-
-
-
-victim_id = None
-actions_time_dict = dict()
-actions_time_dict['action_handled'] = [time(), victim_id]
-# print(actions_time_dict)
-
-
-
-# will store corrective actions stat
-stat_dict = dict()
-
-
-separate_log = False  # will be overwritten after parse config
-
-
-def find_cgroup_indexes():
-    """ Find cgroup-line positions in /proc/*/cgroup file.
-    """
-
-    cgroup_v1_index = None
-    cgroup_v2_index = None
-
-    with open('/proc/self/cgroup') as f:
-        for index, line in enumerate(f):
-            if ':name=' in line:
-                cgroup_v1_index = index
-            if line.startswith('0::'):
-                cgroup_v2_index = index
-
-    return cgroup_v1_index, cgroup_v2_index
-
-
-cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
-
-
 ##########################################################################
 
 # define functions
@@ -115,7 +29,62 @@ def print_self_rss():
 '''
 
 
+def get_swap_threshold_tuple(string):
+    # re (Num %, True) or (Num KiB, False)
+    """Returns KiB value if abs val was set in config, or tuple with %"""
+    # return tuple with abs and bool: (abs %, True) or (abs MiB, False)
+
+    if string.endswith('%'):
+        valid = string_to_float_convert_test(string[:-1])
+        if valid is None:
+            errprint('somewhere swap unit is not float_%')
+            exit(1)
+
+        value = float(string[:-1].strip())
+        if value < 0 or value > 100:
+            errprint('invalid value, must be from the range[0; 100] %')
+            exit(1)
+
+        return value, True
+
+    elif string.endswith('M'):
+        valid = string_to_float_convert_test(string[:-1])
+        if valid is None:
+            errprint('somewhere swap unit is not float_M')
+            exit(1)
+
+        value = float(string[:-1].strip()) * 1024
+        if value < 0:
+            errprint('invalid unit in config (negative value)')
+            exit(1)
+
+        return value, False
+
+    else:
+        errprint(
+            'Invalid config file. There are invalid units somewhere\nExit')
+        exit(1)
+
+
+def find_cgroup_indexes():
+    """ Find cgroup-line positions in /proc/*/cgroup file.
+    """
+
+    cgroup_v1_index = cgroup_v2_index = None
+
+    with open('/proc/self/cgroup') as f:
+        for index, line in enumerate(f):
+            if ':name=' in line:
+                cgroup_v1_index = index
+            if line.startswith('0::'):
+                cgroup_v2_index = index
+
+    return cgroup_v1_index, cgroup_v2_index
+
+
 def pid_to_rss(pid):
+    """
+    """
     try:
         rss = int(rline1(
             '/proc/{}/statm'.format(pid)).split(' ')[1]) * SC_PAGESIZE
@@ -129,6 +98,8 @@ def pid_to_rss(pid):
 
 
 def pid_to_vm_size(pid):
+    """
+    """
     try:
         vm_size = int(rline1(
             '/proc/{}/statm'.format(pid)).partition(' ')[0]) * SC_PAGESIZE
@@ -139,12 +110,6 @@ def pid_to_vm_size(pid):
     except ProcessLookupError:
         vm_size = None
     return vm_size
-
-
-
-
-
-
 
 
 def signal_handler(signum, frame):
@@ -191,13 +156,6 @@ def write_self_oom_score_adj(new_value):
     """
     if root:
         write('/proc/self/oom_score_adj', new_value)
-
-
-self_oom_score_adj_min = '-600'
-self_oom_score_adj_max = '-6'
-
-
-write_self_oom_score_adj(self_oom_score_adj_min)
 
 
 def valid_re(reg_exp):
@@ -431,6 +389,8 @@ def pid_to_environ(pid):
 
 
 def pid_to_realpath(pid):
+    """
+    """
     try:
         return os.path.realpath('/proc/' + pid + '/exe')
     except FileNotFoundError:
@@ -613,9 +573,6 @@ def pid_to_status_unicode(pid):
 
     except ValueError:
         return None
-
-
-##########################################################################
 
 
 def uptime():
@@ -993,9 +950,6 @@ def get_pid_list():
     return pid_list
 
 
-pid_list = get_pid_list()
-
-
 def get_non_decimal_pids():
     """
     """
@@ -1362,23 +1316,14 @@ def find_victim_info(pid, victim_badness, name):
     return victim_info
 
 
-
-
-
-
-
-
-
-
-
-
 def implement_corrective_action(signal):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
+    time0 = time()
 
-
-    # выходим из фции, если для SIGTERM порога не превышено время min_delay_after_sigterm  и спим в течение over_sleep
+    # выходим из фции, если для SIGTERM порога не превышено время
+    # min_delay_after_sigterm  и спим в течение over_sleep
     if signal is SIGTERM:
 
         dt = time() - actions_time_dict['action_handled'][0]
@@ -1397,13 +1342,12 @@ def implement_corrective_action(signal):
         else:
             print('min_delay_after_sigterm IS EXCEEDED, it is time to action')
 
-
-
-
     """
 
-    При заходе в фцию проверяем права на сигтерм.  Права на сигкилл у нас всегда есть
-    (потому что идем дальше только после полн освободж памяти после смерти жертвы)
+    При заходе в фцию проверяем права на сигтерм.  Права на сигкилл у нас
+    всегда есть
+    (потому что идем дальше только после полн освободж памяти после
+    смерти жертвы)
 
     actions_time_dict[action_handled] = time()
     actions_time_dict[veto] = True
@@ -1413,7 +1357,6 @@ def implement_corrective_action(signal):
 
 
     """
-
 
     log(mem_info)
 
@@ -1425,10 +1368,8 @@ def implement_corrective_action(signal):
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
 
-
-
-
-        # пороги могли превысиься за время поиска жертвы (поиск может занимать сотни миллисекунд)
+        # пороги могли превысиься за время поиска жертвы (поиск может занимать
+        # сотни миллисекунд)
         mem_available, swap_total, swap_free = check_mem_and_swap()
 
         ma_mib = int(mem_available) / 1024.0
@@ -1445,14 +1386,7 @@ def implement_corrective_action(signal):
             log('Hard threshold exceeded')
             signal = SIGKILL
 
-
-
         victim_id = get_victim_id(pid)
-
-
-
-
-
 
         # kill the victim if it doesn't respond to SIGTERM    В ТЕЧЕНИЕ
         # ЗАДАННОГО ВРЕМЕНИ
@@ -1465,18 +1399,9 @@ def implement_corrective_action(signal):
                 dt = time() - victim_dict[victim_id]
 
                 if dt > max_post_sigterm_victim_lifetime:
-                    print('max_post_sigterm_victim_lifetime exceeded: the victim will get SIGKILL')
+                    print('max_post_sigterm_victim_lifetime exceeded: the '
+                          'victim will get SIGKILL')
                     signal = SIGKILL
-
-
-
-
-
-
-
-
-
-
 
         # matching with re to customize corrective actions
         soft_match = False
@@ -1529,8 +1454,10 @@ def implement_corrective_action(signal):
 
             response_time = time() - time0
 
-            # тут надо, как и при дефолтном действии, проверять существование жертвы, ее реакцию на действие,
-            # и время ее смерти в случае успеха, о обновление таймстемпов действия
+            # тут надо, как и при дефолтном действии, проверять существование
+            # жертвы, ее реакцию на действие,
+            # и время ее смерти в случае успеха, о обновление таймстемпов
+            # действия
 
             etc_info = 'Implement a corrective act' \
                 'ion:\n  Run the command: {}' \
@@ -1552,28 +1479,14 @@ def implement_corrective_action(signal):
                     command.replace('$PID', pid).replace(
                         '$NAME', pid_to_name(pid)))
 
-
-
-
-
-
-
-
         else:
 
             # обычное действие через сигнал
             try:
 
-
                 os.kill(int(pid), signal)
                 kill_timestamp = time()
                 response_time = kill_timestamp - time0
-
-
-
-
-
-
 
                 while True:
                     exe_exists = os.path.exists('/proc/{}/exe'.format(pid))
@@ -1581,49 +1494,40 @@ def implement_corrective_action(signal):
                     dt = time() - kill_timestamp
                     log('Victim VmRSS: {} KiB'.format(rss))
                     if not exe_exists or rss == 0 or dt > 0.01:
-                        #print(dt)
+                        # print(dt)
                         break
                     sleep(0.001)
 
                 if dt > 0.01:
-                    log('Timer (value = 0.01 sec) expired; seems' \
+                    log('Timer (value = 0.01 sec) expired; seems'
                         ' like the victim handles signal')
 
-                    actions_time_dict['action_handled'] = [time(), get_victim_id(pid)]
-
+                    actions_time_dict['action_handled'] = [
+                        time(), get_victim_id(pid)]
 
                     if victim_id not in victim_dict:  # хз как надо.
                         victim_dict.update({victim_id: time()})
 
-
                     # log('actions_time_dict', actions_time_dict)
                     # log('victim_dict', victim_dict)
-
-
-
 
                 else:
                     log('Process exited (VmRSS = 0) in {} sec'.format(
                         round(dt, 5)))
 
-
-
-
-
-
-
                 if signal is SIGKILL or not exe_exists or rss == 0:
 
                     while True:
                         sleep(0.001)
-                        rss = pid_to_rss(pid)  # рсс не важен когда путь не существует. Проверяй просто существование пид.
+                        # рсс не важен когда путь не существует. Проверяй
+                        # просто существование пид.
+                        rss = pid_to_rss(pid)
                         if rss is None:
                             break
                     t1 = time()
                     kill_duration = t1 - kill_timestamp
                     log('The victim died in {} sec'.format(
                         round(kill_duration, 3)))
-
 
                     mem_available, swap_total, swap_free = check_mem_and_swap()
 
@@ -1635,12 +1539,6 @@ def implement_corrective_action(signal):
                             round(ma_mib, 1), round(sf_mib, 1)
                         )
                         )
-
-
-
-
-
-
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -1700,11 +1598,12 @@ def implement_corrective_action(signal):
         update_stat_dict_and_print(key)
 
         # тут надо поспать хорошенько. а может и счетчики поправить.
-        # херню несу. во-первых, внезапно может кто-то появиться c блльшим бэднес.. Далее надо минимизировать аутпут спам.
+        # херню несу. во-первых, внезапно может кто-то появиться c блльшим
+        # бэднес.. Далее надо минимизировать аутпут спам.
         sleep(over_sleep)
 
-
-    # обновлять время не на каждый кил, а только на килл той жертвы, которая не отвечала на софт экшн.
+    # обновлять время не на каждый кил, а только на килл той жертвы,
+    # которая не отвечала на софт экшн.
     # Вывод: ко времени действия прилагать также виктим айди.
 
     print('##################################################################')
@@ -1739,17 +1638,23 @@ def sleep_after_check_mem():
 
     t_mem = mem_point / rate_mem
     t_swap = swap_point / rate_swap
-    t_zram = (mem_total * 0.8 - mem_used_zram) / rate_zram
-    if t_zram < 0:
-        t_zram = 0
+
+    if CHECK_ZRAM:
+        t_zram = (mem_total * 0.8 - mem_used_zram) / rate_zram
+        if t_zram < 0:
+            t_zram = 0
+        t_mem_zram = t_mem + t_zram
 
     t_mem_swap = t_mem + t_swap
-    t_mem_zram = t_mem + t_zram
 
-    if t_mem_swap <= t_mem_zram:
-        t = t_mem_swap
+    if CHECK_ZRAM:
+
+        if t_mem_swap <= t_mem_zram:
+            t = t_mem_swap
+        else:
+            t = t_mem_zram
     else:
-        t = t_mem_zram
+        t = t_mem_swap
 
     if t > max_sleep:
         t = max_sleep
@@ -1841,6 +1746,83 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
+start_time = time()
+
+
+help_mess = """usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -v, --version         print version
+  -t, --test            print some tests
+  -p, --print-proc-table
+                        print table of processes with their badness values
+  -c CONFIG, --config CONFIG
+                        path to the config file, default values:
+                        ./nohang.conf, /etc/nohang/nohang.conf"""
+
+
+SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+
+SC_PAGESIZE = os.sysconf(os.sysconf_names['SC_PAGESIZE'])
+
+conf_err_mess = 'Invalid config. Exit.'
+
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
+
+sig_dict = {
+    SIGKILL: 'SIGKILL',
+    SIGINT: 'SIGINT',
+    SIGQUIT: 'SIGQUIT',
+    SIGHUP: 'SIGHUP',
+    SIGTERM: 'SIGTERM'
+}
+
+self_pid = str(os.getpid())
+
+self_uid = os.geteuid()
+
+if self_uid == 0:
+    root = True
+else:
+    root = False
+
+
+if os.path.exists('./nohang_notify_helper'):
+    notify_helper_path = './nohang_notify_helper'
+else:
+    notify_helper_path = '/usr/sbin/nohang_notify_helper'
+
+
+victim_dict = dict()
+
+
+victim_id = None
+actions_time_dict = dict()
+actions_time_dict['action_handled'] = [time(), victim_id]
+# print(actions_time_dict)
+
+
+# will store corrective actions stat
+stat_dict = dict()
+
+
+separate_log = False  # will be overwritten after parse config
+
+
+cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
+
+
+self_oom_score_adj_min = '-600'
+self_oom_score_adj_max = '-6'
+
+
+write_self_oom_score_adj(self_oom_score_adj_min)
+
+
+pid_list = get_pid_list()
+
+
 print_proc_table_flag = False
 
 if len(argv) == 1:
@@ -1877,9 +1859,6 @@ elif len(argv) == 3:
 else:
     errprint('Invalid CLI input: too many options')
     exit(1)
-
-
-##########################################################################
 
 
 # find mem_total
@@ -1927,8 +1906,6 @@ try:
 except ValueError:
     detailed_rss = False
     # print('It is not Linux 4.5+')
-
-##########################################################################
 
 
 log('Config: ' + config)
@@ -2167,6 +2144,8 @@ gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
 ignore_psi = conf_parse_bool('ignore_psi')
+ignore_zram = conf_parse_bool('ignore_zram')
+
 
 (mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
  ) = calculate_percent('mem_min_sigterm')
@@ -2559,43 +2538,6 @@ psi_support = os.path.exists(psi_path)
 # Get KiB levels if it's possible.
 
 
-def get_swap_threshold_tuple(string):
-    # re (Num %, True) or (Num KiB, False)
-    """Returns KiB value if abs val was set in config, or tuple with %"""
-    # return tuple with abs and bool: (abs %, True) or (abs MiB, False)
-
-    if string.endswith('%'):
-        valid = string_to_float_convert_test(string[:-1])
-        if valid is None:
-            errprint('somewhere swap unit is not float_%')
-            exit(1)
-
-        value = float(string[:-1].strip())
-        if value < 0 or value > 100:
-            errprint('invalid value, must be from the range[0; 100] %')
-            exit(1)
-
-        return value, True
-
-    elif string.endswith('M'):
-        valid = string_to_float_convert_test(string[:-1])
-        if valid is None:
-            errprint('somewhere swap unit is not float_M')
-            exit(1)
-
-        value = float(string[:-1].strip()) * 1024
-        if value < 0:
-            errprint('invalid unit in config (negative value)')
-            exit(1)
-
-        return value, False
-
-    else:
-        errprint(
-            'Invalid config file. There are invalid units somewhere\nExit')
-        exit(1)
-
-
 swap_min_sigterm_tuple = get_swap_threshold_tuple(swap_min_sigterm)
 swap_min_sigkill_tuple = get_swap_threshold_tuple(swap_min_sigkill)
 swap_min_warnings_tuple = get_swap_threshold_tuple(swap_min_warnings)
@@ -2732,14 +2674,9 @@ mlockall()
 # print_self_rss()
 
 
-log('Monitoring has started!')
-
-stdout.flush()
-
-##########################################################################
-
 psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
 
+mem_used_zram = 0
 
 if psi_support and not ignore_psi:
     psi_t0 = time()
@@ -2760,58 +2697,26 @@ for i in sig_list:
     signal(i, signal_handler)
 
 
+CHECK_PSI = False
+if psi_support and not ignore_psi:
+    CHECK_PSI = True
+
+
+CHECK_ZRAM = not ignore_zram
+
+log('Monitoring has started!')
+
+stdout.flush()
+
+
+##########################################################################
+
+
 while True:
 
-    if psi_support and not ignore_psi:
+    # Q = time()
 
-        psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
-
-        if print_mem_check_results:
-            psi_avg_string = 'PSI avg value: {} | '.format(
-                str(psi_avg_value).rjust(6))
-
-        if psi_avg_value >= sigkill_psi_threshold:
-            sigkill_psi_exceeded = True
-        else:
-            sigkill_psi_exceeded = False
-
-        if psi_avg_value >= sigterm_psi_threshold:
-            sigterm_psi_exceeded = True
-        else:
-            sigterm_psi_exceeded = False
-
-        if time() - psi_t0 >= psi_post_action_delay:
-            psi_post_action_delay_exceeded = True
-        else:
-            psi_post_action_delay_exceeded = False
-
-        if psi_debug:
-            log('sigterm_psi_exceeded: {}, sigkill_psi_exceeded: {}, ps'
-                'i_post_action_delay_exceeded: {}'.format(
-                    sigterm_psi_exceeded,
-                    sigkill_psi_exceeded,
-                    psi_post_action_delay_exceeded))
-
-        if sigkill_psi_exceeded and psi_post_action_delay_exceeded:
-            time0 = time()
-            mem_info = 'PSI avg value ({}) > sigkill_psi_thresh' \
-                'old ({})'.format(
-                    psi_avg_value, sigkill_psi_threshold)
-
-            implement_corrective_action(SIGKILL)
-
-            psi_t0 = time()
-            continue
-
-        if sigterm_psi_exceeded and psi_post_action_delay_exceeded:
-            time0 = time()
-            mem_info = 'PSI avg value ({}) > sigterm_psi_thre' \
-                'shold ({})'.format(psi_avg_value, sigterm_psi_threshold)
-
-            implement_corrective_action(SIGTERM)
-
-            psi_t0 = time()
-            continue
+    # FIND VALUES: mem, swap, zram, psi
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
@@ -2825,7 +2730,29 @@ while True:
     if swap_warn_is_percent:
         swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
 
-    mem_used_zram = check_zram()
+    if swap_total > swap_min_sigkill_kb:
+        swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
+    else:
+        swap_sigkill_pc = '-'
+
+    if swap_total > swap_min_sigterm_kb:
+        swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 0.1))
+    else:
+        swap_sigterm_pc = '-'
+
+    if CHECK_ZRAM:
+        mem_used_zram = check_zram()
+
+    if CHECK_PSI:
+        psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
+        if time() - psi_t0 >= psi_post_action_delay:
+            psi_post_action_delay_exceeded = True
+        else:
+            psi_post_action_delay_exceeded = False
+
+        if print_mem_check_results:
+            psi_avg_string = 'PSI avg value: {} | '.format(
+                str(psi_avg_value).rjust(6))
 
     if print_mem_check_results:
 
@@ -2894,20 +2821,12 @@ while True:
                     )
                     )
 
-    if swap_total > swap_min_sigkill_kb:
-        swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
-    else:
-        swap_sigkill_pc = '-'
+    ###########################################################################
 
-    if swap_total > swap_min_sigterm_kb:
-        swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 0.1))
-    else:
-        swap_sigterm_pc = '-'
+    # CHECK HARD THRESHOLDS (SIGKILL LEVEL)
 
-    # MEM SWAP KILL
     if (mem_available <= mem_min_sigkill_kb and
             swap_free <= swap_min_sigkill_kb):
-        time0 = time()
 
         mem_info = 'Hard threshold exceeded\nMemory status that requ' \
             'ires corrective actions:' \
@@ -2924,33 +2843,47 @@ while True:
                 swap_sigkill_pc)
 
         implement_corrective_action(SIGKILL)
-
         psi_t0 = time()
         continue
 
-    # ZRAM KILL
-    if mem_used_zram >= zram_max_sigkill_kb:
-        time0 = time()
+    if CHECK_ZRAM:
+        if mem_used_zram >= zram_max_sigkill_kb:
 
-        mem_info = 'Hard threshold exceeded\nMemory status that requir' \
-            'es corrective actions:' \
-            '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
-            'kill [{} MiB, {} %]'.format(
-                kib_to_mib(mem_used_zram),
-                percent(mem_used_zram / mem_total),
-                kib_to_mib(zram_max_sigkill_kb),
-                percent(zram_max_sigkill_kb / mem_total))
+            mem_info = 'Hard threshold exceeded\nMemory status that requir' \
+                'es corrective actions:' \
+                '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
+                'kill [{} MiB, {} %]'.format(
+                    kib_to_mib(mem_used_zram),
+                    percent(mem_used_zram / mem_total),
+                    kib_to_mib(zram_max_sigkill_kb),
+                    percent(zram_max_sigkill_kb / mem_total))
 
-        implement_corrective_action(SIGKILL)
+            implement_corrective_action(SIGKILL)
+            psi_t0 = time()
+            continue
 
-        psi_t0 = time()
-        continue
+    if CHECK_PSI:
+        if psi_avg_value >= sigkill_psi_threshold:
+            sigkill_psi_exceeded = True
+        else:
+            sigkill_psi_exceeded = False
 
-    # MEM SWAP TERM
-    if mem_available <= mem_min_sigterm_kb and \
-            swap_free <= swap_min_sigterm_kb:
+        if sigkill_psi_exceeded and psi_post_action_delay_exceeded:
 
-        time0 = time()
+            mem_info = 'PSI avg value ({}) > sigkill_psi_thresh' \
+                'old ({})'.format(
+                    psi_avg_value, sigkill_psi_threshold)
+
+            implement_corrective_action(SIGKILL)
+            psi_t0 = time()
+            continue
+
+    ###########################################################################
+
+    # CHECK SOFT THRESHOLDS (SIGTERM LEVEL)
+
+    if (mem_available <= mem_min_sigterm_kb and
+            swap_free <= swap_min_sigterm_kb):
 
         mem_info = 'Soft threshold exceeded\nMemory status that requi' \
             'res corrective actions:' \
@@ -2967,34 +2900,54 @@ while True:
                 swap_sigterm_pc)
 
         implement_corrective_action(SIGTERM)
-
         psi_t0 = time()
         continue
 
-    # ZRAM TERM
-    if mem_used_zram >= zram_max_sigterm_kb:
-        time0 = time()
+    if CHECK_ZRAM:
+        if mem_used_zram >= zram_max_sigterm_kb:
 
-        mem_info = 'Soft threshold exceeded\nMemory status that requ' \
-            'ires corrective actions:' \
-            '\n  MemUsedZram [{} MiB, {} %] >= ' \
-            'zram_max_sigterm [{} M, {} %]'.format(
-                kib_to_mib(mem_used_zram),
-                percent(mem_used_zram / mem_total),
-                kib_to_mib(zram_max_sigterm_kb),
-                percent(zram_max_sigterm_kb / mem_total))
+            mem_info = 'Soft threshold exceeded\nMemory status that require' \
+                's corrective actions:\n  MemUsedZram [{} MiB, {} %] >= zra' \
+                'm_max_sigterm [{} M, {} %]'.format(
+                    kib_to_mib(mem_used_zram),
+                    percent(mem_used_zram / mem_total),
+                    kib_to_mib(zram_max_sigterm_kb),
+                    percent(zram_max_sigterm_kb / mem_total))
 
-        implement_corrective_action(SIGTERM)
+            implement_corrective_action(SIGTERM)
+            psi_t0 = time()
+            continue
 
-        psi_t0 = time()
-        continue
+    if CHECK_PSI:
+        if psi_avg_value >= sigterm_psi_threshold:
+            sigterm_psi_exceeded = True
+        else:
+            sigterm_psi_exceeded = False
 
-    # LOW MEMORY WARNINGS
+        if psi_debug:
+            log('sigterm_psi_exceeded: {}, sigkill_psi_exceeded: {}, ps'
+                'i_post_action_delay_exceeded: {}'.format(
+                    sigterm_psi_exceeded,
+                    sigkill_psi_exceeded,
+                    psi_post_action_delay_exceeded))
+
+        if sigterm_psi_exceeded and psi_post_action_delay_exceeded:
+
+            mem_info = 'PSI avg value ({}) > sigterm_psi_thre' \
+                'shold ({})'.format(psi_avg_value, sigterm_psi_threshold)
+
+            implement_corrective_action(SIGTERM)
+            psi_t0 = time()
+            continue
+
+    ###########################################################################
+
     if gui_low_memory_warnings:
 
-        if mem_available <= mem_min_warnings_kb and \
-            swap_free <= swap_min_warnings_kb + 0.1 or \
-                mem_used_zram >= zram_max_warnings_kb:
+        if (mem_available <= mem_min_warnings_kb and
+            swap_free <= swap_min_warnings_kb + 0.1 or
+                mem_used_zram >= zram_max_warnings_kb):
+
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
             warn_timer += warn_time_delta
@@ -3003,17 +2956,7 @@ while True:
                 warn_timer = 0
 
 
+    # x = time() - Q
+    # print(x * 1000)
 
-
-    # SLEEP BETWEEN MEM CHECKS
     sleep_after_check_mem()
-
-
-
-
-
-
-
-
-
-
