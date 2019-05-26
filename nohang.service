@@ -10,7 +10,6 @@ Restart=always
 KillMode=mixed
 StartLimitBurst=60
 StartLimitInterval=20
-StartLimitIntervalSec=20
 MemoryMax=50M
 TasksMax=50
 Nice=-20

@@ -1,3 +1,4 @@
+![pic](https://i.imgur.com/vq69emd.png)
 
 # Nohang
 
@@ -6,8 +7,6 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 ## What is the problem?
 
 OOM conditions may cause [freezes](https://en.wikipedia.org/wiki/Hang_(computing)), [livelocks](https://en.wikipedia.org/wiki/Deadlock#Livelock), drop [caches](https://en.wikipedia.org/wiki/Page_cache) and processes to be killed (via sending [SIGKILL](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGKILL)) instead of trying to terminate them correctly (via sending [SIGTERM](https://en.wikipedia.org/wiki/Signal_(IPC)#SIGTERM) or takes other corrective action). Some applications may crash if it's impossible to allocate memory.
-
-![pic](https://i.imgur.com/9yuZOOf.png)
 
 Here are the statements of some users:
 
@@ -388,13 +387,6 @@ $ sudo journalctl -eu nohang
 See also `man journalctl`.
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
-
-## Known issues
-
-- Awful documentation
-- Non-optimal default settings (I do not know which settings are optimal for most users; you need a configuration for better experience)
-- No installation option for non-systemd users
-- No deb/rpm packages
 
 ## Contribution
 
