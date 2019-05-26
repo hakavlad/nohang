@@ -1,4 +1,4 @@
-![pic](https://i.imgur.com/vq69emd.png)
+![pic](https://i.imgur.com/YbQf7nL.png)
 
 # Nohang
 
