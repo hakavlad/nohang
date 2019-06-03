@@ -2455,6 +2455,20 @@ else:
     exit(1)
 
 
+if 'psi_excess_duration' in config_dict:
+    psi_excess_duration = string_to_float_convert_test(
+        config_dict['psi_excess_duration'])
+    if psi_excess_duration is None:
+        errprint('Invalid psi_excess_duration value, not float\nExit')
+        exit(1)
+    if psi_excess_duration < 0:
+        errprint('psi_excess_duration must be non-negative number\nExit')
+        exit(1)
+else:
+    errprint('psi_excess_duration is not in config\nExit')
+    exit(1)
+
+
 if 'max_sleep' in config_dict:
     max_sleep = string_to_float_convert_test(
         config_dict['max_sleep'])
@@ -2709,12 +2723,17 @@ log('Monitoring has started!')
 stdout.flush()
 
 
+psi_kill_exceeded_timer = psi_term_exceeded_timer = delta0 = 0
+
+x0 = time()
+
 ##########################################################################
 
 
 while True:
 
-    # Q = time()
+    delta0 = time() - x0
+    x0 = time()
 
     # FIND VALUES: mem, swap, zram, psi
 
@@ -2751,7 +2770,7 @@ while True:
             psi_post_action_delay_exceeded = False
 
         if print_mem_check_results:
-            psi_avg_string = 'PSI avg value: {} | '.format(
+            psi_avg_string = 'PSI avg: {} | '.format(
                 str(psi_avg_value).rjust(6))
 
     if print_mem_check_results:
@@ -2863,16 +2882,35 @@ while True:
             continue
 
     if CHECK_PSI:
+
         if psi_avg_value >= sigkill_psi_threshold:
             sigkill_psi_exceeded = True
+            psi_kill_exceeded_timer += delta0
         else:
             sigkill_psi_exceeded = False
+            psi_kill_exceeded_timer = 0
 
-        if sigkill_psi_exceeded and psi_post_action_delay_exceeded:
+        if psi_debug:
 
-            mem_info = 'PSI avg value ({}) > sigkill_psi_thresh' \
-                'old ({})'.format(
-                    psi_avg_value, sigkill_psi_threshold)
+            log('psi_post_action_delay_exceeded: {}\nsigkill_psi_exceeded'
+                ': {}\npsi_kill_exceeded_timer: {}'.format(
+                    psi_post_action_delay_exceeded,
+                    sigkill_psi_exceeded,
+                    round(psi_kill_exceeded_timer, 1)
+                )
+                )
+
+        if (psi_kill_exceeded_timer >= psi_excess_duration and
+                psi_post_action_delay_exceeded):
+
+            mem_info = 'PSI avg ({}) > sigkill_psi_threshold ({})\n' \
+                       'PSI avg exceeded psi_excess_duration (value' \
+                       ' = {} sec) for {} seconds'.format(
+                           psi_avg_value,
+                           sigkill_psi_threshold,
+                           psi_excess_duration,
+                           round(psi_kill_exceeded_timer, 1)
+                       )
 
             implement_corrective_action(SIGKILL)
             psi_t0 = time()
@@ -2921,20 +2959,31 @@ while True:
     if CHECK_PSI:
         if psi_avg_value >= sigterm_psi_threshold:
             sigterm_psi_exceeded = True
+            psi_term_exceeded_timer += delta0
         else:
             sigterm_psi_exceeded = False
+            psi_term_exceeded_timer = 0
 
         if psi_debug:
-            log('sigterm_psi_exceeded: {}, sigkill_psi_exceeded: {}, ps'
-                'i_post_action_delay_exceeded: {}'.format(
+
+            log('sigterm_psi_exceeded: {}\n'
+                'psi_term_exceeded_timer: {}\n'.format(
                     sigterm_psi_exceeded,
-                    sigkill_psi_exceeded,
-                    psi_post_action_delay_exceeded))
+                    round(psi_term_exceeded_timer, 1)
+                )
+                )
 
-        if sigterm_psi_exceeded and psi_post_action_delay_exceeded:
+        if (psi_term_exceeded_timer >= psi_excess_duration and
+                psi_post_action_delay_exceeded):
 
-            mem_info = 'PSI avg value ({}) > sigterm_psi_thre' \
-                'shold ({})'.format(psi_avg_value, sigterm_psi_threshold)
+            mem_info = 'PSI avg ({}) > sigterm_psi_threshold ({})\n' \
+                       'PSI avg exceeded psi_excess_duration (value' \
+                       ' = {} sec) for {} seconds'.format(
+                           psi_avg_value,
+                           sigterm_psi_threshold,
+                           psi_excess_duration,
+                           round(psi_term_exceeded_timer, 1)
+                       )
 
             implement_corrective_action(SIGTERM)
             psi_t0 = time()
@@ -2954,9 +3003,5 @@ while True:
             if warn_timer > min_time_between_warnings:
                 send_notify_warn()
                 warn_timer = 0
-
-
-    # x = time() - Q
-    # print(x * 1000)
 
     sleep_after_check_mem()
