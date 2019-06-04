@@ -1,0 +1,49 @@
+## Changelog
+
+- In progress
+    - [x] Added new CLI options:
+        - [x] -v, --version
+        - [x] -p, --print-proc-table
+    - [x] Possible process crashes are fixed:
+        - [x] Fixed crash at startup due to `UnicodeDecodeError` on some systems
+        - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
+        - [x] Fixed process crash before performing corrective actions if Python 3.4 or lower are used to interpret nohang
+    - [x] Improve output:
+        - [x] Display `oom_score`, `oom_score_adj`, `Ancestry`, `EUID`, `State`, `VmSize`, `RssAnon`, `RssFile`, `RssShmem`, `CGroup_v1`, `CGroup_v2`, `Realpath`, `Cmdline` and `Lifetime` of the victim in corrective action reports
+        - [x] Added memory report interval
+        - [x] Added delta memory info (the rate of change of available memory)
+        - [x] Print statistics on corrective actions after each corrective action
+        - [x] Added ability to print a process table before each corrective action
+        - [x] Added the ability to log into a separate file
+    - [x] Improved GUI warnings:
+        - [x] Reduced the idle time of the daemon in the process of launching a notification
+        - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
+        - [x] Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
+        - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
+        - [x] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
+    - [x] Improved modifing badness via matching with regular expressions:
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup`, `cmdline`, `realpath` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+        - [x] Fix: replace `re.fullmatch()` by `re.search()`
+    - [x] Reduced memory usage:
+        - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
+        - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+    - [x] Added new tools:
+        - [x] `oom-sort`
+        - [x] `psi-top`
+        - [x] `psi-monitor`
+    - [x] Improve poll rate algorithm
+    - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
+    - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
+    - [x] Added `post_kill_exe` option (the ability to run any command after killing the victim)
+    - [x] Added `warning_exe` option (the ability to run any command instead of GUI low memory warnings)
+    - [x] Improved victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
+    - [x] Improved limiting `oom_score_adj`: now it can works with UID != 0
+    - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
+    - [x] Removed self-defense options from the config, use systemd unit scheduling instead
+    - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
+    - [x] Added initial support for `PSI`
+    - [x] Improved user input validation
+    - [x] Improved documentation
+    - [x] Handle signals
+
+- [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release
