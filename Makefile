@@ -28,6 +28,7 @@ install:
 
 	install -d $(DESTDIR)/$(PREFIX)/lib/systemd/system
 	install -m0644 ./nohang.service $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
+	chcon -t systemd_unit_file_t $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
 
 uninstall:
 	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
