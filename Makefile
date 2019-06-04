@@ -1,8 +1,7 @@
-VERSION ?= $(shell git describe --tags --long --dirty > /etc/nohang/version 2> /dev/null)
 PREFIX = /
 
 all:
-	@ echo "Nothing to compile. Use: make install, make uninstall, make systemd"
+	@ echo "Use: make install, make systemd, make uninstall"
 
 install:
 	install -d $(DESTDIR)/$(PREFIX)/usr/sbin
@@ -13,7 +12,11 @@ install:
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
-	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/$(VERSION)
+	git describe --tags --long --dirty > ./version
+	install -m0644 ./version $(DESTDIR)/$(PREFIX)/etc/nohang/version
+	rm -fvr ./version
+	
+	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/logrotate.d
