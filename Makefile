@@ -10,12 +10,14 @@ install:
 
 	install -d $(DESTDIR)/$(PREFIX)/usr/bin
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
+	install -m0755 ./psi-top $(DESTDIR)/$(PREFIX)/usr/bin/psi-top
+	install -m0755 ./psi-monitor $(DESTDIR)/$(PREFIX)/usr/bin/psi-monitor
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	-git describe --tags --long --dirty > ./version
 	-install -m0644 ./version $(DESTDIR)/$(PREFIX)/etc/nohang/version
 	-rm -fvr ./version
-	
+
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
 
@@ -36,6 +38,8 @@ uninstall:
 	rm -fv $(PREFIX)/usr/sbin/nohang
 	rm -fv $(PREFIX)/usr/sbin/nohang_notify_helper
 	rm -fv $(PREFIX)/usr/bin/oom-sort
+	rm -fv $(PREFIX)/usr/bin/psi-top
+	rm -fv $(PREFIX)/usr/bin/psi-monitor
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
 	rm -fv $(PREFIX)/usr/share/man/man1/oom-sort.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service
