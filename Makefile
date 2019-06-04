@@ -12,9 +12,9 @@ install:
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
-	git describe --tags --long --dirty > ./version
-	install -m0644 ./version $(DESTDIR)/$(PREFIX)/etc/nohang/version
-	rm -fvr ./version
+	-git describe --tags --long --dirty > ./version
+	-install -m0644 ./version $(DESTDIR)/$(PREFIX)/etc/nohang/version
+	-rm -fvr ./version
 	
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
@@ -26,13 +26,13 @@ install:
 	gzip -c nohang.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/nohang.1.gz
 	gzip -c oom-sort.1 > $(DESTDIR)/$(PREFIX)/usr/share/man/man1/oom-sort.1.gz
 
-	install -d $(DESTDIR)/$(PREFIX)/lib/systemd/system
-	install -m0644 ./nohang.service $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
-	chcon -t systemd_unit_file_t $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
+	-install -d $(DESTDIR)/$(PREFIX)/lib/systemd/system
+	-install -m0644 ./nohang.service $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
+	-chcon -t systemd_unit_file_t $(DESTDIR)/$(PREFIX)/lib/systemd/system/nohang.service
 
 uninstall:
 	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
-	systemctl disable nohang.service || true
+	-systemctl disable nohang.service || true
 	rm -fv $(PREFIX)/usr/sbin/nohang
 	rm -fv $(PREFIX)/usr/sbin/nohang_notify_helper
 	rm -fv $(PREFIX)/usr/bin/oom-sort
@@ -44,6 +44,6 @@ uninstall:
 	rm -fvr $(PREFIX)/var/log/nohang/
 
 systemd:
-	systemctl daemon-reload
-	systemctl enable nohang.service
-	systemctl restart nohang
+	-systemctl daemon-reload
+	-systemctl enable nohang.service
+	-systemctl restart nohang
