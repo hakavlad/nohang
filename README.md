@@ -125,7 +125,6 @@ usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         print version
-  -t, --test            print some tests
   -p, --print-proc-table
                         print table of processes with their badness values
   -c CONFIG, --config CONFIG
