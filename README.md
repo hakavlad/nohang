@@ -273,7 +273,59 @@ Process with highest badness (found in 55 ms):
 ```
 </details>
 
-## oom-sort
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Logging
+
+To view the latest entries in the log (for systemd users):
+
+```bash
+$ sudo journalctl -eu nohang
+```
+See also `man journalctl`.
+
+You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
+
+
+
+
+
+
+
+
+
+
+## Additional tools: oom-sort, psi-top, psi-monitor
+
+
+### oom-sort
 
 `oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info.
 
@@ -376,16 +428,13 @@ oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
 
 Kthreads, zombies and Pid 1 will not be displayed.
 
-## Logging
+### psi-top
 
-To view the latest entries in the log (for systemd users):
+It needs Linux 4.20+
 
-```bash
-$ sudo journalctl -eu nohang
-```
-See also `man journalctl`.
+### psi-monitor
 
-You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
+It needs Linux 4.20+
 
 ## Contribution
 
