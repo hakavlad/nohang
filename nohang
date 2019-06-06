@@ -5,7 +5,7 @@ import os
 from ctypes import CDLL
 from time import sleep, time
 from operator import itemgetter
-from sys import stdout, stderr, argv, exit, version
+from sys import stdout, stderr, argv, exit
 from re import search
 from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
@@ -374,43 +374,43 @@ def pid_to_badness(pid):
 
         if regex_matching:
             name = pid_to_name(pid)
-            for re_tup in processname_re_list:
+            for re_tup in badness_adj_re_name_list:
                 if search(re_tup[1], name) is not None:
                     badness += int(re_tup[0])
 
         if re_match_cgroup_v1:
             cgroup_v1 = pid_to_cgroup_v1(pid)
-            for re_tup in cgroup_v1_re_list:
+            for re_tup in badness_adj_re_cgroup_v1_list:
                 if search(re_tup[1], cgroup_v1) is not None:
                     badness += int(re_tup[0])
 
         if re_match_cgroup_v2:
             cgroup_v2 = pid_to_cgroup_v2(pid)
-            for re_tup in cgroup_v2_re_list:
+            for re_tup in badness_adj_re_cgroup_v2_list:
                 if search(re_tup[1], cgroup_v2) is not None:
                     badness += int(re_tup[0])
 
         if re_match_realpath:
             realpath = pid_to_realpath(pid)
-            for re_tup in realpath_re_list:
+            for re_tup in badness_adj_re_realpath_list:
                 if search(re_tup[1], realpath) is not None:
                     badness += int(re_tup[0])
 
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
-            for re_tup in cmdline_re_list:
+            for re_tup in badness_adj_re_cmdline_list:
                 if search(re_tup[1], cmdline) is not None:
                     badness += int(re_tup[0])
 
         if re_match_environ:
             environ = pid_to_environ(pid)
-            for re_tup in environ_re_list:
+            for re_tup in badness_adj_re_environ_list:
                 if search(re_tup[1], environ) is not None:
                     badness += int(re_tup[0])
 
         if re_match_uid:
             uid = pid_to_uid(pid)
-            for re_tup in uid_re_list:
+            for re_tup in badness_adj_re_uid_list:
                 if search(re_tup[1], uid) is not None:
                     badness += int(re_tup[0])
 
@@ -2094,20 +2094,18 @@ log('Config: ' + config)
 # dictionary with config options
 config_dict = dict()
 
-processname_re_list = []
-cmdline_re_list = []
-environ_re_list = []
-uid_re_list = []
-cgroup_v1_re_list = []
-cgroup_v2_re_list = []
-realpath_re_list = []
+badness_adj_re_name_list = []
+badness_adj_re_cmdline_list = []
+badness_adj_re_environ_list = []
+badness_adj_re_uid_list = []
+badness_adj_re_cgroup_v1_list = []
+badness_adj_re_cgroup_v2_list = []
+badness_adj_re_realpath_list = []
 
 soft_actions_list = []
 
-
 # separator for optional parameters (that starts with @)
 opt_separator = '///'
-
 
 # stupid conf parsing, need refactoring
 try:
@@ -2167,61 +2165,61 @@ try:
 
                 soft_actions_list.append(zzz)
 
-            if line.startswith('@PROCESSNAME_RE'):
-                a = line.partition(
-                    '@PROCESSNAME_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_NAME'):
+                a = line.partition('@BADNESS_ADJ_RE_NAME')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                processname_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_name_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@CMDLINE_RE'):
-                a = line.partition(
-                    '@CMDLINE_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_CMDLINE'):
+                a = line.partition('@BADNESS_ADJ_RE_CMDLINE')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cmdline_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_cmdline_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@UID_RE'):
-                a = line.partition(
-                    '@UID_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_UID'):
+                a = line.partition('@BADNESS_ADJ_RE_UID')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                uid_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_uid_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@CGROUP_V1_RE'):
-                a = line.partition(
-                    '@CGROUP_V1_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_CGROUP_V1'):
+                a = line.partition('@BADNESS_ADJ_RE_CGROUP_V1')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_v1_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_cgroup_v1_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@CGROUP_V2_RE'):
-                a = line.partition(
-                    '@CGROUP_V2_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_CGROUP_V2'):
+                a = line.partition('@BADNESS_ADJ_RE_CGROUP_V2')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                cgroup_v2_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_cgroup_v2_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@REALPATH_RE'):
-                a = line.partition(
-                    '@REALPATH_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_REALPATH'):
+                a = line.partition('@BADNESS_ADJ_RE_REALPATH')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                realpath_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_realpath_list.append((badness_adj, reg_exp))
 
-            if line.startswith('@ENVIRON_RE'):
-                a = line.partition(
-                    '@ENVIRON_RE')[2].strip(' \n').partition(opt_separator)
+            if line.startswith('@BADNESS_ADJ_RE_ENVIRON'):
+                a = line.partition('@BADNESS_ADJ_RE_ENVIRON')[2].strip(
+                    ' \n').partition(opt_separator)
                 badness_adj = a[0].strip(' ')
                 reg_exp = a[2].strip(' ')
                 valid_re(reg_exp)
-                environ_re_list.append((badness_adj, reg_exp))
+                badness_adj_re_environ_list.append((badness_adj, reg_exp))
 
 
 except PermissionError:
@@ -2241,54 +2239,54 @@ except FileNotFoundError:
     exit(1)
 
 
-if processname_re_list == []:
+if badness_adj_re_name_list == []:
     regex_matching = False
 else:
     regex_matching = True
 
 
-if cmdline_re_list == []:
+if badness_adj_re_cmdline_list == []:
     re_match_cmdline = False
 else:
     re_match_cmdline = True
 
 
-if uid_re_list == []:
+if badness_adj_re_uid_list == []:
     re_match_uid = False
 else:
     re_match_uid = True
 
 
-if environ_re_list == []:
+if badness_adj_re_environ_list == []:
     re_match_environ = False
 else:
     re_match_environ = True
 
 
-if realpath_re_list == []:
+if badness_adj_re_realpath_list == []:
     re_match_realpath = False
 else:
     re_match_realpath = True
 
 
-if cgroup_v1_re_list == []:
+if badness_adj_re_cgroup_v1_list == []:
     re_match_cgroup_v1 = False
 else:
     re_match_cgroup_v1 = True
 
-if cgroup_v2_re_list == []:
+if badness_adj_re_cgroup_v2_list == []:
     re_match_cgroup_v2 = False
 else:
     re_match_cgroup_v2 = True
 
 
-# print(processname_re_list)
-# print(cmdline_re_list)
-# print(uid_re_list)
-# print(environ_re_list)
-# print(realpath_re_list)
-# print(cgroup_v1_re_list)
-# print(cgroup_v2_re_list)
+# print(badness_adj_re_name_list)
+# print(badness_adj_re_cmdline_list)
+# print(badness_adj_re_uid_list)
+# print(badness_adj_re_environ_list)
+# print(badness_adj_re_realpath_list)
+# print(badness_adj_re_cgroup_v1_list)
+# print(badness_adj_re_cgroup_v2_list)
 
 # print(soft_actions_list)
 
