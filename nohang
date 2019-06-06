@@ -1117,7 +1117,8 @@ def find_victim_info(pid, victim_badness, name):
                     vm_swap = kib_to_mib(int(line.split('\t')[1][:-4]))
                     break
 
-        cmdline = pid_to_cmdline(pid)  #                      make it optional!
+        if print_victim_cmdline:
+            cmdline = pid_to_cmdline(pid)
         oom_score = rline1('/proc/' + pid + '/oom_score')
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
@@ -1172,7 +1173,8 @@ def find_victim_info(pid, victim_badness, name):
                     vm_swap = kib_to_mib(
                         int(f_list[i].split('\t')[1][:-3]))
 
-        cmdline = pid_to_cmdline(pid)  #                      make it optional!
+        if print_victim_cmdline:
+            cmdline = pid_to_cmdline(pid)
         oom_score = rline1('/proc/' + pid + '/oom_score')
         oom_score_adj = rline1('/proc/' + pid + '/oom_score_adj')
 
@@ -1213,6 +1215,12 @@ def find_victim_info(pid, victim_badness, name):
 
     ancestry = pid_to_ancestry(pid, max_ancestry_depth)
 
+    if print_victim_cmdline is False:
+        cmdline = ''
+        c1 = ''
+    else:
+        c1 = '\n  Cmdline:   '
+
     if detailed_rss:
         detailed_rss_info = ' (' \
             'Anon: {} MiB, ' \
@@ -1239,7 +1247,7 @@ def find_victim_info(pid, victim_badness, name):
         '\n  CGroup_v1: {}' \
         '\n  CGroup_v2: {}' \
         '\n  Realpath:  {}' \
-        '\n  Cmdline:   {}' \
+        '{}{}' \
         '\n  Lifetime:  {}'.format(
             round((time() - status0) * 1000),
             name,
@@ -1257,7 +1265,7 @@ def find_victim_info(pid, victim_badness, name):
             victim_cgroup_v1,
             victim_cgroup_v2,
             realpath,
-            cmdline,  # make it optional!
+            c1, cmdline,
             victim_lifetime)
 
     return victim_info
@@ -2308,6 +2316,12 @@ print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
 forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
 print_victim_info = conf_parse_bool('print_victim_info')
+
+print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
+
+
+
+
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
