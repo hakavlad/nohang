@@ -1776,6 +1776,9 @@ def sleep_after_check_mem():
         if t_zram < 0:
             t_zram = 0
         t_mem_zram = t_mem + t_zram
+        z = ', t_zram={}'.format(round(t_zram, 2))
+    else:
+        z = ''
 
     t_mem_swap = t_mem + t_swap
 
@@ -1798,13 +1801,9 @@ def sleep_after_check_mem():
     if print_sleep_periods:
 
         log(
-            'Sleep {} sec (t_mem={}, t_swap={}, t_zram={})'.format(
-                round(t, 2),
-                round(t_mem, 2),
-                round(t_swap, 2),
-                round(t_zram, 2)
+            'Sleep {} sec (t_mem={}, t_swap={}{})'.format(
+                round(t, 2),round(t_mem, 2),round(t_swap, 2), z)
             )
-        )
 
     try:
         stdout.flush()
