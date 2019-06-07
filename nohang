@@ -1748,7 +1748,7 @@ def sleep_after_check_mem():
 
         if print_sleep_periods:
             log('Sleep {} sec'.format(min_sleep))
-
+        stdout.flush()
         sleep(min_sleep)
         return None
 
