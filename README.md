@@ -432,9 +432,106 @@ Kthreads, zombies and Pid 1 will not be displayed.
 
 It needs Linux 4.20+
 
+<details>
+ <summary>Output example</summary>
+
+```
+$ psi-top
+WARNING: cannot lock all memory
+cgroup2 root dir: /sys/fs/cgroup/unified
+      avg10  avg60 avg300         avg10  avg60 avg300  cgroup2
+      -----  ----- ------         -----  ----- ------  ---------
+some  46.72  31.48  22.60 | full  45.67  30.53  21.55  [SYSTEM]
+some  44.29  28.54  20.08 | full  43.42  27.88  19.43  /user.slice
+some  45.92  28.77  20.19 | full  45.05  28.17  19.56  /user.slice/user-1000.slice
+some   1.44   4.67   9.24 | full   1.44   4.65   9.20  /user.slice/user-1000.slice/user@1000.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/pulseaudio.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-daemon.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/dbus.socket
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-udisks2-volume-monitor.service
+some   0.25   1.97   4.05 | full   0.25   1.96   4.03  /user.slice/user-1000.slice/user@1000.service/xfce4-notifyd.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/init.scope
+some   0.00   0.66   1.99 | full   0.00   0.66   1.97  /user.slice/user-1000.slice/user@1000.service/gpg-agent.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-gphoto2-volume-monitor.service
+some   0.93   0.75   0.20 | full   0.93   0.75   0.20  /user.slice/user-1000.slice/user@1000.service/at-spi-dbus-bus.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-metadata.service
+some   0.00   2.44   6.78 | full   0.00   2.43   6.74  /user.slice/user-1000.slice/user@1000.service/dbus.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-mtp-volume-monitor.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-afc-volume-monitor.service
+some  44.99  28.30  19.41 | full  44.10  27.70  18.79  /user.slice/user-1000.slice/session-2.scope
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /nohang.slice
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /nohang.slice/nohang.service
+some   0.00   0.31   0.53 | full   0.00   0.31   0.53  /init.scope
+some   7.25  11.40  13.34 | full   7.23  11.32  13.24  /system.slice
+some   0.00   0.01   0.02 | full   0.00   0.01   0.02  /system.slice/systemd-udevd.service
+some   0.00   0.58   1.55 | full   0.00   0.58   1.55  /system.slice/cronie.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/sys-kernel-config.mount
+some   0.00   0.22   0.35 | full   0.00   0.22   0.35  /system.slice/polkit.service
+some   0.00   0.06   0.20 | full   0.00   0.06   0.20  /system.slice/rtkit-daemon.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/sys-kernel-debug.mount
+some   0.00   0.14   0.62 | full   0.00   0.14   0.62  /system.slice/accounts-daemon.service
+some   7.86  11.48  12.56 | full   7.84  11.42  12.51  /system.slice/lightdm.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/ModemManager.service
+some   0.00   1.82   5.47 | full   0.00   1.81   5.43  /system.slice/systemd-journald.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/dev-mqueue.mount
+some   0.00   1.64   4.07 | full   0.00   1.64   4.07  /system.slice/NetworkManager.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/tmp.mount
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/lvm2-lvmetad.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/dev-disk-by\x2duuid-5d7355c0\x2dc131\x2d40c5\x2d8541\x2d1e04ad7c8b8d.swap
+some   0.00   0.09   0.11 | full   0.00   0.09   0.11  /system.slice/upower.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/udisks2.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/dev-hugepages.mount
+some   0.00   0.27   0.49 | full   0.00   0.27   0.48  /system.slice/dbus.service
+some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /system.slice/system-getty.slice
+some   0.00   0.12   0.20 | full   0.00   0.12   0.20  /system.slice/avahi-daemon.service
+some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-logind.service
+```
+</details>
+
 ### psi-monitor
 
 It needs Linux 4.20+
+
+<details>
+ <summary>Output example</summary>
+
+```
+$ psi-monitor
+WARNING: cannot lock all memory
+Path to PSI file: /proc/pressure/memory
+
+      avg10  avg60 avg300         avg10  avg60 avg300
+some  25.94  19.08  17.65 | full  23.39  17.41  16.03
+some  21.24  18.46  17.53 | full  19.15  16.84  15.92
+some  17.39  17.85  17.41 | full  15.68  16.29  15.81
+some  14.42  17.30  17.30 | full  13.02  15.79  15.71
+some  11.81  16.73  17.18 | full  10.66  15.27  15.60
+some   9.67  16.19  17.06 | full   8.73  14.77  15.50
+some   7.91  15.66  16.95 | full   7.15  14.29  15.39
+some   6.48  15.14  16.83 | full   5.85  13.82  15.29
+some   5.30  14.65  16.72 | full   4.79  13.37  15.18
+some   4.34  14.17  16.60 | full   3.92  12.93  15.08
+some   3.56  13.70  16.49 | full   3.21  12.51  14.97
+some   2.91  13.26  16.38 | full   2.63  12.10  14.87
+some   2.38  12.82  16.26 | full   2.15  11.70  14.77
+some   1.95  12.40  16.15 | full   1.76  11.32  14.67
+some   1.60  12.00  16.04 | full   1.44  10.95  14.57
+some   1.31  11.60  15.93 | full   1.18  10.59  14.47
+some   1.25  11.26  15.83 | full   1.14  10.28  14.37
+some   1.02  10.89  15.72 | full   0.94   9.94  14.28
+some   0.83  10.53  15.61 | full   0.77   9.61  14.18
+some   0.68  10.19  15.51 | full   0.63   9.30  14.08
+some   0.56   9.85  15.40 | full   0.51   8.99  13.98
+some   0.46   9.53  15.29 | full   0.42   8.70  13.89
+some   0.37   9.22  15.19 | full   0.34   8.41  13.79
+some   0.30   8.92  15.08 | full   0.28   8.14  13.70
+some   0.25   8.62  14.98 | full   0.23   7.87  13.60
+some   0.20   8.34  14.88 | full   0.18   7.61  13.51
+some   0.16   8.07  14.78 | full   0.15   7.36  13.42
+some   0.13   7.80  14.68 | full   0.12   7.12  13.33
+some   0.29   7.58  14.58 | full   0.28   6.92  13.24
+```
+</details>
 
 ## Contribution
 
