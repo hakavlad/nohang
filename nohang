@@ -10,6 +10,8 @@ from re import search
 from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 
+#from subprocess import Popen
+
 
 ##########################################################################
 
@@ -881,9 +883,48 @@ def send_notification(title, body):
             '(No space left on device: /dev/shm)')
         return None
 
-    cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
 
+
+    cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
     exe(cmd)
+
+
+
+
+
+    #t5 = time()
+    #Popen([notify_helper_path, '--uid', str(self_uid), '--time', str(t000)])
+    #print(time() - t5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def get_pid_list():
@@ -1495,13 +1536,29 @@ def is_victim_alive(pid):
         return 0
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def implement_corrective_action(
         threshold,
         mem_info_list,
-        psi_t0,
+        psi_t0,  # да это ж тупо время последнего коррект действия. В идеале - время оконч действия. Любого.
         psi_kill_exceeded_timer,
         psi_term_exceeded_timer,
-        x0, psi_s, zram_s, zram_m, psi_m):
+        x0, psi_threshold, zram_threshold, zram_info, psi_info):
     """
     Find victim with highest badness and send SIGTERM/SIGKILL
     """
@@ -1567,15 +1624,15 @@ def implement_corrective_action(
 
 
     # перепроверяем пороги: они могли измениться за время поиска жертвы
-    (masf_s, masf_m, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
+    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
      swap_free, swap_total) = check_mem_swap_ex()
 
 
     if CHECK_ZRAM:
-        zram_s, zram_m, mem_used_zram = check_zram_ex()
+        zram_threshold, zram_info, mem_used_zram = check_zram_ex()
 
     if CHECK_PSI:
-        (psi_s, psi_m, psi_t0, psi_kill_exceeded_timer,
+        (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
              psi_t0,psi_kill_exceeded_timer,psi_term_exceeded_timer,x0)
 
@@ -1587,33 +1644,33 @@ def implement_corrective_action(
 
 
 
-    if masf_s is SIGKILL or zram_s is SIGKILL or psi_s is SIGKILL:
+    if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
 
         new_threshold = SIGKILL
         mem_info_list = []
 
-        if masf_s is SIGKILL or masf_s is SIGTERM:
-            mem_info_list.append(masf_m)
+        if masf_threshold is SIGKILL or masf_threshold is SIGTERM:
+            mem_info_list.append(masf_info)
 
-        if zram_s is SIGKILL or zram_s is SIGTERM:
-            mem_info_list.append(zram_m)
+        if zram_threshold is SIGKILL or zram_threshold is SIGTERM:
+            mem_info_list.append(zram_info)
 
-        if psi_s is SIGKILL or psi_s is SIGTERM:
-            mem_info_list.append(psi_m)
+        if psi_threshold is SIGKILL or psi_threshold is SIGTERM:
+            mem_info_list.append(psi_info)
 
-    elif masf_s is SIGTERM or zram_s is SIGTERM or psi_s is SIGTERM:
+    elif masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM:
 
         new_threshold = SIGTERM
         mem_info_list = []
 
-        if masf_s is SIGKILL or masf_s is SIGTERM:
-            mem_info_list.append(masf_m)
+        if masf_threshold is SIGKILL or masf_threshold is SIGTERM:
+            mem_info_list.append(masf_info)
 
-        if zram_s is SIGKILL or zram_s is SIGTERM:
-            mem_info_list.append(zram_m)
+        if zram_threshold is SIGKILL or zram_threshold is SIGTERM:
+            mem_info_list.append(zram_info)
 
-        if psi_s is SIGKILL or psi_s is SIGTERM:
-            mem_info_list.append(psi_m)
+        if psi_threshold is SIGKILL or psi_threshold is SIGTERM:
+            mem_info_list.append(psi_info)
 
     else:
         log('Thresholds is not exceeded now')
@@ -1635,7 +1692,7 @@ def implement_corrective_action(
 
     if victim_badness >= min_badness:
 
-        psi_t0 = time()
+        psi_t0 = time()  # так себе идея
 
         if print_victim_info:
             victim_info = find_victim_info(pid, victim_badness, name)
@@ -1741,8 +1798,21 @@ def implement_corrective_action(
             try:  # вот тут засрано, в блоке try должно быть только kill(), остальное ниже за пределами
 
                 os.kill(int(pid), threshold)
+
+
+                a_dict[threshold] = time()
+                v_dict[victim_id] = time()
+
+
+
+
+
                 kill_timestamp = time()
                 response_time = kill_timestamp - time0
+
+
+
+
 
                 while True:
                     victim_alive = is_victim_alive(pid)
@@ -1781,7 +1851,8 @@ def implement_corrective_action(
                     log('The victim died in {} sec'.format(
                         round(kill_duration, 3)))
 
-                    """
+
+
                     mem_available, swap_total, swap_free = check_mem_and_swap()
 
                     ma_mib = int(mem_available) / 1024.0
@@ -1792,7 +1863,7 @@ def implement_corrective_action(
                             round(ma_mib, 1), round(sf_mib, 1)
                         )
                         )
-                    """
+
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -2015,6 +2086,25 @@ victim_id = None
 actions_time_dict = dict()
 actions_time_dict['action_handled'] = [time(), victim_id]
 # print(actions_time_dict)
+
+
+
+
+# (victim_id : {SIGKILL: ts, SIGTERM: ts}}
+v_dict = dict()
+
+
+
+# {SIGTERM: timestamp, SIGKILL: timestamp}
+a_dict = dict()
+
+
+
+
+
+
+
+
 
 
 start_time = time()
@@ -3000,7 +3090,7 @@ if psi_support and not ignore_psi:
 psi_kill_exceeded_timer = 0
 psi_term_exceeded_timer = 0
 psi_t0 = time()
-psi_s = zram_s = zram_m = psi_m = None
+psi_threshold = zram_threshold = zram_info = psi_info = None
 
 
 CHECK_ZRAM = not ignore_zram
@@ -3015,14 +3105,14 @@ stdout.flush()
 
 while True:
 
-    (masf_s, masf_m, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
+    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
      swap_free, swap_total) = check_mem_swap_ex()
 
     if CHECK_ZRAM:
-        zram_s, zram_m, mem_used_zram = check_zram_ex()
+        zram_threshold, zram_info, mem_used_zram = check_zram_ex()
 
     if CHECK_PSI:
-        (psi_s, psi_m, psi_t0, psi_kill_exceeded_timer,
+        (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
              psi_t0,psi_kill_exceeded_timer,psi_term_exceeded_timer,x0)
 
@@ -3106,19 +3196,19 @@ while True:
                     )
 
 
-    if masf_s is SIGKILL or zram_s is SIGKILL or psi_s is SIGKILL:
+    if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
 
         threshold = SIGKILL
         mem_info_list = []
 
-        if masf_m is not None:
-            mem_info_list.append(masf_m)
+        if masf_info is not None:
+            mem_info_list.append(masf_info)
 
-        if zram_m is not None:
-            mem_info_list.append(zram_m)
+        if zram_info is not None:
+            mem_info_list.append(zram_info)
 
-        if psi_m is not None:
-            mem_info_list.append(psi_m)
+        if psi_info is not None:
+            mem_info_list.append(psi_info)
 
         psi_t0 = implement_corrective_action(
             threshold,
@@ -3126,22 +3216,22 @@ while True:
             psi_t0,
             psi_kill_exceeded_timer,
             psi_term_exceeded_timer,
-            x0, psi_s, zram_s, zram_m, psi_m)
+            x0, psi_threshold, zram_threshold, zram_info, psi_info)
         continue
 
-    if masf_s is SIGTERM or zram_s is SIGTERM or psi_s is SIGTERM:
+    if masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM:
 
         threshold = SIGTERM
         mem_info_list = []
 
-        if masf_m is not None:
-            mem_info_list.append(masf_m)
+        if masf_info is not None:
+            mem_info_list.append(masf_info)
 
-        if zram_m is not None:
-            mem_info_list.append(zram_m)
+        if zram_info is not None:
+            mem_info_list.append(zram_info)
 
-        if psi_m is not None:
-            mem_info_list.append(psi_m)
+        if psi_info is not None:
+            mem_info_list.append(psi_info)
 
         psi_t0 = implement_corrective_action(
             threshold,
@@ -3149,12 +3239,12 @@ while True:
             psi_t0,
             psi_kill_exceeded_timer,
             psi_term_exceeded_timer,
-            x0, psi_s, zram_s, zram_m, psi_m)
+            x0, psi_threshold, zram_threshold, zram_info, psi_info)
         continue
 
     if gui_low_memory_warnings:
 
-        if masf_s == 'WARN' or zram_s == 'WARN' or psi_s == 'WARN':
+        if masf_threshold == 'WARN' or zram_threshold == 'WARN' or psi_threshold == 'WARN':
 
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
@@ -3165,4 +3255,16 @@ while True:
 
                 warn_timer = 0
 
+
+    #print(a_dict)
+    #print(v_dict)
     sleep_after_check_mem()
+
+
+
+
+
+
+
+
+
