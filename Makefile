@@ -20,6 +20,7 @@ install:
 
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf
 	install -m0644 ./nohang.conf $(DESTDIR)/$(PREFIX)/etc/nohang/nohang.conf.default
+	install -m0644 ./my_desktop.conf $(DESTDIR)/$(PREFIX)/etc/nohang/my_desktop.conf
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/logrotate.d
 	install -m0644 ./nohang.logrotate $(DESTDIR)/$(PREFIX)/etc/logrotate.d/nohang
