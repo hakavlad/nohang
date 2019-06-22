@@ -11,8 +11,6 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 
 
-
-
 ##########################################################################
 
 # define functions
@@ -883,12 +881,8 @@ def send_notification(title, body):
             '(No space left on device: /dev/shm)')
         return None
 
-
-
     cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
     exe(cmd)
-
-
 
 
 def get_pid_list():
@@ -1500,26 +1494,12 @@ def is_victim_alive(pid):
         return 0
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def implement_corrective_action(
         threshold,
         mem_info_list,
-        psi_t0,  # да это ж тупо время последнего коррект действия. В идеале - время оконч действия. Любого.
+        psi_t0,
+    # да это ж тупо время последнего коррект действия. В идеале - время оконч
+    # действия. Любого.
         psi_kill_exceeded_timer,
         psi_term_exceeded_timer,
         x0, psi_threshold, zram_threshold, zram_info, psi_info):
@@ -1576,21 +1556,11 @@ def implement_corrective_action(
     pid, victim_badness, name, victim_id = find_victim(print_proc_table)
     # sleep(0.1)
 
-
-
-
-
-
-
-
     log('Recheck memory levels...')
 
-
-
     # перепроверяем пороги: они могли измениться за время поиска жертвы
-    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
-     swap_free, swap_total) = check_mem_swap_ex()
-
+    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb,
+     swap_min_sigterm_kb, swap_free, swap_total) = check_mem_swap_ex()
 
     if CHECK_ZRAM:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
@@ -1598,15 +1568,7 @@ def implement_corrective_action(
     if CHECK_PSI:
         (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
-             psi_t0,psi_kill_exceeded_timer,psi_term_exceeded_timer,x0)
-
-
-
-
-
-
-
-
+             psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0)
 
     if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
 
@@ -1639,9 +1601,6 @@ def implement_corrective_action(
     else:
         log('Thresholds is not exceeded now')
         return psi_t0
-
-
-
 
     # печать порогов
     for i in mem_info_list:
@@ -1763,20 +1722,11 @@ def implement_corrective_action(
 
                 os.kill(int(pid), threshold)
 
-
                 a_dict[threshold] = time()
                 v_dict[victim_id] = time()
 
-
-
-
-
                 kill_timestamp = time()
                 response_time = kill_timestamp - time0
-
-
-
-
 
                 while True:
                     victim_alive = is_victim_alive(pid)
@@ -1815,8 +1765,6 @@ def implement_corrective_action(
                     log('The victim died in {} sec'.format(
                         round(kill_duration, 3)))
 
-
-
                     mem_available, swap_total, swap_free = check_mem_and_swap()
 
                     ma_mib = int(mem_available) / 1024.0
@@ -1827,7 +1775,6 @@ def implement_corrective_action(
                             round(ma_mib, 1), round(sf_mib, 1)
                         )
                         )
-
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -2052,8 +1999,6 @@ actions_time_dict['action_handled'] = [time(), victim_id]
 # print(actions_time_dict)
 
 
-
-
 # (victim_id : {SIGKILL: ts, SIGTERM: ts}}
 v_dict = dict()
 
@@ -2062,15 +2007,10 @@ v_dict = dict()
 a_dict = dict()
 
 
-
 a_dict['last_action_ts'] = a_dict[SIGTERM] = a_dict[SIGKILL] = time()
 
 
-
-
 # print(a_dict)
-
-
 
 
 start_time = time()
@@ -2879,9 +2819,7 @@ psi_support = os.path.exists(psi_path)
 
 ##########################################################################
 
-
 # Get KiB levels if it's possible.
-
 
 swap_min_sigterm_tuple = get_swap_threshold_tuple(swap_min_sigterm)
 swap_min_sigkill_tuple = get_swap_threshold_tuple(swap_min_sigkill)
@@ -2911,72 +2849,160 @@ else:
 
 ##########################################################################
 
-# outdated section, need fixes
-
 if print_config:
 
-    print(
-        '\n1. Memory levels to respond to as an OOM threat\n[display'
-        'ing these options need fix]\n')
+    log('#' * 79)
 
-    print('mem_min_sigterm:           {} MiB, {} %'.format(
+    log('0. Common zram settings')
+
+    log('    ignore_zram: {}'.format(ignore_zram))
+
+    log('1. Thresholds below which a signal should be sent to the victim')
+
+    log('    mem_min_sigterm:     {} MiB, {} %'.format(
         round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
-    print('mem_min_sigkill:           {} MiB, {} %'.format(
+    log('    mem_min_sigkill:     {} MiB, {} %'.format(
         round(mem_min_sigkill_mb), round(mem_min_sigkill_percent, 1)))
 
-    print('swap_min_sigterm:          {}'.format(swap_min_sigterm))
-    print('swap_min_sigkill:          {}'.format(swap_min_sigkill))
+    log('    swap_min_sigterm:    {}'.format(swap_min_sigterm))
+    log('    swap_min_sigkill:    {}'.format(swap_min_sigkill))
 
-    print('zram_max_sigterm:          {} MiB, {} %'.format(
+    log('    zram_max_sigterm:    {} MiB, {} %'.format(
         round(zram_max_sigterm_mb), round(zram_max_sigterm_percent, 1)))
-    print('zram_max_sigkill:          {} MiB, {} %'.format(
+    log('    zram_max_sigkill:    {} MiB, {} %'.format(
         round(zram_max_sigkill_mb), round(zram_max_sigkill_percent, 1)))
 
-    print('\n2. The frequency of checking the level of available m'
-          'emory (and CPU usage)\n')
-    print('rate_mem:                  {}'.format(rate_mem))
-    print('rate_swap:                 {}'.format(rate_swap))
-    print('rate_zram:                 {}'.format(rate_zram))
+    log('2. Response on PSI memory metrics')
 
-    print('\n3. The prevention of killing innocent victims\n')
-    print('min_delay_after_sigterm:   {}'.format(min_delay_after_sigterm))
-    print('min_badness:               {}'.format(min_badness))
+    log('    ignore_psi:             {}'.format(ignore_psi))
+    log('    psi_path:               {}'.format(psi_path))
+    log('    psi_metrics:            {}'.format(psi_metrics))
+    log('    sigterm_psi_threshold:  {}'.format(sigterm_psi_threshold))
+    log('    sigkill_psi_threshold:  {}'.format(sigkill_psi_threshold))
+    log('    psi_excess_duration:    {} sec'.format(psi_excess_duration))
+    log('    psi_post_action_delay:  {} sec'.format(psi_post_action_delay))
 
-    print('decrease_oom_score_adj:    {}'.format(
-        decrease_oom_score_adj
-    ))
-    if decrease_oom_score_adj:
-        print('oom_score_adj_max:         {}'.format(oom_score_adj_max))
+    log('3. The frequency of checking the amount of available memory')
 
-    print('\n4. Impact on the badness of processes via matching their'
-          ' names, cmdlines ir UIDs with regular expressions\n')
+    log('    rate_mem:    {}'.format(rate_mem))
+    log('    rate_swap:   {}'.format(rate_swap))
+    log('    rate_zram:   {}'.format(rate_zram))
+    log('    max_sleep:   {} sec'.format(max_sleep))
+    log('    min_sleep:   {} sec'.format(min_sleep))
+    log('    over_sleep:  {} sec'.format(over_sleep))
 
-    print('(todo)')
+    log('4. The prevention of killing innocent victims')
 
-    print('\n5. The execution of a specific command instead of sen'
-          'ding the\nSIGTERM signal\n')
+    log('    min_badness:              {}'.format(min_badness))
+    log('    min_delay_after_sigterm:  {} sec'.format(min_delay_after_sigterm))
+    log('    decrease_oom_score_adj:   {}'.format(decrease_oom_score_adj))
+    log('    oom_score_adj_max:        {}'.format(oom_score_adj_max))
 
-    print('\n6. GUI notifications:\n- OOM prevention results and\n- low m'
-          'emory warnings\n')
-    print('gui_notifications:         {}'.format(gui_notifications))
+    log('5. Impact on the badness of processes')
 
-    print('gui_low_memory_warnings:   {}'.format(gui_low_memory_warnings))
-    if gui_low_memory_warnings:
-        print('min_time_between_warnings: {}'.format(
-            min_time_between_warnings))
+    log('5.1. Matching process names with RE patterns')
+    if len(badness_adj_re_name_list) > 0:
+        log('    regexp:         badness_adj:')
+        for i in badness_adj_re_name_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
 
-        print('mem_min_warnings:          {} MiB, {} %'.format(
-            round(mem_min_warnings_mb), round(mem_min_warnings_percent, 1)))
+    log('5.2. Matching CGroup_v1-line with RE patterns')
+    if len(badness_adj_re_cgroup_v1_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_cgroup_v1_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
 
-        print('swap_min_warnings:         {}'.format(swap_min_warnings))
+    log('5.3. Matching CGroup_v2-line with RE patterns')
+    if len(badness_adj_re_cgroup_v2_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_cgroup_v1_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
 
-        print('zram_max_warnings:         {} MiB, {} %'.format(
-            round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
+    log('5.4. Matching eUIDs with RE patterns')
+    if len(badness_adj_re_cgroup_v2_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_uid_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
 
-    print('\n7. Output verbosity\n')
-    print('print_config:              {}'.format(print_config))
-    print('print_mem_check_results:   {}'.format(print_mem_check_results))
-    print('print_sleep_periods:       {}\n'.format(print_sleep_periods))
+    log('5.5. Matching realpath with RE patterns')
+    if len(badness_adj_re_cgroup_v2_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_realpath_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
+
+    log('5.6. Matching cmdlines with RE patterns')
+    if len(badness_adj_re_cgroup_v2_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_cmdline_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
+
+    log('5.7. Matching environ with RE patterns')
+    if len(badness_adj_re_cgroup_v2_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_environ_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
+
+    log('6. Customize corrective actions.')
+
+    if len(soft_actions_list) > 0:
+        log('    Match by:   regexp:     command: ')
+        for i in soft_actions_list:
+            log('    {}         {}        {}'.format(i[0], i[1], i[2]))
+    else:
+        log('    (not set)')
+
+    log('7. GUI notifications')
+
+    log('    gui_notifications:         {}'.format(gui_notifications))
+    log('    gui_low_memory_warnings:   {}'.format(gui_low_memory_warnings))
+    log('    warning_exe:               {}'.format(warning_exe))
+    log('    mem_min_warnings:          {} MiB, {} %'.format(
+        round(mem_min_warnings_mb), round(mem_min_warnings_percent, 1)))
+    log('    swap_min_warnings:         {}'.format(swap_min_warnings))
+    log('    zram_max_warnings:         {} MiB, {} %'.format(
+        round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
+    log('    psi_avg_warnings:          {}'.format(psi_avg_warnings))
+    log('    min_time_between_warnings: {}'.format(min_time_between_warnings))
+
+    log('8. Verbosity')
+
+    log('    print_config:             {}'.format(print_config))
+    log('    print_mem_check_results:  {}'.format(print_mem_check_results))
+    log('    min_mem_report_interval:  {}'.format(min_mem_report_interval))
+    log('    print_sleep_periods:      {}'.format(print_sleep_periods))
+    log('    print_total_stat:         {}'.format(print_total_stat))
+    log('    print_proc_table:         {}'.format(print_proc_table))
+    log('    extra_table_info:         {}'.format(extra_table_info))
+    log('    print_victim_info:        {}'.format(print_victim_info))
+    log('    print_victim_cmdline:     {}'.format(print_victim_cmdline))
+    log('    max_ancestry_depth:       {}'.format(max_ancestry_depth))
+    log('    separate_log:             {}'.format(separate_log))
+    log('    psi_debug:                {}'.format(psi_debug))
+
+    log('9. Misc')
+
+    log('    max_post_sigterm_victim_lifetime:  {} sec'.format(
+        max_post_sigterm_victim_lifetime))
+    log('    post_kill_exe:                     {}'.format(post_kill_exe))
+    log('    forbid_negative_badness:           {}'.format(
+        forbid_negative_badness))
+
+    #    log(':    {}'.format())
+    log('#' * 79)
 
 
 ##########################################################################
@@ -3017,7 +3043,6 @@ mlockall()
 
 
 # print_self_rss()
-
 
 psi_avg_string = ''  # will be overwritten if PSI monitoring enabled
 
@@ -3071,8 +3096,8 @@ stdout.flush()
 
 while True:
 
-    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb,
-     swap_free, swap_total) = check_mem_swap_ex()
+    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb,
+     swap_min_sigterm_kb, swap_free, swap_total) = check_mem_swap_ex()
 
     if CHECK_ZRAM:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
@@ -3080,8 +3105,7 @@ while True:
     if CHECK_PSI:
         (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
-             psi_t0,psi_kill_exceeded_timer,psi_term_exceeded_timer,x0)
-
+             psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0)
 
     if print_mem_check_results:
 
@@ -3161,7 +3185,6 @@ while True:
                     )
                     )
 
-
     if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
 
         threshold = SIGKILL
@@ -3221,16 +3244,6 @@ while True:
 
                 warn_timer = 0
 
-
-    #print(a_dict)
-    #print(v_dict)
+    # print(a_dict)
+    # print(v_dict)
     sleep_after_check_mem()
-
-
-
-
-
-
-
-
-
