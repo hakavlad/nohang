@@ -1807,14 +1807,12 @@ def implement_corrective_action(
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'FileNotFoundError (the victim died in the se' \
-                      'arch process): '
+                key = 'The victim died in the search process: FileNotFoundError'
             except ProcessLookupError:
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'ProcessLookupError (the victim died in the se' \
-                      'arch process): '
+                key = 'The victim died in the search process: ProcessLookupError'
 
             try:
                 log(preventing_oom_message)
