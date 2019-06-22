@@ -1282,12 +1282,18 @@ def check_mem_swap_ex():
     # if swap_min_sigkill is set in percent
     if swap_kill_is_percent:
         swap_min_sigkill_kb = swap_total * swap_min_sigkill_percent / 100.0
+    else:
+        swap_min_sigkill_kb = swap_kb_dict['swap_min_sigkill_kb']
 
     if swap_term_is_percent:
         swap_min_sigterm_kb = swap_total * swap_min_sigterm_percent / 100.0
+    else:
+        swap_min_sigterm_kb = swap_kb_dict['swap_min_sigterm_kb']
 
     if swap_warn_is_percent:
         swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
+    else:
+        swap_min_warnings_kb = swap_kb_dict['swap_min_warnings_kb']
 
     if swap_total > swap_min_sigkill_kb:
         swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
@@ -2826,18 +2832,21 @@ swap_min_sigkill_tuple = get_swap_threshold_tuple(swap_min_sigkill)
 swap_min_warnings_tuple = get_swap_threshold_tuple(swap_min_warnings)
 
 
+swap_kb_dict = dict()
+
 swap_term_is_percent = swap_min_sigterm_tuple[1]
 if swap_term_is_percent:
     swap_min_sigterm_percent = swap_min_sigterm_tuple[0]
 else:
     swap_min_sigterm_kb = swap_min_sigterm_tuple[0]
-
+    swap_kb_dict['swap_min_sigterm_kb'] = swap_min_sigterm_kb
 
 swap_kill_is_percent = swap_min_sigkill_tuple[1]
 if swap_kill_is_percent:
     swap_min_sigkill_percent = swap_min_sigkill_tuple[0]
 else:
     swap_min_sigkill_kb = swap_min_sigkill_tuple[0]
+    swap_kb_dict['swap_min_sigkill_kb'] = swap_min_sigkill_kb
 
 
 swap_warn_is_percent = swap_min_warnings_tuple[1]
@@ -2845,6 +2854,7 @@ if swap_warn_is_percent:
     swap_min_warnings_percent = swap_min_warnings_tuple[0]
 else:
     swap_min_warnings_kb = swap_min_warnings_tuple[0]
+    swap_kb_dict['swap_min_warnings_kb'] = swap_min_warnings_kb
 
 
 ##########################################################################
