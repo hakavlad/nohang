@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 # print('Starting nohang_notify_helper')
 
 
@@ -9,20 +8,6 @@ def write(path, string):
     """
     with open(path, 'w') as f:
         f.write(string)
-
-
-try:
-    write('/proc/self/oom_score_adj', '0')
-except Exception:
-    pass
-
-
-try:
-    from os import listdir, path, remove
-    from subprocess import Popen, TimeoutExpired
-    from sys import argv
-except OSError:
-    exit(1)
 
 
 def rline1(path):
@@ -39,52 +24,6 @@ def rfile(path):
     """read file."""
     with open(path) as f:
         return f.read()
-
-
-with open('/proc/meminfo') as f:
-    for line in f:
-        if line.startswith('SwapTotal'):
-            swap_total = int(line.split(':')[1][:-4])
-            if swap_total > 0:
-                wait_time = 8
-            else:
-                wait_time = 2
-
-
-print('nohang_notify_helper: wait_time:', wait_time)
-
-
-# print(argv)
-
-
-# print(len(argv))
-
-
-split_by = '#' * 16
-
-
-uid = argv[2]
-
-
-t000 = argv[4]
-
-
-display_env = 'DISPLAY='
-dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
-user_env = 'USER='
-
-
-path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
-    uid, t000
-)
-
-try:
-    title, body = rfile(path_to_cache).split(split_by)
-except FileNotFoundError:
-    print('nohang_notify_helper: FileNotFoundError')
-    exit(1)
-
-remove(path_to_cache)
 
 
 def re_pid_environ(pid):
@@ -118,7 +57,7 @@ def re_pid_environ(pid):
 
                 if i.startswith('HOME='):
                     # exclude Display Manager's user
-                    if i.startswith('HOME=/var') or i.startswith('HOME=/root'):
+                    if i.startswith('HOME=/var'):
                         return None
 
             try:
@@ -164,9 +103,74 @@ def root_notify_env():
     return new_env
 
 
+try:
+    write('/proc/self/oom_score_adj', '0')
+except Exception:
+    pass
+
+
+try:
+    from os import listdir, path, remove
+    from subprocess import Popen, TimeoutExpired
+    from sys import argv
+except OSError:
+    exit(1)
+
+
+if len(argv) != 5:
+    print('nohang_notify_helper: invalid input')
+    exit()
+
+
+with open('/proc/meminfo') as f:
+    for line in f:
+        if line.startswith('SwapTotal'):
+            swap_total = int(line.split(':')[1][:-4])
+            if swap_total > 0:
+                wait_time = 10
+            else:
+                wait_time = 2
+
+print('nohang_notify_helper: wait_time:', wait_time)
+
+split_by = '#' * 16
+
+
+uid = argv[2]
+
+timestamp = argv[4]
+
+
+path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
+    uid, timestamp
+)
+
+
+try:
+    title, body = rfile(path_to_cache).split(split_by)
+except FileNotFoundError:
+    print('nohang_notify_helper: FileNotFoundError')
+    exit(1)
+
+remove(path_to_cache)
+
+if uid != '0':
+    cmd = ['notify-send', '--icon=dialog-warning', title, body]
+    print('nohang_notify_helper: run cmd:', cmd)
+    with Popen(cmd) as proc:
+        try:
+            proc.wait(timeout=wait_time)
+        except TimeoutExpired:
+            proc.kill()
+            print('nohang_notify_helper: TimeoutExpired')
+    exit()
+
+display_env = 'DISPLAY='
+dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
+user_env = 'USER='
+
 list_with_envs = root_notify_env()
 list_len = len(list_with_envs)
-
 
 # if somebody logged in with GUI
 if list_len > 0:
