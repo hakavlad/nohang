@@ -1,0 +1,315 @@
+#!/usr/bin/env python3
+
+
+from signal import signal, SIGTERM
+from time import sleep
+from sys import exit
+import os
+
+
+# чек общей доступной, для lim2avail
+def total_mem_available():
+
+    with open('/proc/meminfo') as file:
+        mem_list = file.readlines()
+
+    mem_available = meminfo_num(mem_list, mem_available_index)
+    swap_free = meminfo_num(mem_list, swap_free_index)
+
+    return round((swap_free + mem_available) / 1024)  # MiB
+
+
+# добитие байтами рандома
+def terminal():
+    ex = []
+    while True:
+        try:
+            ex.append(os.urandom(1))
+        except MemoryError:
+            continue
+
+
+def meminfo_num(mem_list, index):
+    return int(mem_list[index].split(':')[1].split(' ')[-2])
+
+
+# выдача основных показателей meminfo, KiB
+def mem_check_main():
+
+    with open('/proc/meminfo') as file:
+        mem_list = file.readlines()
+
+    mem_available = meminfo_num(mem_list, mem_available_index)
+    swap_total = meminfo_num(mem_list, swap_total_index)
+    swap_free = meminfo_num(mem_list, swap_free_index)
+
+    return mem_available, swap_total, swap_free
+
+
+def signal_handler(signum, frame):
+    print('Got signal {}'.format(signum))
+    # sleep(1)
+    # exit()
+
+
+def meminfo():
+
+    # получаем сырой mem_list
+    with open('/proc/meminfo') as file:
+        mem_list = file.readlines()
+
+    # получаем список названий позиций: MemTotal etc
+    mem_list_names = []
+    for s in mem_list:
+        mem_list_names.append(s.split(':')[0])
+
+    # ищем MemAvailable, обрабатываем исключение
+    try:
+        mem_available_index = mem_list_names.index('MemAvailable')
+    except ValueError:
+        print("Your Linux kernel is too old (3.14+ requied), bye!")
+        # исключение для ядер < 3.14, не определяющих MemAvailable
+        exit()
+
+    # ищем позиции SwapTotl и SwapFree
+    swap_total_index = mem_list_names.index('SwapTotal')
+    swap_free_index = mem_list_names.index('SwapFree')
+
+    buffers_index = mem_list_names.index('Buffers')
+    cached_index = mem_list_names.index('Cached')
+    active_index = mem_list_names.index('Active')
+    inactive_index = mem_list_names.index('Inactive')
+    shmem_index = mem_list_names.index('Shmem')
+
+    # ищем значение MemTotal в KiB
+    mem_total = int(mem_list[0].split(':')[1].split(' ')[-2])
+
+    return mem_total, mem_available_index, swap_total_index, swap_free_index, buffers_index, cached_index, active_index, inactive_index, shmem_index
+
+
+meminfo_tuple = meminfo()
+
+mem_total = meminfo_tuple[0]
+mem_available_index = meminfo_tuple[1]
+swap_total_index = meminfo_tuple[2]
+swap_free_index = meminfo_tuple[3]
+
+buffers_index = meminfo_tuple[4]
+cached_index = meminfo_tuple[5]
+active_index = meminfo_tuple[6]
+inactive_index = meminfo_tuple[7]
+shmem_index = meminfo_tuple[8]
+
+
+# печать показателей на этапах работы
+def print_mem():
+
+    mem_tup = mem_check_main()
+
+    mem_available = mem_tup[0]
+    swap_total = mem_tup[1]
+    swap_free = mem_tup[2]
+
+    print(
+        'MemAvailable: ',
+        round(
+            mem_available /
+            1024 /
+            1024,
+            3),
+        'GiB,',
+        round(
+            mem_available /
+            1024),
+        'MiB,',
+        round(
+            mem_available /
+            mem_total *
+            100,
+            1),
+        '%')
+
+    if swap_total != 0:
+        print(
+            'SwapFree:     ',
+            round(
+                swap_free /
+                1024 /
+                1024,
+                3),
+            'GiB,',
+            round(
+                swap_free /
+                1024),
+            'MiB,',
+            round(
+                swap_free /
+                swap_total *
+                100,
+                1),
+            '%')
+        print('Total Free:   ',
+              round((mem_available + swap_free) / 1024 / 1024,
+                    3),
+              'GiB,',
+              round((mem_available + swap_free) / 1024),
+              'MiB,',
+              round((mem_available + swap_free) / (mem_total + swap_total) * 100,
+                    1),
+              '%')
+    else:
+        print(
+            'Swap disabled'
+        )
+
+
+# бесконечный жор
+def inf():
+
+    print(
+        'Вводите целые неотрицательные числа. Чем больше, тем быстрее потребление памяти.\n1000 same обеспечивает потребление на уровне полтора гиг в секунду,\nurandom работает на скорости максимум 170 M/s'
+    )
+    same = input("same: ")
+    urandom = input("urandom: ")
+
+    expanding_list = []
+
+    print(
+        'Процесс неограниченного потребления пошёл... Press Ctrl + C for exit'
+    )
+
+    while True:
+        try:
+            expanding_list.append(os.urandom(int(urandom)))
+            expanding_list.append('#' * int(same))
+        except MemoryError:
+            print('MemoryError, start побайтовая добивалка!')
+            terminal()
+
+
+def selfterm():
+    os.kill(os.getpid(), signal.SIGTERM)
+
+
+# жор числп гиг
+def lim():
+
+    expanding_list = []
+
+    n = input('На сколько гигабайт уменьшить  доступную память?\n: ')
+
+    print('Погнали тратить ' + n + ' гиг...')
+
+    i = 0
+
+    while True:
+
+        i += 1
+
+        try:
+            expanding_list.append(os.urandom(int(100)))
+            expanding_list.append('#' * int(300))
+        except MemoryError:
+            print('MemoryError!')
+            break
+        if i > 2020202 * int(n):
+            print('DONE')
+            break
+
+    return expanding_list
+
+
+# жор до остатка мегабайт
+def lim2avail():
+
+    expanding_list = []
+
+    n = input(
+        'Сколько мегабайт общей доступной памяти (MemAvailable + SwapFree) оставить?\nВведите целое положительное число: '
+    )
+
+    # проверка на целое положительное
+    if n.isdigit():
+        n = int(n)
+    else:
+        print(
+            'Вы ввели не целое положительное число'
+        )
+        return 0
+
+    if n == 0:
+        print(
+            'Вы ввели не целое положительное число'
+        )
+        return 0
+
+    print(
+        'Погнали уменьшать доступную память до уровня ниже ' +
+        str(n) +
+        ' MiB...')
+
+    while True:
+        try:
+            expanding_list.append(os.urandom(5000))
+            expanding_list.append('#' * 5000)
+        except MemoryError:
+            print('MemoryError!')
+            break
+        if total_mem_available() <= n:
+            print('DONE')
+            break
+
+    return expanding_list
+
+
+print('WARNING: эта прога способна потратить память и повесить систему, будьте осторожны.')
+print('При ее работе следите за показателями памяти.')
+
+
+print('Ignore SIGTERM? (y|n)')
+
+sss = input(': ')
+
+if sss == 'y':
+    signal(SIGTERM, signal_handler)
+    print('The SIGTERM signal will be ignored')
+else:
+    print('The SIGTERM signal will  NOT be ignored')
+
+
+ex_list = []
+
+try:
+    while True:
+
+        print()
+        print_mem()
+        print()
+        print('Выберите вариант из списка ниже')
+        print('8 или i или I - запустить бесконечное потребление, предложив выбрать скорость потребления и энтропию')
+        print('7 или l или L - запустить ограниченное потребление заданного числа гигов')
+        print('6 или a или A - жрать память пока количество доступной памяти не опустится ниже заданного')
+        print('0 или с или С - очистить накопления при их наличии')
+        print('q или любой другой символ - выход (можно просто нажать Enter)')
+
+        li = input(': ')
+
+        if li is 'l' or li is 'L' or li is '7':
+            x = lim()
+            ex_list.append(x)
+        elif li is 'i' or li is 'I' or li is '8':
+            inf()
+        elif li is 'c' or li is 'C' or li is '0':
+            ex_list = []
+            x = 0
+            y = 0
+        elif li is '6' or li is 'a' or li is 'A':
+            y = lim2avail()
+            ex_list.append(y)
+        else:
+            exit()
+
+except KeyboardInterrupt:
+    print()
+    print_mem()
+    selfterm()

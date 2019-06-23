@@ -12,6 +12,7 @@ install:
 	install -m0755 ./oom-sort $(DESTDIR)/$(PREFIX)/usr/bin/oom-sort
 	install -m0755 ./psi-top $(DESTDIR)/$(PREFIX)/usr/bin/psi-top
 	install -m0755 ./psi-monitor $(DESTDIR)/$(PREFIX)/usr/bin/psi-monitor
+	install -m0755 ./i-memhog $(DESTDIR)/$(PREFIX)/usr/bin/i-memhog
 
 	install -d $(DESTDIR)/$(PREFIX)/etc/nohang
 	-git describe --tags --long --dirty > ./version
@@ -41,6 +42,7 @@ uninstall:
 	rm -fv $(PREFIX)/usr/bin/oom-sort
 	rm -fv $(PREFIX)/usr/bin/psi-top
 	rm -fv $(PREFIX)/usr/bin/psi-monitor
+	rm -fv $(PREFIX)/usr/bin/i-memhog
 	rm -fv $(PREFIX)/usr/share/man/man1/nohang.1.gz
 	rm -fv $(PREFIX)/usr/share/man/man1/oom-sort.1.gz
 	rm -fv $(PREFIX)/lib/systemd/system/nohang.service

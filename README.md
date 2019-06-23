@@ -533,6 +533,10 @@ some   0.29   7.58  14.58 | full   0.28   6.92  13.24
 ```
 </details>
 
+### i-memhog
+
+`i-memhog` is an interactive memory hog for testing purposes.
+
 ## Contribution
 
 Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).

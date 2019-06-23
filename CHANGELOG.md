@@ -31,6 +31,7 @@
         - [x] `oom-sort`
         - [x] `psi-top`
         - [x] `psi-monitor`
+        - [x] `i-memhog`
     - [x] Improve poll rate algorithm
     - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
@@ -42,6 +43,7 @@
     - [x] Removed self-defense options from the config, use systemd unit scheduling instead
     - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Added initial support for `PSI`
+    - [x] Recheck memory levels after finding a victim
     - [x] Improved user input validation
     - [x] Improved documentation
     - [x] Handle signals
