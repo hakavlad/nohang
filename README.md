@@ -322,7 +322,7 @@ You can also enable `separate_log` in the config to logging in `/var/log/nohang/
 
 
 
-## Additional tools: oom-sort, psi-top, psi-monitor
+## Additional tools: oom-sort, psi-top, psi-monitor, i-memhog
 
 
 ### oom-sort
