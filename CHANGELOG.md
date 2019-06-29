@@ -20,9 +20,8 @@
         - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
         - [x] Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
         - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
-        - [x] Deduplication of frequently repeated identical notifications (for example, if the victim does not respond to SIGTERM)
     - [x] Improved modifing badness via matching with regular expressions:
-        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup`, `cmdline`, `realpath` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup_v1`, `CGroup_v2`, `cmdline`, `realpath`, `environ` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [x] Reduced memory usage:
         - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
@@ -35,7 +34,7 @@
     - [x] Improve poll rate algorithm
     - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
-    - [x] Added `post_kill_exe` option (the ability to run any command after killing the victim)
+    - [x] Added `post_kill_exe` option (the ability to run any command after killing a victim)
     - [x] Added `warning_exe` option (the ability to run any command instead of GUI low memory warnings)
     - [x] Improved victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improved limiting `oom_score_adj`: now it can works with UID != 0
@@ -44,8 +43,10 @@
     - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
     - [x] Added initial support for `PSI`
     - [x] Recheck memory levels after finding a victim
+    - [x] Now one corrective action to one victim can be applied only once.
+    - [x] Ignoring zram by default, checking for this has become optional.
     - [x] Improved user input validation
     - [x] Improved documentation
-    - [x] Handle signals
+    - [x] Handle signals (SIGTERM, SIGINT, SIGQUIT, SIGHUP), print total stat by corrective actions at exit.
 
 - [v0.1](https://github.com/hakavlad/nohang/releases/tag/v0.1), 2018-11-23: Initial release
