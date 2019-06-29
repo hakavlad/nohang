@@ -3,7 +3,8 @@
 import os
 from time import sleep, time
 from signal import (signal,
-                    SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGCONT, SIGUSR1, SIGUSR2,
+                    SIGKILL, SIGTERM, SIGINT, SIGQUIT,
+                    SIGCONT, SIGUSR1, SIGUSR2,
                     SIGHUP, SIGABRT, SIGSEGV, SIGBUS)
 from sys import argv, exit
 
@@ -34,7 +35,6 @@ def mlockall():
         print('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
-
 def check_mem():
     """find mem_available"""
     with open('/proc/meminfo') as f:
@@ -42,8 +42,6 @@ def check_mem():
             if n is 2:
                 mem_available = int(line.split(':')[1][:-4])
                 return mem_available
-
-
 
 
 def pid_to_name(pid):
@@ -102,6 +100,12 @@ def rline1(path):
 ###############################################################################
 
 
+if len(argv) != 2:
+    print("""Usage:
+thanatolog PID""")
+    exit()
+
+
 mlockall()
 
 
@@ -116,15 +120,13 @@ print('Name:', name)
 print('RSS at startup: {} (100.0 %)'.format(int(rss0)))
 print('MemAvail:', ma)
 
-send_signal = SIGTERM
-
+send_signal = SIGKILL
 
 # os.kill(int(pid), SIGCONT)
 
+os.kill(int(pid), send_signal)
 
-# os.kill(int(pid), send_signal)
 t0 = time()
-
 
 while True:
     rpe = os.path.exists('/proc/{}/exe'.format(pid))
@@ -135,12 +137,10 @@ while True:
     state = pid_to_state(pid)
     ma = check_mem()
 
+    print('RP: {}  |  RSS: {} ({} %)  |  State: {}  |  time: {}  |  MemAv'
+          'ail: {}'.format(rpe, rss, round(float(rss) / (
+              rss0 + 0.0001) * 100, 1), state, round(d, 3), ma))
+
     if pe is False:
+        print('Process {} ({}) died in {} sec'.format(pid, name, round(d, 3)))
         exit()
-
-    print('RP: {}  |  RSS: {} ({} %)  |  State: {}  |  time: {}  |  MemAvail: {}'.format(
-        rpe, rss, round(float(rss) / (rss0 + 0.0001) * 100, 1), state, round(d, 4), ma
-        )
-    )
-
-    # sleep(0.0001)
