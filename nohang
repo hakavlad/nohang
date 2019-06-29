@@ -949,19 +949,17 @@ def find_victim(_print_proc_table):
         elif extra_table_info == 'realpath':
             extra_table_title = 'realpath'
 
-        elif extra_table_info == 'All':
-            extra_table_title = '[CGroup] [CmdLine] [RealPath]'
         else:
             extra_table_title = ''
 
-        hr = '#' * 115
+        hr = '#' * 107
 
         log(hr)
         log('#    PID     PPID  badness  oom_score  oom_score_adj        e'
             'UID  S  VmSize  VmRSS  VmSwap  Name             {}'.format(
                 extra_table_title))
         log('#-------  -------  -------  ---------  -------------  -------'
-            '---  -  ------  -----  ------  ---------------  --------')
+            '---  -  ------  -----  ------  ---------------')
 
     for pid in pid_list:
 
@@ -1002,12 +1000,6 @@ def find_victim(_print_proc_table):
             elif extra_table_info == 'realpath':
                 extra_table_line = pid_to_realpath(pid)
 
-            elif extra_table_info == 'All':
-                extra_table_line = '[CG: {}] [CL: {}] [RP: {}]'.format(
-                    pid_to_cgroup_v1(pid),
-                    pid_to_cmdline(pid),
-                    pid_to_realpath(pid)
-                )
             else:
                 extra_table_line = ''
 
@@ -1049,7 +1041,7 @@ def find_victim(_print_proc_table):
     if _print_proc_table:
         log(hr)
 
-    log('Found {} processes with existing /proc/[pid]/exe'.format(
+    log('Found {} processes with existing /proc/[pid]/exe realpath'.format(
         real_proc_num))
 
     log(
@@ -1232,7 +1224,7 @@ def find_victim_info(pid, victim_badness, name):
     else:
         detailed_rss_info = ''
 
-    victim_info = 'Victim information (found in {} ms):' \
+    victim_info = 'Victim status (found in {} ms):' \
         '\n  Name:      {}' \
         '\n  State:     {}' \
         '\n  PID:       {}' \
@@ -1438,11 +1430,6 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
                 round(psi_kill_exceeded_timer, 1)
             )
 
-        # psi_t0 = time()    #  ВОТ ГДЕ ПРОБЛЕМА. Таймер надо сбрасывать именно после применения корректирующего действия. Именно ПОСЛЕ. А не здесь.
-        # Или после любого применения, или после успешного.
-        # Если жертва умерла в процессе поиска - сбрасываем. Если отправлен
-        # сигнал - сбрасываем.
-
         return SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0
 
     if psi_avg_value >= sigterm_psi_threshold:
@@ -1485,10 +1472,10 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
 
 def is_victim_alive(pid):
     """
-    Проверка статуса жертвы:
-    1 - жива
-    0 - полное исчезновение
-    2 - умирает, освобождает память, зомби
+    Check the status of the victim:
+    1 - alive
+    0 - complete disappearance
+    2 - dies, frees up memory, zombies
     """
     exe_exists = os.path.exists('/proc/{}/exe'.format(pid))
     if exe_exists:
@@ -1504,67 +1491,39 @@ def implement_corrective_action(
         threshold,
         mem_info_list,
         psi_t0,
-    # да это ж тупо время последнего коррект действия. В идеале - время оконч
-    # действия. Любого.
         psi_kill_exceeded_timer,
         psi_term_exceeded_timer,
-        x0, psi_threshold, zram_threshold, zram_info, psi_info):
-    """
-    Find victim with highest badness and send SIGTERM/SIGKILL
-    """
+        x0,
+        psi_threshold,
+        zram_threshold,
+        zram_info,
+        psi_info):
 
-    # Ёбаная запутанная фция. Распутать всё нахуй. Выделить части в отдельн фции.
-    # Разбить саму фцию на части. Сделать ее структуру простой и понятной.
+    time0 = time()
 
-    time0 = time()  # начало корр действия. Для вычисл времени действия.
-
-    # выходим из фции, если для SIGTERM порога не превышено время
-    # min_delay_after_sigterm  и спим в течение over_sleep
-    # если хард порог превышен - идем дальше.
     if threshold is SIGTERM:
 
-        dt = time() - actions_time_dict['action_handled'][0]
+        dt = time() - a_dict['any']
 
         if dt < min_delay_after_sigterm:
             log('min_delay_after_sigterm IS NOT EXCEEDED ({} < {})'.format(
                 round(dt, 3), min_delay_after_sigterm))
 
             if print_sleep_periods:
-                log('Sleep {} sec [in implement_corrective_action()]'.format(
-                    over_sleep))
-
+                log('Sleep {} sec (over_sleep)'.format(over_sleep))
             sleep(over_sleep)
 
-            return psi_t0  # время задержки между действиями не истекло
+            return psi_t0
         else:
             log('min_delay_after_sigterm IS EXCEEDED, it is time to action')
-
-    """
-
-    При заходе в фцию проверяем права на сигтерм.  Права на сигкилл у нас
-    всегда есть
-    (потому что идем дальше только после полн освободж памяти после
-    смерти жертвы)
-
-    actions_time_dict[action_handled] = time()
-    actions_time_dict[veto] = True
-
-    actions_time_dict['action_handled'] = [time(), victim_id]
-
-
-
-    """
 
     for i in mem_info_list:
         log(i)
 
-    # ищем жертву с ее бэднес.
     pid, victim_badness, name, victim_id = find_victim(print_proc_table)
-    # sleep(0.1)
 
     log('Recheck memory levels...')
 
-    # перепроверяем пороги: они могли измениться за время поиска жертвы
     (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb,
      swap_min_sigterm_kb, swap_free, swap_total) = check_mem_swap_ex()
 
@@ -1576,7 +1535,7 @@ def implement_corrective_action(
          psi_term_exceeded_timer, x0) = check_psi_ex(
              psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0)
 
-    if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
+    if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL):
 
         new_threshold = SIGKILL
         mem_info_list = []
@@ -1590,7 +1549,7 @@ def implement_corrective_action(
         if psi_threshold is SIGKILL or psi_threshold is SIGTERM:
             mem_info_list.append(psi_info)
 
-    elif masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM:
+    elif (masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM):
 
         new_threshold = SIGTERM
         mem_info_list = []
@@ -1608,43 +1567,43 @@ def implement_corrective_action(
         log('Thresholds is not exceeded now')
         return psi_t0
 
-    # печать порогов
     for i in mem_info_list:
         log(i)
 
-    # может это излишне
     if new_threshold is None or new_threshold == 'WARN':
         log('Thresholds is not exceeded now')
         return psi_t0
 
     threshold = new_threshold
 
+    vwd = None  # Victim Will Die
+
     if victim_badness >= min_badness:
 
-        psi_t0 = time()  # так себе идея
+        log('Try to implement a corrective action...')
+
+        if threshold is SIGTERM:
+            if victim_id in v_dict:
+                dt = time() - a_dict['any']
+                if dt > max_post_sigterm_victim_lifetime:
+                    log('max_post_sigterm_victim_lifetime IS EXCEEDED: the '
+                        'victim will get SIGKILL')
+                    threshold = SIGKILL
+                else:
+                    log('max_post_sigterm_victim_lifetime IS NOT EXCEEDED ({} < {})'.format(
+                        round(dt, 1), max_post_sigterm_victim_lifetime))
+
+                    if print_sleep_periods:
+                        log('Sleep {} sec (over_sleep)'.format(over_sleep))
+                    sleep(over_sleep)
+
+                    return psi_t0
 
         if print_victim_info:
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
 
-        # kill the victim if it doesn't respond to SIGTERM    В ТЕЧЕНИЕ
-        # ЗАДАННОГО ВРЕМЕНИ
-
-        # переопределяем сигнал для старых жертв
-        if threshold is SIGTERM:
-
-            if victim_id in victim_dict:
-
-                dt = time() - victim_dict[victim_id]
-
-                if dt > max_post_sigterm_victim_lifetime:
-                    print('max_post_sigterm_victim_lifetime exceeded: the '
-                          'victim will get SIGKILL')
-                    threshold = SIGKILL
-
-        # matching with re to customize corrective actions
         soft_match = False
-
         if soft_actions and threshold is SIGTERM:
             name = pid_to_name(pid)
             cgroup_v1 = pid_to_cgroup_v1(pid)
@@ -1666,121 +1625,27 @@ def implement_corrective_action(
                     soft_match = True
                     break
 
-        if soft_match:  # ПЕРЕОПРЕДЕЛЕНИЕ МЯГКОГО КОРРЕКТИРУЮЩЕГО ДЕЙСТВИЯ
-
-            # todo: make new func
-            m = check_mem_and_swap()
-            ma = int(m[0]) / 1024.0
-            sf = int(m[2]) / 1024.0
-            log('Memory status before implementing a corrective act'
-                'ion:\n  MemAvailable'
-                ': {} MiB, SwapFree: {} MiB'.format(
-                    round(ma, 1), round(sf, 1)
-                )
-                )
-
-            cmd = command.replace(
-                '$PID',
-                pid).replace(
-                '$NAME',
-                pid_to_name(pid)).replace(
-                '$SERVICE',
-                service)
-
+        if soft_match:
+            cmd = command.replace('$PID', pid).replace('$NAME', pid_to_name(
+                pid)).replace('$SERVICE', service)
             exit_status = exe(cmd)
 
-            exit_status = str(exit_status)
+            if exit_status == 0:
+                success = True
+            else:
+                success = False
 
             response_time = time() - time0
 
-            # тут надо, как и при дефолтном действии, проверять существование
-            # жертвы, ее реакцию на действие,
-            # и время ее смерти в случае успеха, о обновление таймстемпов
-            # действия
-
-            etc_info = 'Implement a corrective act' \
-                'ion:\n  Run the command: {}' \
-                '\n  Exit status: {}; total response ' \
-                'time: {} ms'.format(
-                    cmd,
-                    exit_status,
-                    round(response_time * 1000))
-
-            log(etc_info)
-
-            key = "Run the command '{}'".format(cmd)
-            update_stat_dict_and_print(key)
-
             if gui_notifications:
-                send_notify_etc(
-                    pid,
-                    name,
-                    command.replace('$PID', pid).replace(
-                        '$NAME', pid_to_name(pid)))
+                send_notify_etc(pid, name, cmd)
 
         else:
 
-            # обычное действие через сигнал
-
-            # вот тут поработать. Тут ебаный цикл. Нахуй его.
-
-            try:  # вот тут засрано, в блоке try должно быть только kill(), остальное ниже за пределами
-
+            try:
                 os.kill(int(pid), threshold)
 
-                a_dict[threshold] = time()
-                v_dict[victim_id] = time()
-
-                kill_timestamp = time()
-                response_time = kill_timestamp - time0
-
-                while True:
-                    victim_alive = is_victim_alive(pid)
-                    dt = time() - kill_timestamp
-                    if victim_alive == 2 or dt > 0.02:
-                        # print(dt)
-                        break
-                    sleep(0.002)
-
-                if dt > 0.02:
-                    log('Timer (value = 0.02 sec) expired; victim does not respond on action in 0.02 sec')
-
-                    actions_time_dict['action_handled'] = [
-                        time(), get_victim_id(pid)]
-
-                    if victim_id not in victim_dict:  # хз как надо.
-                        victim_dict.update({victim_id: time()})
-
-                    # log('actions_time_dict', actions_time_dict)
-                    # log('victim_dict', victim_dict)
-
-                else:
-                    log('Process exited (VmRSS = 0) in {} sec'.format(
-                        round(dt, 5)))
-
-                if threshold is SIGKILL or victim_alive == 2:
-                    # жертва умирает от SIGKILL. Дожидаемся ее полной смерти.
-
-                    while True:
-                        sleep(0.002)
-                        rss = pid_to_rss(pid)
-                        if rss is None:  # процесс исчез
-                            break
-                    t1 = time()
-                    kill_duration = t1 - kill_timestamp
-                    log('The victim died in {} sec'.format(
-                        round(kill_duration, 3)))
-
-                    mem_available, swap_total, swap_free = check_mem_and_swap()
-
-                    ma_mib = int(mem_available) / 1024.0
-                    sf_mib = int(swap_free) / 1024.0
-                    log('Memory status after implementing a corrective act'
-                        'ion:\n  MemAvailable'
-                        ': {} MiB, SwapFree: {} MiB'.format(
-                            round(ma_mib, 1), round(sf_mib, 1)
-                        )
-                        )
+                response_time = time() - time0
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -1789,47 +1654,119 @@ def implement_corrective_action(
                     '\n  Send {} to the victim; {}'.format(
                         sig_dict[threshold], send_result)
 
-                key = 'Send {} to {}'.format(sig_dict[threshold], name)
+                success = True
 
-                if threshold is SIGKILL and post_kill_exe != '':
-
-                    cmd = post_kill_exe.replace('$PID', pid).replace(
-                        '$NAME', pid_to_name(pid))
-
-                    log('Execute post_kill_exe')
-
-                    exe(cmd)
-
-                if gui_notifications:
-                    send_notify(threshold, name, pid)
+                if threshold is SIGKILL:
+                    vwd = True
 
             except FileNotFoundError:
+                vwd = True
+                success = False
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
                 key = 'The victim died in the search process: FileNotFoundError'
             except ProcessLookupError:
+                vwd = True
+                success = False
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
                 key = 'The victim died in the search process: ProcessLookupError'
 
-            try:
-                log(preventing_oom_message)
+        try:
+            log(preventing_oom_message)
 
-            except UnboundLocalError:  # какой позор
-                preventing_oom_message = key
+        except UnboundLocalError:
+            preventing_oom_message = key
 
-            update_stat_dict_and_print(key)
-
-    # нехуй делать, бэднес жертвы слишком мал
-    else:
-
-        # может эту часть наверх отправить через if
+        if vwd:
+            a_dict['hard'] = a_dict['any'] = time()
+            if victim_id not in v_dict:
+                v_dict[victim_id] = dict()
+            v_dict[victim_id]['hard'] = v_dict[victim_id]['any'] = time()
+        else:
+            a_dict['soft'] = a_dict['any'] = time()
+            if victim_id not in v_dict:
+                v_dict[victim_id] = dict()
+            v_dict[victim_id]['soft'] = v_dict[victim_id]['any'] = time()
 
         response_time = time() - time0
-        victim_badness_is_too_small = 'victim badness {} < min_b' \
-            'adness {}; nothing to do; response time: {} ms'.format(
+
+        log('success:         ' + str(success))
+        log('victim will die: ' + str(vwd))
+        log('response_time:   ' + str(response_time) + ' sec')
+
+        kill_timestamp = time()
+
+        while True:
+            victim_alive = is_victim_alive(pid)
+            dt = time() - a_dict['any']
+            if victim_alive == 2 or dt > 0.05:
+                break
+            sleep(0.005)
+
+        if dt > 0.05:
+            log('Timer (value = 0.05 sec) expired; victim does not respond on action in 0.05 sec')
+        else:
+            log('Process exited (VmRSS = 0) in {} sec'.format(
+                round(dt, 5)))
+
+        if threshold is SIGKILL or victim_alive == 2:
+            # жертва умирает от SIGKILL. Дожидаемся ее полной смерти.
+            # Сброс таймеа. Готовность к новым мягким
+            # Этого мало. Жетва может выйти в след цикле, через 0.1 - 0.5 сек
+            # Нужно чекать что-то чаще.
+
+            a_dict['any'] -= min_delay_after_sigterm
+
+            while True:
+                sleep(0.001)
+                rss = pid_to_rss(pid)
+                if rss is None:  # процесс исчез
+                    break
+            t1 = time()
+            kill_duration = t1 - kill_timestamp
+            log('The victim died in {} sec'.format(
+                round(kill_duration, 3)))
+            vwd = True
+
+        psi_t0 = time()
+
+        # КОНЕЦ ОТСЛЕЖИВАНИЯ
+
+        mem_available, swap_total, swap_free = check_mem_and_swap()
+        ma_mib = int(mem_available) / 1024.0
+        sf_mib = int(swap_free) / 1024.0
+        log('Memory status after implementing a corrective act'
+            'ion:\n  MemAvailable'
+            ': {} MiB, SwapFree: {} MiB'.format(
+                round(ma_mib, 1), round(sf_mib, 1)))
+
+        if soft_match is False:
+            key = 'Send {} to {}'.format(sig_dict[threshold], name)
+            update_stat_dict_and_print(key)
+        else:
+            key = "Run the command '{}'".format(cmd)
+            update_stat_dict_and_print(key)
+
+        if threshold is SIGKILL and post_kill_exe != '':
+
+            cmd = post_kill_exe.replace('$PID', pid).replace(
+                '$NAME', pid_to_name(pid))
+
+            log('Execute post_kill_exe')
+
+            exe(cmd)
+
+        if gui_notifications:
+            send_notify(threshold, name, pid)
+
+    else:
+
+        response_time = time() - time0
+        victim_badness_is_too_small = 'victim badness ({}) < min_b' \
+            'adness ({}); nothing to do; response time: {} ms'.format(
                 victim_badness,
                 min_badness,
                 round(response_time * 1000))
@@ -1840,22 +1777,13 @@ def implement_corrective_action(
         key = 'victim badness < min_badness'
         update_stat_dict_and_print(key)
 
-        # тут надо поспать хорошенько. а может и счетчики поправить.
-        # херню несу. во-первых, внезапно может кто-то появиться c блльшим
-        # бэднес.. Далее надо минимизировать аутпут спам.
+    if vwd is None:
+
+        if print_sleep_periods:
+            log('Sleep {} sec (over_sleep)'.format(over_sleep))
         sleep(over_sleep)
 
-    # обновлять время не на каждый кил, а только на килл той жертвы,
-    # которая не отвечала на софт экшн.
-    # Вывод: ко времени действия прилагать также виктим айди.
-
-    print('##################################################################')
-
-    sleep(over_sleep)  # Спать если бэднес жертвы мал
-
-    # Что делать с psi_t0 если у мертвы мал бэднес? Ничего, потому что кор действия не было.
-    # демон может жрать 10% цпу при этом. Можно отдельн парам ввести. А можно
-    # не вводить. кек
+    log('##################################################################')
 
     return psi_t0
 
@@ -1996,25 +1924,13 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
-victim_dict = dict()
-victim_id = None
-actions_time_dict = dict()
-actions_time_dict['action_handled'] = [time(), victim_id]
-# print(actions_time_dict)
-
-
-# (victim_id : {SIGKILL: ts, SIGTERM: ts}}
+# {victim_id : {'any': ts, 'soft': ts, 'hard': ts}}
 v_dict = dict()
 
 
-# {SIGTERM: timestamp, SIGKILL: timestamp, 'last_action_ts': ts}
+# {'any': ts, 'soft': ts, 'hard': ts}
 a_dict = dict()
-
-
-a_dict['last_action_ts'] = a_dict[SIGTERM] = a_dict[SIGKILL] = time()
-
-
-# print(a_dict)
+a_dict['any'] = a_dict['soft'] = a_dict['hard'] = time()
 
 
 start_time = time()
@@ -2360,28 +2276,18 @@ if badness_adj_re_cgroup_v1_list == []:
 else:
     re_match_cgroup_v1 = True
 
+
 if badness_adj_re_cgroup_v2_list == []:
     re_match_cgroup_v2 = False
 else:
     re_match_cgroup_v2 = True
 
 
-# print(badness_adj_re_name_list)
-# print(badness_adj_re_cmdline_list)
-# print(badness_adj_re_uid_list)
-# print(badness_adj_re_environ_list)
-# print(badness_adj_re_realpath_list)
-# print(badness_adj_re_cgroup_v1_list)
-# print(badness_adj_re_cgroup_v2_list)
-
-# print(soft_actions_list)
-
 if soft_actions_list == []:
     soft_actions = False
 else:
     soft_actions = True
 
-# print('soft_actions:', soft_actions)
 
 ##########################################################################
 
@@ -2394,10 +2300,7 @@ print_total_stat = conf_parse_bool('print_total_stat')
 print_proc_table = conf_parse_bool('print_proc_table')
 forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
 print_victim_info = conf_parse_bool('print_victim_info')
-
 print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
-
-
 print_config = conf_parse_bool('print_config')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
@@ -2668,8 +2571,7 @@ if 'extra_table_info' in config_dict:
         extra_table_info != 'cgroup_v2' and
         extra_table_info != 'cmdline' and
         extra_table_info != 'environ' and
-        extra_table_info != 'realpath' and
-            extra_table_info != 'All'):
+        extra_table_info != 'realpath'):
 
         errprint('Invalid config: invalid extra_table_info value\nExit')
         exit(1)
@@ -2984,13 +2886,13 @@ if print_config:
     log('    zram_max_warnings:         {} MiB, {} %'.format(
         round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
     log('    psi_avg_warnings:          {}'.format(psi_avg_warnings))
-    log('    min_time_between_warnings: {}'.format(min_time_between_warnings))
+    log('    min_time_between_warnings: {} sec'.format(min_time_between_warnings))
 
     log('8. Verbosity')
 
     log('    print_config:             {}'.format(print_config))
     log('    print_mem_check_results:  {}'.format(print_mem_check_results))
-    log('    min_mem_report_interval:  {}'.format(min_mem_report_interval))
+    log('    min_mem_report_interval:  {} sec'.format(min_mem_report_interval))
     log('    print_sleep_periods:      {}'.format(print_sleep_periods))
     log('    print_total_stat:         {}'.format(print_total_stat))
     log('    print_proc_table:         {}'.format(print_proc_table))
@@ -3252,6 +3154,4 @@ while True:
 
                 warn_timer = 0
 
-    # print(a_dict)
-    # print(v_dict)
     sleep_after_check_mem()
