@@ -124,6 +124,26 @@ send_signal = SIGKILL
 
 # os.kill(int(pid), SIGCONT)
 
+
+t0 = time()
+
+
+for i in range(10):
+    rpe = os.path.exists('/proc/{}/exe'.format(pid))
+    rss = pid_to_rss(pid)
+    pe = os.path.exists('/proc/{}'.format(pid))
+    t1 = time()
+    d = t1 - t0
+    state = pid_to_state(pid)
+    ma = check_mem()
+    vv = pid_to_cmdline(pid)
+    print(vv)
+    print('RP: {}  |  RSS: {} ({} %)  |  State: {}  |  time: {}  |  MemAv'
+          'ail: {}'.format(rpe, rss, round(float(rss) / (
+              rss0 + 0.0001) * 100, 1), state, round(d, 3), ma))
+
+print('Send SIGKILL')
+
 os.kill(int(pid), send_signal)
 
 t0 = time()
@@ -136,6 +156,9 @@ while True:
     d = t1 - t0
     state = pid_to_state(pid)
     ma = check_mem()
+
+    vv = pid_to_cmdline(pid)
+    print(vv)
 
     print('RP: {}  |  RSS: {} ({} %)  |  State: {}  |  time: {}  |  MemAv'
           'ail: {}'.format(rpe, rss, round(float(rss) / (
