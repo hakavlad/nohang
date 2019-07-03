@@ -248,6 +248,11 @@ def get_victim_id(pid):
 
 def pid_to_state(pid):
     """ Handle FNF error! (BTW it already handled in find_victim_info())
+    also handle UDErr
+
+    МОЖНО ЧИТАТЬ ТОЛЬКО НАЧАЛО ФАЙЛА
+
+
     """
     return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
 
@@ -1314,7 +1319,8 @@ def check_mem_swap_ex():
                 kib_to_mib(swap_min_sigkill_kb),
                 swap_sigkill_pc)
 
-        return SIGKILL, mem_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb, swap_free, swap_total
+        return (SIGKILL, mem_info, mem_available, swap_min_sigkill_kb,
+                swap_min_sigterm_kb, swap_free, swap_total)
 
     if (mem_available <= mem_min_sigterm_kb and
             swap_free <= swap_min_sigterm_kb):
@@ -1333,15 +1339,18 @@ def check_mem_swap_ex():
                 kib_to_mib(swap_min_sigterm_kb),
                 swap_sigterm_pc)
 
-        return SIGTERM, mem_info, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb, swap_free, swap_total
+        return (SIGTERM, mem_info, mem_available, swap_min_sigkill_kb,
+                swap_min_sigterm_kb, swap_free, swap_total)
 
     if gui_low_memory_warnings:
 
         if (mem_available <= mem_min_warnings_kb and swap_free <=
                 swap_min_warnings_kb + 0.1):
-            return 'WARN', None, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb, swap_free, swap_total
+            return ('WARN', None, mem_available, swap_min_sigkill_kb,
+                    swap_min_sigterm_kb, swap_free, swap_total)
 
-    return None, None, mem_available, swap_min_sigkill_kb, swap_min_sigterm_kb, swap_free, swap_total
+    return (None, None, mem_available, swap_min_sigkill_kb,
+            swap_min_sigterm_kb, swap_free, swap_total)
 
 
 def check_zram_ex():
@@ -1364,9 +1373,9 @@ def check_zram_ex():
 
     if mem_used_zram >= zram_max_sigterm_kb:
 
-        mem_info = 'Memory status that require' \
-            's corrective actions (soft threshold exceeded):\n  MemUsedZram [{} MiB, {} %] >= zra' \
-            'm_max_sigterm [{} M, {} %]'.format(
+        mem_info = 'Memory status that requires corrective actions (soft th' \
+            'reshold exceeded):\n  MemUsedZram [{} MiB, {} %] >= zram_max_s' \
+            'igterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(zram_max_sigterm_kb),
@@ -1430,7 +1439,8 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
                 round(psi_kill_exceeded_timer, 1)
             )
 
-        return SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0
+        return (SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer,
+                psi_term_exceeded_timer, x0)
 
     if psi_avg_value >= sigterm_psi_threshold:
         sigterm_psi_exceeded = True
@@ -1460,14 +1470,17 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
                 round(psi_term_exceeded_timer, 1)
             )
 
-        return SIGTERM, mem_info, psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0
+        return (SIGTERM, mem_info, psi_t0, psi_kill_exceeded_timer,
+                psi_term_exceeded_timer, x0)
 
     if gui_low_memory_warnings:
 
         if psi_avg_value >= psi_avg_warnings:
-            return 'WARN', None, psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0
+            return ('WARN', None, psi_t0, psi_kill_exceeded_timer,
+                    psi_term_exceeded_timer, x0)
 
-    return None, None, psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0
+    return (None, None, psi_t0, psi_kill_exceeded_timer,
+            psi_term_exceeded_timer, x0)
 
 
 def is_victim_alive(pid):
@@ -1500,6 +1513,35 @@ def implement_corrective_action(
         psi_info):
 
     time0 = time()
+
+
+
+
+    # d.pop("A1")
+    # print('++++++++++++++++++++++++')
+
+    for i in v_dict:
+        pid1 = i.split('_pid')[1]
+        print([pid1])
+        vi1 = get_victim_id(pid1)
+        print([vi1])
+
+        if vi1 == '':
+            print('pop:', i)
+            v_dict.pop(i)
+            a_dict['any'] -= min_delay_after_sigterm
+            # Старая жертва умерла, сброс таймера
+            # На самом деле сброс можно делать либо только если все старые
+            # жертвы умерли и словарь опустошился, либо хз
+            # Это трудно протестировать.
+
+
+
+
+
+
+
+
 
     if threshold is SIGTERM:
 
@@ -1535,7 +1577,8 @@ def implement_corrective_action(
          psi_term_exceeded_timer, x0) = check_psi_ex(
              psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0)
 
-    if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL):
+    if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or
+            psi_threshold is SIGKILL):
 
         new_threshold = SIGKILL
         mem_info_list = []
@@ -1549,7 +1592,8 @@ def implement_corrective_action(
         if psi_threshold is SIGKILL or psi_threshold is SIGTERM:
             mem_info_list.append(psi_info)
 
-    elif (masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM):
+    elif (masf_threshold is SIGTERM or zram_threshold is SIGTERM or
+          psi_threshold is SIGTERM):
 
         new_threshold = SIGTERM
         mem_info_list = []
@@ -1578,6 +1622,12 @@ def implement_corrective_action(
 
     vwd = None  # Victim Will Die
 
+
+
+
+
+
+
     if victim_badness >= min_badness:
 
         log('Try to implement a corrective action...')
@@ -1590,8 +1640,9 @@ def implement_corrective_action(
                         'victim will get SIGKILL')
                     threshold = SIGKILL
                 else:
-                    log('max_post_sigterm_victim_lifetime IS NOT EXCEEDED ({} < {})'.format(
-                        round(dt, 1), max_post_sigterm_victim_lifetime))
+                    log('max_post_sigterm_victim_lifetime IS NOT EXCEEDED ('
+                        '{} < {})'.format(round(
+                            dt, 1), max_post_sigterm_victim_lifetime))
 
                     if print_sleep_periods:
                         log('Sleep {} sec (over_sleep)'.format(over_sleep))
@@ -1637,6 +1688,25 @@ def implement_corrective_action(
 
             response_time = time() - time0
 
+
+
+
+            preventing_oom_message = 'Implement a corrective act' \
+                'ion:\n  Run the command: {}' \
+                '\n  Exit status: {}; total response ' \
+                'time: {} ms'.format(
+                    cmd,
+                    exit_status,
+                    round(response_time * 1000))
+
+            log(preventing_oom_message)
+
+            key = "Run the command '{}'".format(cmd)
+            update_stat_dict_and_print(key)
+
+
+
+
             if gui_notifications:
                 send_notify_etc(pid, name, cmd)
 
@@ -1665,14 +1735,16 @@ def implement_corrective_action(
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'The victim died in the search process: FileNotFoundError'
+                key = 'The victim died in the search process: ' \
+                      'FileNotFoundError'
             except ProcessLookupError:
                 vwd = True
                 success = False
                 response_time = time() - time0
                 send_result = 'no such process; response time: {} ms'.format(
                     round(response_time * 1000))
-                key = 'The victim died in the search process: ProcessLookupError'
+                key = 'The victim died in the search process: ' \
+                      'ProcessLookupError'
 
         try:
             log(preventing_oom_message)
@@ -1680,16 +1752,30 @@ def implement_corrective_action(
         except UnboundLocalError:
             preventing_oom_message = key
 
+
+
         if vwd:
+
+
+
+
+
+            pass
+
+
+            """
             a_dict['hard'] = a_dict['any'] = time()
             if victim_id not in v_dict:
                 v_dict[victim_id] = dict()
             v_dict[victim_id]['hard'] = v_dict[victim_id]['any'] = time()
+            """
         else:
             a_dict['soft'] = a_dict['any'] = time()
             if victim_id not in v_dict:
                 v_dict[victim_id] = dict()
             v_dict[victim_id]['soft'] = v_dict[victim_id]['any'] = time()
+
+
 
         response_time = time() - time0
 
@@ -1699,19 +1785,28 @@ def implement_corrective_action(
 
         kill_timestamp = time()
 
-        while True:
+
+
+
+
+        # ПОЧЕМУ по 2 раза отслеживаем? НАХУЙ ТАК ЖИТЬ
+
+        while True:  # тест на чувствительность
             victim_alive = is_victim_alive(pid)
             dt = time() - a_dict['any']
             if victim_alive == 2 or dt > 0.05:
                 break
             sleep(0.005)
-
         if dt > 0.05:
-            log('Timer (value = 0.05 sec) expired; victim does not respond on action in 0.05 sec')
+            log('Timer (value = 0.05 sec) expired; victim does not respond'
+                ' on action in 0.05 sec')
         else:
             log('Process exited (VmRSS = 0) in {} sec'.format(
                 round(dt, 5)))
 
+            v_dict.pop(victim_id)
+
+        # непррерываемый цикл
         if threshold is SIGKILL or victim_alive == 2:
             # жертва умирает от SIGKILL. Дожидаемся ее полной смерти.
             # Сброс таймеа. Готовность к новым мягким
@@ -1730,6 +1825,19 @@ def implement_corrective_action(
             log('The victim died in {} sec'.format(
                 round(kill_duration, 3)))
             vwd = True
+
+            if victim_id in v_dict:
+                v_dict.pop(victim_id)
+
+
+
+
+
+
+
+
+
+
 
         psi_t0 = time()
 
@@ -2571,7 +2679,7 @@ if 'extra_table_info' in config_dict:
         extra_table_info != 'cgroup_v2' and
         extra_table_info != 'cmdline' and
         extra_table_info != 'environ' and
-        extra_table_info != 'realpath'):
+            extra_table_info != 'realpath'):
 
         errprint('Invalid config: invalid extra_table_info value\nExit')
         exit(1)
@@ -2689,16 +2797,12 @@ else:
 
 
 if max_sleep < min_sleep:
-    errprint(
-        'max_sleep value must not exceed min_sleep value.\nExit'
-    )
+    errprint('min_sleep value must not exceed max_sleep value.\nExit')
     exit(1)
 
 
 if min_sleep < over_sleep:
-    errprint(
-        'min_sleep value must not exceed over_sleep value.\nExit'
-    )
+    errprint('over_sleep value must not exceed min_sleep value.\nExit')
     exit(1)
 
 
@@ -2886,7 +2990,8 @@ if print_config:
     log('    zram_max_warnings:         {} MiB, {} %'.format(
         round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
     log('    psi_avg_warnings:          {}'.format(psi_avg_warnings))
-    log('    min_time_between_warnings: {} sec'.format(min_time_between_warnings))
+    log('    min_time_between_warnings: {} sec'.format(
+        min_time_between_warnings))
 
     log('8. Verbosity')
 
@@ -2981,8 +3086,6 @@ delta0 = 0
 threshold = None
 mem_info = None
 
-
-#print(x0, 'x0')
 
 CHECK_PSI = False
 if psi_support and not ignore_psi:
@@ -3095,7 +3198,8 @@ while True:
                     )
                     )
 
-    if masf_threshold is SIGKILL or zram_threshold is SIGKILL or psi_threshold is SIGKILL:
+    if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or
+            psi_threshold is SIGKILL):
 
         threshold = SIGKILL
         mem_info_list = []
@@ -3118,7 +3222,8 @@ while True:
             x0, psi_threshold, zram_threshold, zram_info, psi_info)
         continue
 
-    if masf_threshold is SIGTERM or zram_threshold is SIGTERM or psi_threshold is SIGTERM:
+    if (masf_threshold is SIGTERM or zram_threshold is SIGTERM or
+            psi_threshold is SIGTERM):
 
         threshold = SIGTERM
         mem_info_list = []
@@ -3143,7 +3248,8 @@ while True:
 
     if gui_low_memory_warnings:
 
-        if masf_threshold == 'WARN' or zram_threshold == 'WARN' or psi_threshold == 'WARN':
+        if (masf_threshold == 'WARN' or zram_threshold == 'WARN' or
+                psi_threshold == 'WARN'):
 
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
