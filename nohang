@@ -1489,6 +1489,10 @@ def is_victim_alive(pid):
     1 - alive
     0 - complete disappearance
     2 - dies, frees up memory, zombies
+
+    NID FIXES
+    We do not have a reliable sign of the end of the release of memory:
+    https://github.com/rfjakob/earlyoom/issues/128#issuecomment-507023717
     """
     exe_exists = os.path.exists('/proc/{}/exe'.format(pid))
     if exe_exists:
@@ -1514,34 +1518,23 @@ def implement_corrective_action(
 
     time0 = time()
 
-
-
-
     # d.pop("A1")
     # print('++++++++++++++++++++++++')
 
     for i in v_dict:
         pid1 = i.split('_pid')[1]
-        print([pid1])
+        # print([pid1])
         vi1 = get_victim_id(pid1)
-        print([vi1])
+        # print([vi1])
 
         if vi1 == '':
-            print('pop:', i)
+            # print('pop:', i)
             v_dict.pop(i)
             a_dict['any'] -= min_delay_after_sigterm
             # Старая жертва умерла, сброс таймера
             # На самом деле сброс можно делать либо только если все старые
             # жертвы умерли и словарь опустошился, либо хз
             # Это трудно протестировать.
-
-
-
-
-
-
-
-
 
     if threshold is SIGTERM:
 
@@ -1622,15 +1615,9 @@ def implement_corrective_action(
 
     vwd = None  # Victim Will Die
 
-
-
-
-
-
-
     if victim_badness >= min_badness:
 
-        log('Try to implement a corrective action...')
+        # log('Try to implement a corrective action...')
 
         if threshold is SIGTERM:
             if victim_id in v_dict:
@@ -1670,6 +1657,7 @@ def implement_corrective_action(
                     u = cgroup_v1
                 regexp = i[1]
                 command = i[2]
+
                 if search(regexp, u) is not None:
                     log("Regexp '{}' matches with {} '{}'".format(
                         regexp, unit, u))
@@ -1677,6 +1665,7 @@ def implement_corrective_action(
                     break
 
         if soft_match:
+
             cmd = command.replace('$PID', pid).replace('$NAME', pid_to_name(
                 pid)).replace('$SERVICE', service)
             exit_status = exe(cmd)
@@ -1688,9 +1677,6 @@ def implement_corrective_action(
 
             response_time = time() - time0
 
-
-
-
             preventing_oom_message = 'Implement a corrective act' \
                 'ion:\n  Run the command: {}' \
                 '\n  Exit status: {}; total response ' \
@@ -1698,17 +1684,6 @@ def implement_corrective_action(
                     cmd,
                     exit_status,
                     round(response_time * 1000))
-
-            log(preventing_oom_message)
-
-            key = "Run the command '{}'".format(cmd)
-            update_stat_dict_and_print(key)
-
-
-
-
-            if gui_notifications:
-                send_notify_etc(pid, name, cmd)
 
         else:
 
@@ -1752,16 +1727,9 @@ def implement_corrective_action(
         except UnboundLocalError:
             preventing_oom_message = key
 
-
-
         if vwd:
 
-
-
-
-
             pass
-
 
             """
             a_dict['hard'] = a_dict['any'] = time()
@@ -1775,19 +1743,13 @@ def implement_corrective_action(
                 v_dict[victim_id] = dict()
             v_dict[victim_id]['soft'] = v_dict[victim_id]['any'] = time()
 
-
-
         response_time = time() - time0
 
-        log('success:         ' + str(success))
-        log('victim will die: ' + str(vwd))
-        log('response_time:   ' + str(response_time) + ' sec')
+        # log('success:         ' + str(success))
+        # log('victim will die: ' + str(vwd))
+        # log('response_time:   ' + str(response_time) + ' sec')
 
         kill_timestamp = time()
-
-
-
-
 
         # ПОЧЕМУ по 2 раза отслеживаем? НАХУЙ ТАК ЖИТЬ
 
@@ -1829,16 +1791,6 @@ def implement_corrective_action(
             if victim_id in v_dict:
                 v_dict.pop(victim_id)
 
-
-
-
-
-
-
-
-
-
-
         psi_t0 = time()
 
         # КОНЕЦ ОТСЛЕЖИВАНИЯ
@@ -1855,7 +1807,7 @@ def implement_corrective_action(
             key = 'Send {} to {}'.format(sig_dict[threshold], name)
             update_stat_dict_and_print(key)
         else:
-            key = "Run the command '{}'".format(cmd)
+            key = "Run the command '{}'".format(command)
             update_stat_dict_and_print(key)
 
         if threshold is SIGKILL and post_kill_exe != '':
@@ -1868,7 +1820,10 @@ def implement_corrective_action(
             exe(cmd)
 
         if gui_notifications:
-            send_notify(threshold, name, pid)
+            if soft_match:
+                send_notify_etc(pid, name, cmd)
+            else:
+                send_notify(threshold, name, pid)
 
     else:
 
