@@ -247,14 +247,15 @@ def get_victim_id(pid):
 
 
 def pid_to_state(pid):
-    """ Handle FNF error! (BTW it already handled in find_victim_info())
-    also handle UDErr
-
-    МОЖНО ЧИТАТЬ ТОЛЬКО НАЧАЛО ФАЙЛА
-
-
     """
-    return rline1('/proc/' + pid + '/stat').rpartition(')')[2][1]
+    """
+    try:
+        with open('/proc/' + pid + '/stat', 'rb') as f:
+            return f.read(20).decode('utf-8', 'ignore').rpartition(')')[2][1]
+    except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
+        return ''
 
 
 def pid_to_name(pid):
@@ -1483,25 +1484,50 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
             psi_term_exceeded_timer, x0)
 
 
-def is_victim_alive(pid):
+def is_victim_alive(victim_id):
     """
-    Check the status of the victim:
-    1 - alive
-    0 - complete disappearance
-    2 - dies, frees up memory, zombies
-
-    NID FIXES
     We do not have a reliable sign of the end of the release of memory:
     https://github.com/rfjakob/earlyoom/issues/128#issuecomment-507023717
+
+    Варианты возврата:
+    0 X, nonexist, другой процесс (полн конец имплементации, можно не делать POST SIGKILL DELAY)
+    1 rp true
+    2 R освобождает память. Ждем смерти.
+    3 Z возможно уже освободил память. Конец отслеживания
     """
+
+    # Проверка целостности жертвы
+    starttime, pid = victim_id.split('_pid')
+    new_victim_id = get_victim_id(pid)
+    if victim_id != new_victim_id:
+        return 0
+
+    # Жива ли жертва?
     exe_exists = os.path.exists('/proc/{}/exe'.format(pid))
     if exe_exists:
         return 1
-    statm_exists = os.path.exists('/proc/{}/statm'.format(pid))
-    if statm_exists:
+
+    # далее жертва смертельно ранена. Дифференцируемся по State.
+    # R -> 2 # отслеживать жертву дальше
+    # X, FNFE, PLE -> 0
+
+    state = pid_to_state(pid)
+
+    if state == 'R':
         return 2
-    else:
+
+    if state == 'Z':
+        return 3
+
+    if state == 'X' or state == '':
         return 0
+
+    return 0
+
+
+post_zombie_delay = 0.1
+sensitivity_test_time = 0.05
+# victim_cache_time = 5
 
 
 def implement_corrective_action(
@@ -1516,45 +1542,54 @@ def implement_corrective_action(
         zram_info,
         psi_info):
 
+    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+
     time0 = time()
 
-    # d.pop("A1")
-    # print('++++++++++++++++++++++++')
+    # 1. Очистка словаря от мертвых. Итерация по словарю, отслеживание умирающих.
+    # 2. Итерация по оставшемуся словарю. Поиск дельт. Если хоть у одного
+    # дельта НЕ истекла - ЖДЕМ, выход из фции.
 
-    for i in v_dict:
-        pid1 = i.split('_pid')[1]
-        # print([pid1])
-        vi1 = get_victim_id(pid1)
-        # print([vi1])
+    print(v_dict)
+    nu = []
 
-        if vi1 == '':
-            # print('pop:', i)
-            v_dict.pop(i)
-            a_dict['any'] -= min_delay_after_sigterm
-            # Старая жертва умерла, сброс таймера
-            # На самом деле сброс можно делать либо только если все старые
-            # жертвы умерли и словарь опустошился, либо хз
-            # Это трудно протестировать.
+    for victim_id in v_dict:
+        iva = is_victim_alive(victim_id)
+        print(iva, victim_id)
+        if iva == 0 or iva == 3:
+            nu.append(victim_id)
+        """
+            continue
+        if iva == 1:
+            continue
+        if iva == 2:
+            pass # быстренько отследить умирающего
+        """
 
-    if threshold is SIGTERM:
+    for i in nu:
+        print('del', i)
+        v_dict.pop(i)
 
-        dt = time() - a_dict['any']
 
-        if dt < min_delay_after_sigterm:
-            log('min_delay_after_sigterm IS NOT EXCEEDED ({} < {})'.format(
-                round(dt, 3), min_delay_after_sigterm))
+    """
+    x = False
+    # 2
+    print(v_dict)
+    for victim_id in v_dict:
+        tx = v_dict[victim_id]['time']
+        ddt = time() - tx
+        print(ddt)
+        if ddt < victim_cache_time:
+            print('victim_cache_time is not exceeded for ' + victim_id)
+            x = True
+            break
+    """
 
-            if print_sleep_periods:
-                log('Sleep {} sec (over_sleep)'.format(over_sleep))
-            sleep(over_sleep)
-
-            return psi_t0
-        else:
-            log('min_delay_after_sigterm IS EXCEEDED, it is time to action')
 
     for i in mem_info_list:
         log(i)
 
+    # эту часть м б пропускать . victim_id_to_find_victim()
     pid, victim_badness, name, victim_id = find_victim(print_proc_table)
 
     log('Recheck memory levels...')
@@ -1617,11 +1652,9 @@ def implement_corrective_action(
 
     if victim_badness >= min_badness:
 
-        # log('Try to implement a corrective action...')
-
         if threshold is SIGTERM:
             if victim_id in v_dict:
-                dt = time() - a_dict['any']
+                dt = time() - v_dict[victim_id]['time']
                 if dt > max_post_sigterm_victim_lifetime:
                     log('max_post_sigterm_victim_lifetime IS EXCEEDED: the '
                         'victim will get SIGKILL')
@@ -1637,7 +1670,10 @@ def implement_corrective_action(
 
                     return psi_t0
 
+        # log('Try to implement a corrective action...')
+
         if print_victim_info:
+            # victim badness ищи снова, не полагайся на старое
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
 
@@ -1723,25 +1759,18 @@ def implement_corrective_action(
 
         try:
             log(preventing_oom_message)
-
         except UnboundLocalError:
             preventing_oom_message = key
 
-        if vwd:
-
+        if not vwd:
+            if victim_id not in v_dict:
+                v_dict[victim_id] = dict()
+            v_dict[victim_id]['time'] = time()
+            v_dict[victim_id]['name'] = name
+        else:
             pass
 
-            """
-            a_dict['hard'] = a_dict['any'] = time()
-            if victim_id not in v_dict:
-                v_dict[victim_id] = dict()
-            v_dict[victim_id]['hard'] = v_dict[victim_id]['any'] = time()
-            """
-        else:
-            a_dict['soft'] = a_dict['any'] = time()
-            if victim_id not in v_dict:
-                v_dict[victim_id] = dict()
-            v_dict[victim_id]['soft'] = v_dict[victim_id]['any'] = time()
+        print(v_dict)
 
         response_time = time() - time0
 
@@ -1751,49 +1780,46 @@ def implement_corrective_action(
 
         kill_timestamp = time()
 
-        # ПОЧЕМУ по 2 раза отслеживаем? НАХУЙ ТАК ЖИТЬ
+        # НАЧАЛО ОТСЛЕЖИВАНИЯ СОСТОЯНИЯ ЖЕРТВЫ. Можно вынести в отд фц. Приним
+        # айди, логирует, возвращает что-то.
 
-        while True:  # тест на чувствительность
-            victim_alive = is_victim_alive(pid)
-            dt = time() - a_dict['any']
-            if victim_alive == 2 or dt > 0.05:
+        # Далее поработать со словарями. Жертва тут умерла - сброс таймера. Все
+        # старые жертвы умерли до 3х секунд с следующих циклах - сброс таймера.
+
+        while True:
+            # sleep(0.005)
+            d = time() - kill_timestamp
+            #print('Прошло времени:', d)
+            iva = is_victim_alive(victim_id)
+
+            if iva == 0:
+                print('Жертва умерла, память освобождена')
+                print('Прошло времени:', d)
+                if victim_id in v_dict:
+                    v_dict.pop(victim_id)
                 break
-            sleep(0.005)
-        if dt > 0.05:
-            log('Timer (value = 0.05 sec) expired; victim does not respond'
-                ' on action in 0.05 sec')
-        else:
-            log('Process exited (VmRSS = 0) in {} sec'.format(
-                round(dt, 5)))
 
-            v_dict.pop(victim_id)
-
-        # непррерываемый цикл
-        if threshold is SIGKILL or victim_alive == 2:
-            # жертва умирает от SIGKILL. Дожидаемся ее полной смерти.
-            # Сброс таймеа. Готовность к новым мягким
-            # Этого мало. Жетва может выйти в след цикле, через 0.1 - 0.5 сек
-            # Нужно чекать что-то чаще.
-
-            a_dict['any'] -= min_delay_after_sigterm
-
-            while True:
-                sleep(0.001)
-                rss = pid_to_rss(pid)
-                if rss is None:  # процесс исчез
+            elif iva == 1:
+                #print('Жива и занимает память')
+                if not vwd and d > sensitivity_test_time:
+                    print('Жертва жива, хотя таймер истек. Конец отслеживания.')
+                    print('Прошло времени:', d)
                     break
-            t1 = time()
-            kill_duration = t1 - kill_timestamp
-            log('The victim died in {} sec'.format(
-                round(kill_duration, 3)))
-            vwd = True
 
-            if victim_id in v_dict:
-                v_dict.pop(victim_id)
+            elif iva == 2:
+                pass
+                #print('Смертельно ранена и освобождает память. Дождаться окончания освобождения памяти.')
 
-        psi_t0 = time()
-
-        # КОНЕЦ ОТСЛЕЖИВАНИЯ
+            else:  # 3
+                #print('Z и быстро освобождает память, если еще не. Поспать немножно и выйти из цикла.')
+                print(
+                    'The victim became a zombie in {} sec'.format(
+                        round(
+                            d, 3)))
+                if victim_id in v_dict:
+                    v_dict.pop(victim_id)
+                sleep(post_zombie_delay)
+                break
 
         mem_available, swap_total, swap_free = check_mem_and_swap()
         ma_mib = int(mem_available) / 1024.0
@@ -1846,7 +1872,7 @@ def implement_corrective_action(
             log('Sleep {} sec (over_sleep)'.format(over_sleep))
         sleep(over_sleep)
 
-    log('##################################################################')
+    log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
 
     return psi_t0
 
@@ -1987,13 +2013,8 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
-# {victim_id : {'any': ts, 'soft': ts, 'hard': ts}}
+# {victim_id : {'time': ts, 'name': ts}
 v_dict = dict()
-
-
-# {'any': ts, 'soft': ts, 'hard': ts}
-a_dict = dict()
-a_dict['any'] = a_dict['soft'] = a_dict['hard'] = time()
 
 
 start_time = time()
