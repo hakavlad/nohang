@@ -227,7 +227,6 @@ def pid_to_starttime(pid):
             2].split(' ')[20]
 
     except UnicodeDecodeError:
-        # print('LOL')
         with open('/proc/' + pid + '/stat', 'rb') as f:
             starttime = f.read().decode('utf-8', 'ignore').rpartition(
                 ')')[2].split(' ')[20]
@@ -1206,7 +1205,7 @@ def find_victim_info(pid, victim_badness, name):
         victim_cgroup_v2 = pid_to_cgroup_v2(pid)
 
     except FileNotFoundError:
-        print('The victim died in the search process: FileNotFoundError')
+        log('The victim died in the search process: FileNotFoundError')
         update_stat_dict_and_print(
             'The victim died in the search process: FileNotFoundError')
         return None
@@ -1525,11 +1524,6 @@ def is_victim_alive(victim_id):
     return 0
 
 
-post_zombie_delay = 0.1
-sensitivity_test_time = 0.05
-# victim_cache_time = 5
-
-
 def implement_corrective_action(
         threshold,
         mem_info_list,
@@ -1542,7 +1536,9 @@ def implement_corrective_action(
         zram_info,
         psi_info):
 
-    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+    log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
+
+    debug_corrective_action = True
 
     time0 = time()
 
@@ -1550,12 +1546,12 @@ def implement_corrective_action(
     # 2. Итерация по оставшемуся словарю. Поиск дельт. Если хоть у одного
     # дельта НЕ истекла - ЖДЕМ, выход из фции.
 
-    print(v_dict)
+    # print(v_dict)
     nu = []
 
     for victim_id in v_dict:
         iva = is_victim_alive(victim_id)
-        print(iva, victim_id)
+        #print(iva, victim_id)
         if iva == 0 or iva == 3:
             nu.append(victim_id)
         """
@@ -1563,34 +1559,52 @@ def implement_corrective_action(
         if iva == 1:
             continue
         if iva == 2:
-            pass # быстренько отследить умирающего
+            pass # быстро отследить умирающего
         """
 
     for i in nu:
-        print('del', i)
+        if debug_corrective_action:
+            log('Remove {} from v_dict'.format(i))
         v_dict.pop(i)
 
-
-    """
     x = False
+    cache_list = []
+    #cache_list.append(('foo', 0.01))
+    #cache_list.append(('boo', 1111.01))
     # 2
-    print(v_dict)
+    # print(v_dict)
+
     for victim_id in v_dict:
         tx = v_dict[victim_id]['time']
         ddt = time() - tx
-        print(ddt)
         if ddt < victim_cache_time:
-            print('victim_cache_time is not exceeded for ' + victim_id)
-            x = True
-            break
-    """
 
+            if debug_corrective_action:
+                log(
+                    'victim_cache_time is not exceeded for {} ({} < {})'.format(
+                        victim_id, round(ddt, 3), victim_cache_time
+                    )
+                )
+            x = True
+            cache_list.append((victim_id, ddt))
+            break
+
+    if x:
+        # print(cache_list)
+        e = sorted(cache_list, key=itemgetter(1), reverse=False)
+        cached_victim_id = e[0][0]
 
     for i in mem_info_list:
         log(i)
 
-    # эту часть м б пропускать . victim_id_to_find_victim()
-    pid, victim_badness, name, victim_id = find_victim(print_proc_table)
+    if x:
+        victim_id = cached_victim_id
+        pid = victim_id.partition('_pid')[2]
+        victim_badness = pid_to_badness(pid)[0]
+        name = v_dict[victim_id]['name']
+        log('New victim is cached victim {} ({})'.format(pid, name))
+    else:
+        pid, victim_badness, name, victim_id = find_victim(print_proc_table)
 
     log('Recheck memory levels...')
 
@@ -1656,17 +1670,19 @@ def implement_corrective_action(
             if victim_id in v_dict:
                 dt = time() - v_dict[victim_id]['time']
                 if dt > max_post_sigterm_victim_lifetime:
-                    log('max_post_sigterm_victim_lifetime IS EXCEEDED: the '
+                    log('max_post_sigterm_victim_lifetime is exceeded: the '
                         'victim will get SIGKILL')
                     threshold = SIGKILL
                 else:
-                    log('max_post_sigterm_victim_lifetime IS NOT EXCEEDED ('
-                        '{} < {})'.format(round(
+                    log('max_post_sigterm_victim_lifetime is not exceeded ('
+                        '{} < {}) for the victim'.format(round(
                             dt, 1), max_post_sigterm_victim_lifetime))
 
                     if print_sleep_periods:
                         log('Sleep {} sec (over_sleep)'.format(over_sleep))
                     sleep(over_sleep)
+
+                    log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
 
                     return psi_t0
 
@@ -1770,7 +1786,7 @@ def implement_corrective_action(
         else:
             pass
 
-        print(v_dict)
+        # print(v_dict)
 
         response_time = time() - time0
 
@@ -1785,16 +1801,18 @@ def implement_corrective_action(
 
         # Далее поработать со словарями. Жертва тут умерла - сброс таймера. Все
         # старые жертвы умерли до 3х секунд с следующих циклах - сброс таймера.
+        # После этого все должно быть супер охуенно.
 
         while True:
-            # sleep(0.005)
+            sleep(0.005)
             d = time() - kill_timestamp
             #print('Прошло времени:', d)
             iva = is_victim_alive(victim_id)
 
             if iva == 0:
-                print('Жертва умерла, память освобождена')
-                print('Прошло времени:', d)
+
+                log('The victim died in {} sec'.format(round(d, 3)))
+
                 if victim_id in v_dict:
                     v_dict.pop(victim_id)
                 break
@@ -1802,8 +1820,10 @@ def implement_corrective_action(
             elif iva == 1:
                 #print('Жива и занимает память')
                 if not vwd and d > sensitivity_test_time:
-                    print('Жертва жива, хотя таймер истек. Конец отслеживания.')
-                    print('Прошло времени:', d)
+
+                    log("The victim doesn't respond on corrective action in {} sec".format(
+                        round(d, 3)))
+
                     break
 
             elif iva == 2:
@@ -1812,10 +1832,9 @@ def implement_corrective_action(
 
             else:  # 3
                 #print('Z и быстро освобождает память, если еще не. Поспать немножно и выйти из цикла.')
-                print(
-                    'The victim became a zombie in {} sec'.format(
-                        round(
-                            d, 3)))
+
+                log('The victim became a zombie in {} sec'.format(round(d, 3)))
+
                 if victim_id in v_dict:
                     v_dict.pop(victim_id)
                 sleep(post_zombie_delay)
@@ -1872,7 +1891,7 @@ def implement_corrective_action(
             log('Sleep {} sec (over_sleep)'.format(over_sleep))
         sleep(over_sleep)
 
-    log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+    log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
 
     return psi_t0
 
@@ -1935,11 +1954,8 @@ def sleep_after_check_mem():
         pass
 
     if print_sleep_periods:
-
-        log(
-            'Sleep {} sec (t_mem={}, t_swap={}{})'.format(
-                round(t, 2), round(t_mem, 2), round(t_swap, 2), z)
-        )
+        log('Sleep {} sec (t_mem={}, t_swap={}{})'.format(round(t, 2), round(
+            t_mem, 2), round(t_swap, 2), z))
 
     try:
         stdout.flush()
@@ -2013,7 +2029,7 @@ def calculate_percent(arg_key):
 ##########################################################################
 
 
-# {victim_id : {'time': ts, 'name': ts}
+# {victim_id : {'time': timestamp, 'name': name}
 v_dict = dict()
 
 
@@ -2376,6 +2392,11 @@ else:
 ##########################################################################
 
 
+# post_zombie_delay = 0.1
+
+# victim_cache_time = 50
+
+
 # extracting parameters from the dictionary
 # check for all necessary parameters
 # validation of all parameters
@@ -2412,6 +2433,34 @@ ignore_zram = conf_parse_bool('ignore_zram')
 
 (zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent
  ) = calculate_percent('zram_max_warnings')
+
+
+if 'post_zombie_delay' in config_dict:
+    post_zombie_delay = string_to_float_convert_test(
+        config_dict['post_zombie_delay'])
+    if post_zombie_delay is None:
+        errprint('Invalid post_zombie_delay, not float\nExit')
+        exit(1)
+    if post_zombie_delay < 0:
+        errprint('post_zombie_delay MUST be >= 0\nExit')
+        exit(1)
+else:
+    errprint('post_zombie_delay not in config\nExit')
+    exit(1)
+
+
+if 'victim_cache_time' in config_dict:
+    victim_cache_time = string_to_float_convert_test(
+        config_dict['victim_cache_time'])
+    if victim_cache_time is None:
+        errprint('Invalid victim_cache_time, not float\nExit')
+        exit(1)
+    if victim_cache_time < 0:
+        errprint('victim_cache_time MUST be >= 0\nExit')
+        exit(1)
+else:
+    errprint('victim_cache_time not in config\nExit')
+    exit(1)
 
 
 if 'rate_mem' in config_dict:
@@ -2770,6 +2819,9 @@ if 'over_sleep' in config_dict:
 else:
     errprint('over_sleep is not in config\nExit')
     exit(1)
+
+
+sensitivity_test_time = over_sleep / 2
 
 
 if max_sleep < min_sleep:

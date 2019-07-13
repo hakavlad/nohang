@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+# rawcat 1 999 /path/to/file
+
+from sys import argv
+
+print('argv:')
+print(argv)
+
+mode = int(argv[1])
+num = int(argv[2])
+path = argv[3]
+
+if mode == 0:
+    with open(path, 'rb') as f:
+        raw = f.read(num)
+if mode == 1:
+    with open(path, 'rb') as f:
+        raw = f.read(num).decode('utf-8', 'ignore')
+if mode == 2:
+    with open(path) as f:
+        raw = f.read(num)
+
+print('raw:')
+print([raw])
