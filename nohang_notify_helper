@@ -2,7 +2,15 @@
 
 # print('Starting nohang_notify_helper')
 
-debug = True
+
+def decoder(string):
+    """
+    """
+    decoded = ''
+    for i in string.split(':'):
+        decoded += chr(int(i))
+    return decoded
+
 
 def write(path, string):
     """
@@ -118,9 +126,24 @@ except OSError:
     exit(1)
 
 
+_, uid, debug, title, body = argv
+
+uid = uid.partition('--euid=')[2]
+
+debug = debug.partition('--debug=')[2]
+
+if debug == 'True':
+    debug = True
+else:
+    debug = False
+
+title = title.partition('--title=')[2]
+
+body = decoder(body.partition('--body=')[2])
+
 if len(argv) != 5:
     print('nohang_notify_helper: invalid input')
-    exit()
+    exit(1)
 
 
 with open('/proc/meminfo') as f:
@@ -132,29 +155,10 @@ with open('/proc/meminfo') as f:
             else:
                 wait_time = 2
 
+
 if debug:
-    print('nohang_notify_helper: wait_time:', wait_time)
+    print('nohang_notify_helper: wait_time:', wait_time, 'sec')
 
-split_by = '#' * 16
-
-
-uid = argv[2]
-
-timestamp = argv[4]
-
-
-path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
-    uid, timestamp
-)
-
-
-try:
-    title, body = rfile(path_to_cache).split(split_by)
-except FileNotFoundError:
-    print('nohang_notify_helper: FileNotFoundError')
-    exit(1)
-
-remove(path_to_cache)
 
 if uid != '0':
     cmd = ['notify-send', '--icon=dialog-warning', title, body]
@@ -182,10 +186,10 @@ if list_len > 0:
     for i in list_with_envs:
         if debug:
             print('Send a GUI notification:\n ',
-                'title:   ', [title],
-                '\n  body:    ', [body],
-                '\n  user/env:', i
-                )
+                  'title:   ', [title],
+                  '\n  body:    ', [body],
+                  '\n  user/env:', i
+                  )
 
     # iterating over logged-in users
     for i in list_with_envs:

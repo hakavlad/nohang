@@ -16,6 +16,15 @@ from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 # define functions
 
 
+def encoder(string):
+    """
+    """
+    encoded = ''
+    for i in string:
+        encoded += str(ord(i)) + ':'
+    return encoded[:-1]
+
+
 def get_swap_threshold_tuple(string):
     # re (Num %, True) or (Num KiB, False)
     """Returns KiB value if abs val was set in config, or tuple with %"""
@@ -867,26 +876,13 @@ def send_notify_etc(pid, name, command):
 def send_notification(title, body):
     """
     """
-    split_by = '#' * 16
+    cmd = '{} "--euid={}" "--debug={}" "--title={}" "--body={}" &'.format(
+        notify_helper_path,
+        self_uid,
+        debug_gui_notifications,
+        title,
+        encoder(body))
 
-    t000 = time()
-
-    path_to_cache = '/dev/shm/nohang_notify_cache_uid{}_time{}'.format(
-        str(self_uid), t000
-    )
-
-    text = '{}{}{}'.format(title, split_by, body)
-
-    try:
-        with open(path_to_cache, 'w') as f:
-            f.write(text)
-            os.chmod(path_to_cache, 0o600)
-    except OSError:
-        log('OSError while send notification '
-            '(No space left on device: /dev/shm)')
-        return None
-
-    cmd = '{} --uid {} --time {} &'.format(notify_helper_path, self_uid, t000)
     exe(cmd)
 
 
@@ -2414,6 +2410,7 @@ gui_notifications = conf_parse_bool('gui_notifications')
 decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
 ignore_psi = conf_parse_bool('ignore_psi')
 ignore_zram = conf_parse_bool('ignore_zram')
+debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
 
 
 (mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
@@ -2937,6 +2934,8 @@ if print_config:
 
     log('    min_badness:              {}'.format(min_badness))
     log('    min_delay_after_sigterm:  {} sec'.format(min_delay_after_sigterm))
+    log('    post_zombie_delay:        {} sec'.format(post_zombie_delay))
+    log('    victim_cache_time:        {} sec'.format(victim_cache_time))
     log('    decrease_oom_score_adj:   {}'.format(decrease_oom_score_adj))
     log('    oom_score_adj_max:        {}'.format(oom_score_adj_max))
 
@@ -2998,7 +2997,7 @@ if print_config:
     else:
         log('    (not set)')
 
-    log('6. Customize corrective actions.')
+    log('6. Customize corrective actions')
 
     if len(soft_actions_list) > 0:
         log('    Match by:   regexp:     command: ')
@@ -3033,6 +3032,7 @@ if print_config:
     log('    print_victim_info:        {}'.format(print_victim_info))
     log('    print_victim_cmdline:     {}'.format(print_victim_cmdline))
     log('    max_ancestry_depth:       {}'.format(max_ancestry_depth))
+    log('    debug_gui_notifications:  {}'.format(debug_gui_notifications))
     log('    separate_log:             {}'.format(separate_log))
     log('    psi_debug:                {}'.format(psi_debug))
 
