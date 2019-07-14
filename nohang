@@ -1560,6 +1560,16 @@ def check_zram_ex():
     return None, None, mem_used_zram
 
 
+
+
+
+
+
+
+
+
+
+
 def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     """
     """
@@ -1570,7 +1580,7 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
     # print(psi_avg_value)
 
-    psi_post_action_delay_timer = time() - psi_t0
+    psi_post_action_delay_timer = time() - last_action_dict['t']  # psi_t0
 
     if psi_post_action_delay_timer >= psi_post_action_delay:
         psi_post_action_delay_exceeded = True
@@ -1651,6 +1661,15 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
 
     return (None, None, psi_t0, psi_kill_exceeded_timer,
             psi_term_exceeded_timer, x0)
+
+
+
+
+
+
+
+
+
 
 
 def is_victim_alive(victim_id):
@@ -1956,6 +1975,13 @@ def implement_corrective_action(
         else:
             pass
 
+
+
+        last_action_dict['t'] = kill_timestamp = time()
+
+
+
+
         # print(v_dict)
 
         response_time = time() - time0
@@ -1964,7 +1990,6 @@ def implement_corrective_action(
         # log('victim will die: ' + str(vwd))
         # log('response_time:   ' + str(response_time) + ' sec')
 
-        kill_timestamp = time()
 
         # НАЧАЛО ОТСЛЕЖИВАНИЯ СОСТОЯНИЯ ЖЕРТВЫ. Можно вынести в отд фц. Приним
         # айди, логирует, возвращает что-то.
@@ -2250,6 +2275,20 @@ if os.path.exists('./nohang_notify_helper'):
     notify_helper_path = './nohang_notify_helper'
 else:
     notify_helper_path = '/usr/sbin/nohang_notify_helper'
+
+
+
+
+
+last_action_dict = dict()
+
+last_action_dict['t'] = time()
+
+
+
+
+
+
 
 
 # will store corrective actions stat
