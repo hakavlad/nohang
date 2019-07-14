@@ -120,7 +120,7 @@ $ sudo systemctl enable nohang
 
 ```
 ./nohang -h
-usage: nohang [-h] [-v] [-p] [-c CONFIG]
+usage: nohang [-h] [-v] [-p] [-c CONFIG] [-cc CONFIG]
 
 optional arguments:
   -h, --help            show this help message and exit
