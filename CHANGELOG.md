@@ -4,6 +4,7 @@
     - [x] Added new CLI options:
         - [x] -v, --version
         - [x] -p, --print-proc-table
+        - [x] -cc CONFIG, --check-config CONFIG
     - [x] Possible process crashes are fixed:
         - [x] Fixed crash at startup due to `UnicodeDecodeError` on some systems
         - [x] Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
@@ -19,13 +20,13 @@
         - [x] Reduced the idle time of the daemon in the process of launching a notification
         - [x] All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
         - [x] Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
-        - [x] Messages are sent to the helper via a temporary file in `/dev/shm`
     - [x] Improved modifing badness via matching with regular expressions:
-        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup_v1`, `CGroup_v2`, `cmdline`, `realpath`, `environ` and `EUID` with the specified regular expressions ([issue #74](https://github.com/hakavlad/nohang/issues/11))
+        - [x] Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup_v1`, `CGroup_v2`, `cmdline`, `realpath`, `environ` and `EUID` with the specified regular expressions ([issue #11](https://github.com/hakavlad/nohang/issues/11))
         - [x] Fix: replace `re.fullmatch()` by `re.search()`
     - [x] Reduced memory usage:
         - [x] Reduced memory usage and startup time (using `sys.argv` instead of `argparse`)
-        - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112)) and lock all memory by default
+        - [x] Reduced memory usage with `mlockall()` using `MCL_ONFAULT` ([rfjakob/earlyoom#112](https://github.com/rfjakob/earlyoom/issues/112))
+    - [x] Lock all memory by default using mlockall()
     - [x] Added new tools:
         - [x] `oom-sort`
         - [x] `psi-top`
@@ -36,13 +37,14 @@
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
     - [x] Added `post_kill_exe` option (the ability to run any command after killing a victim)
     - [x] Added `warning_exe` option (the ability to run any command instead of GUI low memory warnings)
+    - [x] Added `victim_cache_time` option
     - [x] Improved victim search algorithm (do it ~30% faster) ([rfjakob/earlyoom#114](https://github.com/rfjakob/earlyoom/issues/114))
     - [x] Improved limiting `oom_score_adj`: now it can works with UID != 0
     - [x] Fixed conf parsing: use of `line.partition('=')` instead of `line.split('=')`
     - [x] Removed self-defense options from the config, use systemd unit scheduling instead
     - [x] Added the ability to send any signal instead of SIGTERM for processes with certain names
-    - [x] Added initial support for `PSI`
-    - [x] Recheck memory levels after finding a victim
+    - [x] Added support for `PSI`
+    - [x] Recheck memory levels after finding a victim to prevent killing innocent victims in some cases ([issue #20](https://github.com/hakavlad/nohang/issues/20))
     - [x] Now one corrective action to one victim can be applied only once.
     - [x] Ignoring zram by default, checking for this has become optional.
     - [x] Improved user input validation
