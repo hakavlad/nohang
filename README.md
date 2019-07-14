@@ -120,7 +120,7 @@ $ sudo systemctl enable nohang
 
 ```
 ./nohang -h
-usage: nohang [-h] [-v] [-t] [-p] [-c CONFIG]
+usage: nohang [-h] [-v] [-p] [-c CONFIG]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -130,6 +130,8 @@ optional arguments:
   -c CONFIG, --config CONFIG
                         path to the config file, default values:
                         ./nohang.conf, /etc/nohang/nohang.conf
+  -cc CONFIG, --check-config CONFIG
+                        ckeck and print config
 ```
 
 ## How to configure nohang
@@ -274,34 +276,6 @@ Process with highest badness (found in 55 ms):
 </details>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ## Logging
 
 To view the latest entries in the log (for systemd users):
@@ -312,14 +286,6 @@ $ sudo journalctl -eu nohang
 See also `man journalctl`.
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
-
-
-
-
-
-
-
-
 
 
 ## Additional tools: oom-sort, psi-top, psi-monitor, i-memhog
