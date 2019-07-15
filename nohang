@@ -64,12 +64,11 @@ def check_config():
 
     log('4. The prevention of killing innocent victims')
 
-    log('    min_badness:              {}'.format(min_badness))
-    log('    min_delay_after_sigterm:  {} sec'.format(min_delay_after_sigterm))
-    log('    post_zombie_delay:        {} sec'.format(post_zombie_delay))
-    log('    victim_cache_time:        {} sec'.format(victim_cache_time))
-    log('    decrease_oom_score_adj:   {}'.format(decrease_oom_score_adj))
-    log('    oom_score_adj_max:        {}'.format(oom_score_adj_max))
+    log('    min_badness:                   {}'.format(min_badness))
+    log('    min_delay_after_sigterm:       {} sec'.format(min_delay_after_sigterm))
+    log('    post_zombie_delay:             {} sec'.format(post_zombie_delay))
+    log('    victim_cache_time:             {} sec'.format(victim_cache_time))
+    log('    ignore_positive_oom_score_adj: {}'.format(ignore_positive_oom_score_adj))
 
     log('5. Impact on the badness of processes')
 
@@ -555,10 +554,10 @@ def pid_to_badness(pid):
         oom_score = int(rline1('/proc/' + pid + '/oom_score'))
         badness = oom_score
 
-        if decrease_oom_score_adj:
+        if ignore_positive_oom_score_adj:
             oom_score_adj = int(rline1('/proc/' + pid + '/oom_score_adj'))
-            if badness > oom_score_adj_max and oom_score_adj > 0:
-                badness = badness - oom_score_adj + oom_score_adj_max
+            if oom_score_adj > 0:
+                badness = badness - oom_score_adj
 
         if regex_matching:
             name = pid_to_name(pid)
@@ -2633,10 +2632,13 @@ print_mem_check_results = conf_parse_bool('print_mem_check_results')
 print_sleep_periods = conf_parse_bool('print_sleep_periods')
 gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
 gui_notifications = conf_parse_bool('gui_notifications')
-decrease_oom_score_adj = conf_parse_bool('decrease_oom_score_adj')
 ignore_psi = conf_parse_bool('ignore_psi')
 ignore_zram = conf_parse_bool('ignore_zram')
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
+ignore_positive_oom_score_adj = conf_parse_bool('ignore_positive_oom_score_adj')
+
+
+
 
 
 (mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
@@ -2823,18 +2825,7 @@ else:
     exit(1)
 
 
-if 'oom_score_adj_max' in config_dict:
-    oom_score_adj_max = string_to_int_convert_test(
-        config_dict['oom_score_adj_max'])
-    if oom_score_adj_max is None:
-        errprint('Invalid oom_score_adj_max value, not integer\nExit')
-        exit(1)
-    if oom_score_adj_max < 0 or oom_score_adj_max > 1000:
-        errprint('Invalid oom_score_adj_max value\nExit')
-        exit(1)
-else:
-    errprint('oom_score_adj_max not in config\nExit')
-    exit(1)
+
 
 
 if 'min_time_between_warnings' in config_dict:
