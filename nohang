@@ -26,49 +26,43 @@ def check_config():
 
     log('0. Common zram settings')
 
-    log('    ignore_zram: {}'.format(ignore_zram))
+    log('    zram_checking_enabled:  {}'.format(zram_checking_enabled))
 
     log('1. Thresholds below which a signal should be sent to the victim')
 
-    log('    mem_min_sigterm:     {} MiB, {} %'.format(
-        round(mem_min_sigterm_mb), round(mem_min_sigterm_percent, 1)))
-    log('    mem_min_sigkill:     {} MiB, {} %'.format(
-        round(mem_min_sigkill_mb), round(mem_min_sigkill_percent, 1)))
-
-    log('    swap_min_sigterm:    {}'.format(swap_min_sigterm))
-    log('    swap_min_sigkill:    {}'.format(swap_min_sigkill))
-
-    log('    zram_max_sigterm:    {} MiB, {} %'.format(
-        round(zram_max_sigterm_mb), round(zram_max_sigterm_percent, 1)))
-    log('    zram_max_sigkill:    {} MiB, {} %'.format(
-        round(zram_max_sigkill_mb), round(zram_max_sigkill_percent, 1)))
+    log('    soft_threshold_min_mem:   {} MiB, {} %'.format(round(soft_threshold_min_mem_mb), round(soft_threshold_min_mem_percent, 1)))
+    log('    hard_threshold_min_mem:   {} MiB, {} %'.format(round(hard_threshold_min_mem_mb), round(hard_threshold_min_mem_percent, 1)))
+    log('    soft_threshold_min_swap:  {}'.format(soft_threshold_min_swap))
+    log('    hard_threshold_min_swap:  {}'.format(hard_threshold_min_swap))
+    log('    soft_threshold_max_zram:  {} MiB, {} %'.format(round(soft_threshold_max_zram_mb), round(soft_threshold_max_zram_percent, 1)))
+    log('    hard_threshold_max_zram:  {} MiB, {} %'.format(round(hard_threshold_max_zram_mb), round(hard_threshold_max_zram_percent, 1)))
 
     log('2. Response on PSI memory metrics')
 
-    log('    ignore_psi:             {}'.format(ignore_psi))
-    log('    psi_path:               {}'.format(psi_path))
-    log('    psi_metrics:            {}'.format(psi_metrics))
-    log('    sigterm_psi_threshold:  {}'.format(sigterm_psi_threshold))
-    log('    sigkill_psi_threshold:  {}'.format(sigkill_psi_threshold))
-    log('    psi_excess_duration:    {} sec'.format(psi_excess_duration))
-    log('    psi_post_action_delay:  {} sec'.format(psi_post_action_delay))
+    log('    psi_checking_enabled:    {}'.format(psi_checking_enabled))
+    log('    psi_path:                {}'.format(psi_path))
+    log('    psi_metrics:             {}'.format(psi_metrics))
+    log('    soft_threshold_max_psi:  {}'.format(soft_threshold_max_psi))
+    log('    hard_threshold_max_psi:  {}'.format(hard_threshold_max_psi))
+    log('    psi_excess_duration:     {} sec'.format(psi_excess_duration))
+    log('    psi_post_action_delay:   {} sec'.format(psi_post_action_delay))
 
     log('3. The frequency of checking the amount of available memory')
 
-    log('    rate_mem:    {}'.format(rate_mem))
-    log('    rate_swap:   {}'.format(rate_swap))
-    log('    rate_zram:   {}'.format(rate_zram))
-    log('    max_sleep:   {} sec'.format(max_sleep))
-    log('    min_sleep:   {} sec'.format(min_sleep))
-    log('    over_sleep:  {} sec'.format(over_sleep))
+    log('    fill_rate_mem:   {}'.format(fill_rate_mem))
+    log('    fill_rate_swap:  {}'.format(fill_rate_swap))
+    log('    fill_rate_zram:  {}'.format(fill_rate_zram))
+    log('    max_sleep:       {} sec'.format(max_sleep))
+    log('    min_sleep:       {} sec'.format(min_sleep))
+    log('    over_sleep:      {} sec'.format(over_sleep))
 
     log('4. The prevention of killing innocent victims')
 
-    log('    min_badness:                   {}'.format(min_badness))
-    log('    min_delay_after_sigterm:       {} sec'.format(min_delay_after_sigterm))
-    log('    post_zombie_delay:             {} sec'.format(post_zombie_delay))
-    log('    victim_cache_time:             {} sec'.format(victim_cache_time))
-    log('    ignore_positive_oom_score_adj: {}'.format(ignore_positive_oom_score_adj))
+    log('    min_badness:                    {}'.format(min_badness))
+    log('    post_soft_action_delay:         {} sec'.format(post_soft_action_delay))
+    log('    post_zombie_delay:              {} sec'.format(post_zombie_delay))
+    log('    victim_cache_time:              {} sec'.format(victim_cache_time))
+    log('    ignore_positive_oom_score_adj:  {}'.format(ignore_positive_oom_score_adj))
 
     log('5. Impact on the badness of processes')
 
@@ -139,40 +133,36 @@ def check_config():
 
     log('7. GUI notifications')
 
-    log('    gui_notifications:         {}'.format(gui_notifications))
-    log('    gui_low_memory_warnings:   {}'.format(gui_low_memory_warnings))
-    log('    warning_exe:               {}'.format(warning_exe))
-    log('    mem_min_warnings:          {} MiB, {} %'.format(
-        round(mem_min_warnings_mb), round(mem_min_warnings_percent, 1)))
-    log('    swap_min_warnings:         {}'.format(swap_min_warnings))
-    log('    zram_max_warnings:         {} MiB, {} %'.format(
-        round(zram_max_warnings_mb), round(zram_max_warnings_percent, 1)))
-    log('    psi_avg_warnings:          {}'.format(psi_avg_warnings))
-    log('    min_time_between_warnings: {} sec'.format(
-        min_time_between_warnings))
+    log('    post_action_gui_notifications:  {}'.format(post_action_gui_notifications))
+    log('    low_memory_warnings_enabled:    {}'.format(low_memory_warnings_enabled))
+    log('    warning_exe:                    {}'.format(warning_exe))
+    log('    warning_threshold_min_mem:      {} MiB, {} %'.format(round(warning_threshold_min_mem_mb), round(warning_threshold_min_mem_percent, 1)))
+    log('    warning_threshold_min_swap:     {}'.format(warning_threshold_min_swap))
+    log('    warning_threshold_max_zram:     {} MiB, {} %'.format(round(warning_threshold_max_zram_mb), round(warning_threshold_max_zram_percent, 1)))
+    log('    warning_threshold_max_psi:      {}'.format(warning_threshold_max_psi))
+    log('    min_post_warning_delay:         {} sec'.format(min_post_warning_delay))
 
     log('8. Verbosity')
 
-    log('    print_config:             {}'.format(print_config))
-    log('    print_mem_check_results:  {}'.format(print_mem_check_results))
-    log('    min_mem_report_interval:  {} sec'.format(min_mem_report_interval))
-    log('    print_sleep_periods:      {}'.format(print_sleep_periods))
-    log('    print_total_stat:         {}'.format(print_total_stat))
-    log('    print_proc_table:         {}'.format(print_proc_table))
-    log('    extra_table_info:         {}'.format(extra_table_info))
-    log('    print_victim_info:        {}'.format(print_victim_info))
-    log('    print_victim_cmdline:     {}'.format(print_victim_cmdline))
-    log('    max_ancestry_depth:       {}'.format(max_ancestry_depth))
-    log('    debug_gui_notifications:  {}'.format(debug_gui_notifications))
-    log('    separate_log:             {}'.format(separate_log))
-    log('    psi_debug:                {}'.format(psi_debug))
+    log('    print_config_at_startup:    {}'.format(print_config_at_startup))
+    log('    print_mem_check_results:    {}'.format(print_mem_check_results))
+    log('    min_mem_report_interval:    {} sec'.format(min_mem_report_interval))
+    log('    debug_sleep:                {}'.format(debug_sleep))
+    log('    print_statistics:           {}'.format(print_statistics))
+    log('    print_proc_table:           {}'.format(print_proc_table))
+    log('    extra_table_info:           {}'.format(extra_table_info))
+    log('    print_victim_status:        {}'.format(print_victim_status))
+    log('    print_victim_cmdline:       {}'.format(print_victim_cmdline))
+    log('    max_victim_ancestry_depth:  {}'.format(max_victim_ancestry_depth))
+    log('    debug_gui_notifications:    {}'.format(debug_gui_notifications))
+    log('    separate_log:               {}'.format(separate_log))
+    log('    debug_psi:                  {}'.format(debug_psi))
 
     log('9. Misc')
 
-    log('    max_post_sigterm_victim_lifetime:  {} sec'.format(
-        max_post_sigterm_victim_lifetime))
-    log('    post_kill_exe:                     {}'.format(post_kill_exe))
-    log('    forbid_negative_badness:           {}'.format(
+    log('    max_soft_exit_time:       {} sec'.format(max_soft_exit_time))
+    log('    post_kill_exe:            {}'.format(post_kill_exe))
+    log('    forbid_negative_badness:  {}'.format(
         forbid_negative_badness))
 
     #    log(':    {}'.format())
@@ -471,17 +461,17 @@ def pid_to_ppid(pid):
                     return f_list[i].split('\t')[1]
 
 
-def pid_to_ancestry(pid, max_ancestry_depth=1):
+def pid_to_ancestry(pid, max_victim_ancestry_depth=1):
     """
     """
-    if max_ancestry_depth == 1:
+    if max_victim_ancestry_depth == 1:
         ppid = pid_to_ppid(pid)
         pname = pid_to_name(ppid)
         return '\n  PPID:      {} ({})'.format(ppid, pname)
-    if max_ancestry_depth == 0:
+    if max_victim_ancestry_depth == 0:
         return ''
     anc_list = []
-    for i in range(max_ancestry_depth):
+    for i in range(max_victim_ancestry_depth):
         ppid = pid_to_ppid(pid)
         pname = pid_to_name(ppid)
         anc_list.append((ppid, pname))
@@ -762,7 +752,7 @@ def update_stat_dict_and_print(key):
             new_value = stat_dict[key] + 1
             stat_dict.update({key: new_value})
 
-    if print_total_stat:
+    if print_statistics:
 
         stats_msg = 'Total stat (what happened in the last {}):'.format(
             format_time(time() - start_time))
@@ -1379,7 +1369,7 @@ def find_victim_info(pid, victim_badness, name):
             'The victim died in the search process: FileNotFoundError')
         return None
 
-    ancestry = pid_to_ancestry(pid, max_ancestry_depth)
+    ancestry = pid_to_ancestry(pid, max_victim_ancestry_depth)
 
     if print_victim_cmdline is False:
         cmdline = ''
@@ -1445,34 +1435,34 @@ def check_mem_swap_ex():
 
     mem_available, swap_total, swap_free = check_mem_and_swap()
 
-    # if swap_min_sigkill is set in percent
+    # if hard_threshold_min_swap is set in percent
     if swap_kill_is_percent:
-        swap_min_sigkill_kb = swap_total * swap_min_sigkill_percent / 100.0
+        hard_threshold_min_swap_kb = swap_total * hard_threshold_min_swap_percent / 100.0
     else:
-        swap_min_sigkill_kb = swap_kb_dict['swap_min_sigkill_kb']
+        hard_threshold_min_swap_kb = swap_kb_dict['hard_threshold_min_swap_kb']
 
     if swap_term_is_percent:
-        swap_min_sigterm_kb = swap_total * swap_min_sigterm_percent / 100.0
+        soft_threshold_min_swap_kb = swap_total * soft_threshold_min_swap_percent / 100.0
     else:
-        swap_min_sigterm_kb = swap_kb_dict['swap_min_sigterm_kb']
+        soft_threshold_min_swap_kb = swap_kb_dict['soft_threshold_min_swap_kb']
 
     if swap_warn_is_percent:
-        swap_min_warnings_kb = swap_total * swap_min_warnings_percent / 100.0
+        warning_threshold_min_swap_kb = swap_total * warning_threshold_min_swap_percent / 100.0
     else:
-        swap_min_warnings_kb = swap_kb_dict['swap_min_warnings_kb']
+        warning_threshold_min_swap_kb = swap_kb_dict['warning_threshold_min_swap_kb']
 
-    if swap_total > swap_min_sigkill_kb:
-        swap_sigkill_pc = percent(swap_min_sigkill_kb / (swap_total + 0.1))
+    if swap_total > hard_threshold_min_swap_kb:
+        swap_sigkill_pc = percent(hard_threshold_min_swap_kb / (swap_total + 0.1))
     else:
         swap_sigkill_pc = '-'
 
-    if swap_total > swap_min_sigterm_kb:
-        swap_sigterm_pc = percent(swap_min_sigterm_kb / (swap_total + 0.1))
+    if swap_total > soft_threshold_min_swap_kb:
+        swap_sigterm_pc = percent(soft_threshold_min_swap_kb / (swap_total + 0.1))
     else:
         swap_sigterm_pc = '-'
 
-    if (mem_available <= mem_min_sigkill_kb and
-            swap_free <= swap_min_sigkill_kb):
+    if (mem_available <= hard_threshold_min_mem_kb and
+            swap_free <= hard_threshold_min_swap_kb):
 
         mem_info = 'Memory status that requ' \
             'ires corrective actions (hard threshold exceeded):' \
@@ -1481,18 +1471,18 @@ def check_mem_swap_ex():
             'p_min_sigkill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
-                kib_to_mib(mem_min_sigkill_kb),
-                percent(mem_min_sigkill_kb / mem_total),
+                kib_to_mib(hard_threshold_min_mem_kb),
+                percent(hard_threshold_min_mem_kb / mem_total),
                 kib_to_mib(swap_free),
                 percent(swap_free / (swap_total + 0.1)),
-                kib_to_mib(swap_min_sigkill_kb),
+                kib_to_mib(hard_threshold_min_swap_kb),
                 swap_sigkill_pc)
 
-        return (SIGKILL, mem_info, mem_available, swap_min_sigkill_kb,
-                swap_min_sigterm_kb, swap_free, swap_total)
+        return (SIGKILL, mem_info, mem_available, hard_threshold_min_swap_kb,
+                soft_threshold_min_swap_kb, swap_free, swap_total)
 
-    if (mem_available <= mem_min_sigterm_kb and
-            swap_free <= swap_min_sigterm_kb):
+    if (mem_available <= soft_threshold_min_mem_kb and
+            swap_free <= soft_threshold_min_swap_kb):
 
         mem_info = 'Memory status that requi' \
             'res corrective actions (soft threshold exceeded):' \
@@ -1501,25 +1491,25 @@ def check_mem_swap_ex():
             'p_min_sigterm [{} MiB, {} %]'.format(
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
-                kib_to_mib(mem_min_sigterm_kb),
-                round(mem_min_sigterm_percent, 1),
+                kib_to_mib(soft_threshold_min_mem_kb),
+                round(soft_threshold_min_mem_percent, 1),
                 kib_to_mib(swap_free),
                 percent(swap_free / (swap_total + 0.1)),
-                kib_to_mib(swap_min_sigterm_kb),
+                kib_to_mib(soft_threshold_min_swap_kb),
                 swap_sigterm_pc)
 
-        return (SIGTERM, mem_info, mem_available, swap_min_sigkill_kb,
-                swap_min_sigterm_kb, swap_free, swap_total)
+        return (SIGTERM, mem_info, mem_available, hard_threshold_min_swap_kb,
+                soft_threshold_min_swap_kb, swap_free, swap_total)
 
-    if gui_low_memory_warnings:
+    if low_memory_warnings_enabled:
 
-        if (mem_available <= mem_min_warnings_kb and swap_free <=
-                swap_min_warnings_kb + 0.1):
-            return ('WARN', None, mem_available, swap_min_sigkill_kb,
-                    swap_min_sigterm_kb, swap_free, swap_total)
+        if (mem_available <= warning_threshold_min_mem_kb and swap_free <=
+                warning_threshold_min_swap_kb + 0.1):
+            return ('WARN', None, mem_available, hard_threshold_min_swap_kb,
+                    soft_threshold_min_swap_kb, swap_free, swap_total)
 
-    return (None, None, mem_available, swap_min_sigkill_kb,
-            swap_min_sigterm_kb, swap_free, swap_total)
+    return (None, None, mem_available, hard_threshold_min_swap_kb,
+            soft_threshold_min_swap_kb, swap_free, swap_total)
 
 
 def check_zram_ex():
@@ -1527,7 +1517,7 @@ def check_zram_ex():
     """
     mem_used_zram = check_zram()
 
-    if mem_used_zram >= zram_max_sigkill_kb:
+    if mem_used_zram >= hard_threshold_max_zram_kb:
 
         mem_info = 'Memory status that requir' \
             'es corrective actions (hard threshold exceeded):' \
@@ -1535,25 +1525,25 @@ def check_zram_ex():
             'kill [{} MiB, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
-                kib_to_mib(zram_max_sigkill_kb),
-                percent(zram_max_sigkill_kb / mem_total))
+                kib_to_mib(hard_threshold_max_zram_kb),
+                percent(hard_threshold_max_zram_kb / mem_total))
 
         return SIGKILL, mem_info, mem_used_zram
 
-    if mem_used_zram >= zram_max_sigterm_kb:
+    if mem_used_zram >= soft_threshold_max_zram_kb:
 
         mem_info = 'Memory status that requires corrective actions (soft th' \
             'reshold exceeded):\n  MemUsedZram [{} MiB, {} %] >= zram_max_s' \
             'igterm [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
-                kib_to_mib(zram_max_sigterm_kb),
-                percent(zram_max_sigterm_kb / mem_total))
+                kib_to_mib(soft_threshold_max_zram_kb),
+                percent(soft_threshold_max_zram_kb / mem_total))
 
         return SIGTERM, mem_info, mem_used_zram
 
-    if gui_low_memory_warnings:
-        if mem_used_zram >= zram_max_warnings_kb:
+    if low_memory_warnings_enabled:
+        if mem_used_zram >= warning_threshold_max_zram_kb:
             return 'WARN', None, mem_used_zram
 
     return None, None, mem_used_zram
@@ -1586,14 +1576,14 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     else:
         psi_post_action_delay_exceeded = False
 
-    if psi_avg_value >= sigkill_psi_threshold:
+    if psi_avg_value >= hard_threshold_max_psi:
         sigkill_psi_exceeded = True
         psi_kill_exceeded_timer += delta0
     else:
         sigkill_psi_exceeded = False
         psi_kill_exceeded_timer = 0
 
-    if psi_debug:
+    if debug_psi:
 
         log('psi_post_action_delay_timer: {}'.format(
             round(psi_post_action_delay_timer, 3)))
@@ -1609,11 +1599,11 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     if (psi_kill_exceeded_timer >= psi_excess_duration and
             psi_post_action_delay_exceeded):
 
-        mem_info = 'PSI avg ({}) > sigkill_psi_threshold ({})\n' \
+        mem_info = 'PSI avg ({}) > hard_threshold_max_psi ({})\n' \
             'PSI avg exceeded psi_excess_duration (value' \
             ' = {} sec) for {} seconds'.format(
                 psi_avg_value,
-                sigkill_psi_threshold,
+                hard_threshold_max_psi,
                 psi_excess_duration,
                 round(psi_kill_exceeded_timer, 1)
             )
@@ -1621,14 +1611,14 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
         return (SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
 
-    if psi_avg_value >= sigterm_psi_threshold:
+    if psi_avg_value >= soft_threshold_max_psi:
         sigterm_psi_exceeded = True
         psi_term_exceeded_timer += delta0
     else:
         sigterm_psi_exceeded = False
         psi_term_exceeded_timer = 0
 
-    if psi_debug:
+    if debug_psi:
 
         log('sigterm_psi_exceeded: {}\n'
             'psi_term_exceeded_timer: {}\n'.format(
@@ -1640,11 +1630,11 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     if (psi_term_exceeded_timer >= psi_excess_duration and
             psi_post_action_delay_exceeded):
 
-        mem_info = 'PSI avg ({}) > sigterm_psi_threshold ({})\n' \
+        mem_info = 'PSI avg ({}) > soft_threshold_max_psi ({})\n' \
             'PSI avg exceeded psi_excess_duration (value' \
             ' = {} sec) for {} seconds'.format(
                 psi_avg_value,
-                sigterm_psi_threshold,
+                soft_threshold_max_psi,
                 psi_excess_duration,
                 round(psi_term_exceeded_timer, 1)
             )
@@ -1652,9 +1642,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
         return (SIGTERM, mem_info, psi_t0, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
 
-    if gui_low_memory_warnings:
+    if low_memory_warnings_enabled:
 
-        if psi_avg_value >= psi_avg_warnings:
+        if psi_avg_value >= warning_threshold_max_psi:
             return ('WARN', None, psi_t0, psi_kill_exceeded_timer,
                     psi_term_exceeded_timer, x0)
 
@@ -1796,8 +1786,8 @@ def implement_corrective_action(
 
     log('Recheck memory levels...')
 
-    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb,
-     swap_min_sigterm_kb, swap_free, swap_total) = check_mem_swap_ex()
+    (masf_threshold, masf_info, mem_available, hard_threshold_min_swap_kb,
+     soft_threshold_min_swap_kb, swap_free, swap_total) = check_mem_swap_ex()
 
     if CHECK_ZRAM:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
@@ -1857,16 +1847,16 @@ def implement_corrective_action(
         if threshold is SIGTERM:
             if victim_id in v_dict:
                 dt = time() - v_dict[victim_id]['time']
-                if dt > max_post_sigterm_victim_lifetime:
-                    log('max_post_sigterm_victim_lifetime is exceeded: the '
+                if dt > max_soft_exit_time:
+                    log('max_soft_exit_time is exceeded: the '
                         'victim will get SIGKILL')
                     threshold = SIGKILL
                 else:
-                    log('max_post_sigterm_victim_lifetime is not exceeded ('
+                    log('max_soft_exit_time is not exceeded ('
                         '{} < {}) for the victim'.format(round(
-                            dt, 1), max_post_sigterm_victim_lifetime))
+                            dt, 1), max_soft_exit_time))
 
-                    if print_sleep_periods:
+                    if debug_sleep:
                         log('Sleep {} sec (over_sleep)'.format(over_sleep))
                     sleep(over_sleep)
 
@@ -1876,7 +1866,7 @@ def implement_corrective_action(
 
         # log('Try to implement a corrective action...')
 
-        if print_victim_info:
+        if print_victim_status:
             # victim badness ищи снова, не полагайся на старое
             victim_info = find_victim_info(pid, victim_badness, name)
             log(victim_info)
@@ -2058,7 +2048,7 @@ def implement_corrective_action(
 
             exe(cmd)
 
-        if gui_notifications:
+        if post_action_gui_notifications:
             if soft_match:
                 send_notify_etc(pid, name, cmd)
             else:
@@ -2081,7 +2071,7 @@ def implement_corrective_action(
 
     if vwd is None:
 
-        if print_sleep_periods:
+        if debug_sleep:
             log('Sleep {} sec (over_sleep)'.format(over_sleep))
         sleep(over_sleep)
 
@@ -2095,21 +2085,21 @@ def sleep_after_check_mem():
 
     if stable_sleep:
 
-        if print_sleep_periods:
+        if debug_sleep:
             log('Sleep {} sec'.format(min_sleep))
         stdout.flush()
         sleep(min_sleep)
         return None
 
-    if mem_min_sigkill_kb < mem_min_sigterm_kb:
-        mem_point = mem_available - mem_min_sigterm_kb
+    if hard_threshold_min_mem_kb < soft_threshold_min_mem_kb:
+        mem_point = mem_available - soft_threshold_min_mem_kb
     else:
-        mem_point = mem_available - mem_min_sigkill_kb
+        mem_point = mem_available - hard_threshold_min_mem_kb
 
-    if swap_min_sigkill_kb < swap_min_sigterm_kb:
-        swap_point = swap_free - swap_min_sigterm_kb
+    if hard_threshold_min_swap_kb < soft_threshold_min_swap_kb:
+        swap_point = swap_free - soft_threshold_min_swap_kb
     else:
-        swap_point = swap_free - swap_min_sigkill_kb
+        swap_point = swap_free - hard_threshold_min_swap_kb
 
     if swap_point < 0:
         swap_point = 0
@@ -2117,11 +2107,11 @@ def sleep_after_check_mem():
     if mem_point < 0:
         mem_point = 0
 
-    t_mem = mem_point / rate_mem
-    t_swap = swap_point / rate_swap
+    t_mem = mem_point / fill_rate_mem
+    t_swap = swap_point / fill_rate_swap
 
     if CHECK_ZRAM:
-        t_zram = (mem_total * 0.8 - mem_used_zram) / rate_zram
+        t_zram = (mem_total * 0.8 - mem_used_zram) / fill_rate_zram
         if t_zram < 0:
             t_zram = 0
         t_mem_zram = t_mem + t_zram
@@ -2147,7 +2137,7 @@ def sleep_after_check_mem():
     else:
         pass
 
-    if print_sleep_periods:
+    if debug_sleep:
         log('Sleep {} sec (t_mem={}, t_swap={}{})'.format(round(t, 2), round(
             t_mem, 2), round(t_swap, 2), z))
 
@@ -2187,7 +2177,7 @@ def calculate_percent(arg_key):
                     'ge [0; 100]\nExit'.format(arg_key))
                 exit(1)
 
-            # mem_min_sigterm_percent is clean and valid float percentage. Can
+            # soft_threshold_min_mem_percent is clean and valid float percentage. Can
             # translate into Kb
             mem_min_kb = mem_min_percent / 100 * mem_total
             mem_min_mb = round(mem_min_kb / 1024)
@@ -2621,19 +2611,30 @@ else:
 # extracting parameters from the dictionary
 # check for all necessary parameters
 # validation of all parameters
-psi_debug = conf_parse_bool('psi_debug')
-print_total_stat = conf_parse_bool('print_total_stat')
+debug_psi = conf_parse_bool('debug_psi')
+print_statistics = conf_parse_bool('print_statistics')
 print_proc_table = conf_parse_bool('print_proc_table')
 forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
-print_victim_info = conf_parse_bool('print_victim_info')
+print_victim_status = conf_parse_bool('print_victim_status')
 print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
-print_config = conf_parse_bool('print_config')
+print_config_at_startup = conf_parse_bool('print_config_at_startup')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
-print_sleep_periods = conf_parse_bool('print_sleep_periods')
-gui_low_memory_warnings = conf_parse_bool('gui_low_memory_warnings')
-gui_notifications = conf_parse_bool('gui_notifications')
-ignore_psi = conf_parse_bool('ignore_psi')
-ignore_zram = conf_parse_bool('ignore_zram')
+debug_sleep = conf_parse_bool('debug_sleep')
+low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
+post_action_gui_notifications = conf_parse_bool('post_action_gui_notifications')
+
+
+psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
+ignore_psi = not psi_checking_enabled
+
+zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
+ignore_zram = not zram_checking_enabled
+
+
+
+
+
+
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
 ignore_positive_oom_score_adj = conf_parse_bool('ignore_positive_oom_score_adj')
 
@@ -2641,23 +2642,23 @@ ignore_positive_oom_score_adj = conf_parse_bool('ignore_positive_oom_score_adj')
 
 
 
-(mem_min_sigterm_kb, mem_min_sigterm_mb, mem_min_sigterm_percent
- ) = calculate_percent('mem_min_sigterm')
+(soft_threshold_min_mem_kb, soft_threshold_min_mem_mb, soft_threshold_min_mem_percent
+ ) = calculate_percent('soft_threshold_min_mem')
 
-(mem_min_sigkill_kb, mem_min_sigkill_mb, mem_min_sigkill_percent
- ) = calculate_percent('mem_min_sigkill')
+(hard_threshold_min_mem_kb, hard_threshold_min_mem_mb, hard_threshold_min_mem_percent
+ ) = calculate_percent('hard_threshold_min_mem')
 
-(zram_max_sigterm_kb, zram_max_sigterm_mb, zram_max_sigterm_percent
- ) = calculate_percent('zram_max_sigterm')
+(soft_threshold_max_zram_kb, soft_threshold_max_zram_mb, soft_threshold_max_zram_percent
+ ) = calculate_percent('soft_threshold_max_zram')
 
-(zram_max_sigkill_kb, zram_max_sigkill_mb, zram_max_sigkill_percent
- ) = calculate_percent('zram_max_sigkill')
+(hard_threshold_max_zram_kb, hard_threshold_max_zram_mb, hard_threshold_max_zram_percent
+ ) = calculate_percent('hard_threshold_max_zram')
 
-(mem_min_warnings_kb, mem_min_warnings_mb, mem_min_warnings_percent
- ) = calculate_percent('mem_min_warnings')
+(warning_threshold_min_mem_kb, warning_threshold_min_mem_mb, warning_threshold_min_mem_percent
+ ) = calculate_percent('warning_threshold_min_mem')
 
-(zram_max_warnings_kb, zram_max_warnings_mb, zram_max_warnings_percent
- ) = calculate_percent('zram_max_warnings')
+(warning_threshold_max_zram_kb, warning_threshold_max_zram_mb, warning_threshold_max_zram_percent
+ ) = calculate_percent('warning_threshold_max_zram')
 
 
 if 'post_zombie_delay' in config_dict:
@@ -2688,70 +2689,70 @@ else:
     exit(1)
 
 
-if 'rate_mem' in config_dict:
-    rate_mem = string_to_float_convert_test(config_dict['rate_mem'])
-    if rate_mem is None:
-        errprint('Invalid rate_mem value, not float\nExit')
+if 'fill_rate_mem' in config_dict:
+    fill_rate_mem = string_to_float_convert_test(config_dict['fill_rate_mem'])
+    if fill_rate_mem is None:
+        errprint('Invalid fill_rate_mem value, not float\nExit')
         exit(1)
-    if rate_mem <= 0:
-        errprint('rate_mem MUST be > 0\nExit')
+    if fill_rate_mem <= 0:
+        errprint('fill_rate_mem MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('rate_mem not in config\nExit')
+    errprint('fill_rate_mem not in config\nExit')
     exit(1)
 
 
-if 'rate_swap' in config_dict:
-    rate_swap = string_to_float_convert_test(config_dict['rate_swap'])
-    if rate_swap is None:
-        errprint('Invalid rate_swap value, not float\nExit')
+if 'fill_rate_swap' in config_dict:
+    fill_rate_swap = string_to_float_convert_test(config_dict['fill_rate_swap'])
+    if fill_rate_swap is None:
+        errprint('Invalid fill_rate_swap value, not float\nExit')
         exit(1)
-    if rate_swap <= 0:
-        errprint('rate_swap MUST be > 0\nExit')
+    if fill_rate_swap <= 0:
+        errprint('fill_rate_swap MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('rate_swap not in config\nExit')
+    errprint('fill_rate_swap not in config\nExit')
     exit(1)
 
 
-if 'rate_zram' in config_dict:
-    rate_zram = string_to_float_convert_test(config_dict['rate_zram'])
-    if rate_zram is None:
-        errprint('Invalid rate_zram value, not float\nExit')
+if 'fill_rate_zram' in config_dict:
+    fill_rate_zram = string_to_float_convert_test(config_dict['fill_rate_zram'])
+    if fill_rate_zram is None:
+        errprint('Invalid fill_rate_zram value, not float\nExit')
         exit(1)
-    if rate_zram <= 0:
-        errprint('rate_zram MUST be > 0\nExit')
+    if fill_rate_zram <= 0:
+        errprint('fill_rate_zram MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('rate_zram not in config\nExit')
+    errprint('fill_rate_zram not in config\nExit')
     exit(1)
 
 
-if 'swap_min_sigterm' in config_dict:
-    swap_min_sigterm = config_dict['swap_min_sigterm']
+if 'soft_threshold_min_swap' in config_dict:
+    soft_threshold_min_swap = config_dict['soft_threshold_min_swap']
 else:
-    errprint('swap_min_sigterm not in config\nExit')
+    errprint('soft_threshold_min_swap not in config\nExit')
     exit(1)
 
 
-if 'swap_min_sigkill' in config_dict:
-    swap_min_sigkill = config_dict['swap_min_sigkill']
+if 'hard_threshold_min_swap' in config_dict:
+    hard_threshold_min_swap = config_dict['hard_threshold_min_swap']
 else:
-    errprint('swap_min_sigkill not in config\nExit')
+    errprint('hard_threshold_min_swap not in config\nExit')
     exit(1)
 
 
-if 'min_delay_after_sigterm' in config_dict:
-    min_delay_after_sigterm = string_to_float_convert_test(
-        config_dict['min_delay_after_sigterm'])
-    if min_delay_after_sigterm is None:
-        errprint('Invalid min_delay_after_sigterm value, not float\nExit')
+if 'post_soft_action_delay' in config_dict:
+    post_soft_action_delay = string_to_float_convert_test(
+        config_dict['post_soft_action_delay'])
+    if post_soft_action_delay is None:
+        errprint('Invalid post_soft_action_delay value, not float\nExit')
         exit(1)
-    if min_delay_after_sigterm < 0:
-        errprint('min_delay_after_sigterm must be positiv\nExit')
+    if post_soft_action_delay < 0:
+        errprint('post_soft_action_delay must be positiv\nExit')
         exit(1)
 else:
-    errprint('min_delay_after_sigterm not in config\nExit')
+    errprint('post_soft_action_delay not in config\nExit')
     exit(1)
 
 
@@ -2769,45 +2770,45 @@ else:
     exit(1)
 
 
-if 'sigkill_psi_threshold' in config_dict:
-    sigkill_psi_threshold = string_to_float_convert_test(
-        config_dict['sigkill_psi_threshold'])
-    if sigkill_psi_threshold is None:
-        errprint('Invalid sigkill_psi_threshold value, not float\nExit')
+if 'hard_threshold_max_psi' in config_dict:
+    hard_threshold_max_psi = string_to_float_convert_test(
+        config_dict['hard_threshold_max_psi'])
+    if hard_threshold_max_psi is None:
+        errprint('Invalid hard_threshold_max_psi value, not float\nExit')
         exit(1)
-    if sigkill_psi_threshold < 0 or sigkill_psi_threshold > 100:
-        errprint('sigkill_psi_threshold must be in the range [0; 100]\nExit')
+    if hard_threshold_max_psi < 0 or hard_threshold_max_psi > 100:
+        errprint('hard_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('sigkill_psi_threshold not in config\nExit')
+    errprint('hard_threshold_max_psi not in config\nExit')
     exit(1)
 
 
-if 'sigterm_psi_threshold' in config_dict:
-    sigterm_psi_threshold = string_to_float_convert_test(
-        config_dict['sigterm_psi_threshold'])
-    if sigterm_psi_threshold is None:
-        errprint('Invalid sigterm_psi_threshold value, not float\nExit')
+if 'soft_threshold_max_psi' in config_dict:
+    soft_threshold_max_psi = string_to_float_convert_test(
+        config_dict['soft_threshold_max_psi'])
+    if soft_threshold_max_psi is None:
+        errprint('Invalid soft_threshold_max_psi value, not float\nExit')
         exit(1)
-    if sigterm_psi_threshold < 0 or sigterm_psi_threshold > 100:
-        errprint('sigterm_psi_threshold must be in the range [0; 100]\nExit')
+    if soft_threshold_max_psi < 0 or soft_threshold_max_psi > 100:
+        errprint('soft_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('sigterm_psi_threshold not in config\nExit')
+    errprint('soft_threshold_max_psi not in config\nExit')
     exit(1)
 
 
-if 'psi_avg_warnings' in config_dict:
-    psi_avg_warnings = string_to_float_convert_test(
-        config_dict['psi_avg_warnings'])
-    if psi_avg_warnings is None:
-        errprint('Invalid psi_avg_warnings value, not float\nExit')
+if 'warning_threshold_max_psi' in config_dict:
+    warning_threshold_max_psi = string_to_float_convert_test(
+        config_dict['warning_threshold_max_psi'])
+    if warning_threshold_max_psi is None:
+        errprint('Invalid warning_threshold_max_psi value, not float\nExit')
         exit(1)
-    if psi_avg_warnings < 0 or psi_avg_warnings > 100:
-        errprint('psi_avg_warnings must be in the range [0; 100]\nExit')
+    if warning_threshold_max_psi < 0 or warning_threshold_max_psi > 100:
+        errprint('warning_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('psi_avg_warnings not in config\nExit')
+    errprint('warning_threshold_max_psi not in config\nExit')
     exit(1)
 
 
@@ -2828,54 +2829,54 @@ else:
 
 
 
-if 'min_time_between_warnings' in config_dict:
-    min_time_between_warnings = string_to_float_convert_test(
-        config_dict['min_time_between_warnings'])
-    if min_time_between_warnings is None:
-        errprint('Invalid min_time_between_warnings value, not float\nExit')
+if 'min_post_warning_delay' in config_dict:
+    min_post_warning_delay = string_to_float_convert_test(
+        config_dict['min_post_warning_delay'])
+    if min_post_warning_delay is None:
+        errprint('Invalid min_post_warning_delay value, not float\nExit')
         exit(1)
-    if min_time_between_warnings < 1 or min_time_between_warnings > 300:
-        errprint('min_time_between_warnings value out of range [1; 300]\nExit')
+    if min_post_warning_delay < 1 or min_post_warning_delay > 300:
+        errprint('min_post_warning_delay value out of range [1; 300]\nExit')
         exit(1)
 else:
-    errprint('min_time_between_warnings not in config\nExit')
+    errprint('min_post_warning_delay not in config\nExit')
     exit(1)
 
 
-if 'swap_min_warnings' in config_dict:
-    swap_min_warnings = config_dict['swap_min_warnings']
+if 'warning_threshold_min_swap' in config_dict:
+    warning_threshold_min_swap = config_dict['warning_threshold_min_swap']
 else:
-    errprint('swap_min_warnings not in config\nExit')
+    errprint('warning_threshold_min_swap not in config\nExit')
     exit(1)
 
 
-if 'max_ancestry_depth' in config_dict:
-    max_ancestry_depth = string_to_int_convert_test(
-        config_dict['max_ancestry_depth'])
+if 'max_victim_ancestry_depth' in config_dict:
+    max_victim_ancestry_depth = string_to_int_convert_test(
+        config_dict['max_victim_ancestry_depth'])
     if min_badness is None:
-        errprint('Invalid max_ancestry_depth value, not integer\nExit')
+        errprint('Invalid max_victim_ancestry_depth value, not integer\nExit')
         exit(1)
-    if max_ancestry_depth < 1:
-        errprint('Invalud max_ancestry_depth value\nExit')
+    if max_victim_ancestry_depth < 1:
+        errprint('Invalud max_victim_ancestry_depth value\nExit')
         exit(1)
 else:
-    errprint('max_ancestry_depth is not in config\nExit')
+    errprint('max_victim_ancestry_depth is not in config\nExit')
     exit(1)
 
 
-if 'max_post_sigterm_victim_lifetime' in config_dict:
-    max_post_sigterm_victim_lifetime = string_to_float_convert_test(
-        config_dict['max_post_sigterm_victim_lifetime'])
-    if max_post_sigterm_victim_lifetime is None:
-        errprint('Invalid max_post_sigterm_victim_lifetime val'
+if 'max_soft_exit_time' in config_dict:
+    max_soft_exit_time = string_to_float_convert_test(
+        config_dict['max_soft_exit_time'])
+    if max_soft_exit_time is None:
+        errprint('Invalid max_soft_exit_time val'
                  'ue, not float\nExit')
         exit(1)
-    if max_post_sigterm_victim_lifetime < 0:
-        errprint('max_post_sigterm_victim_lifetime must be non-n'
+    if max_soft_exit_time < 0:
+        errprint('max_soft_exit_time must be non-n'
                  'egative number\nExit')
         exit(1)
 else:
-    errprint('max_post_sigterm_victim_lifetime is not in config\nExit')
+    errprint('max_soft_exit_time is not in config\nExit')
     exit(1)
 
 
@@ -3073,34 +3074,34 @@ psi_support = os.path.exists(psi_path)
 
 # Get KiB levels if it's possible.
 
-swap_min_sigterm_tuple = get_swap_threshold_tuple(swap_min_sigterm)
-swap_min_sigkill_tuple = get_swap_threshold_tuple(swap_min_sigkill)
-swap_min_warnings_tuple = get_swap_threshold_tuple(swap_min_warnings)
+soft_threshold_min_swap_tuple = get_swap_threshold_tuple(soft_threshold_min_swap)
+hard_threshold_min_swap_tuple = get_swap_threshold_tuple(hard_threshold_min_swap)
+warning_threshold_min_swap_tuple = get_swap_threshold_tuple(warning_threshold_min_swap)
 
 
 swap_kb_dict = dict()
 
-swap_term_is_percent = swap_min_sigterm_tuple[1]
+swap_term_is_percent = soft_threshold_min_swap_tuple[1]
 if swap_term_is_percent:
-    swap_min_sigterm_percent = swap_min_sigterm_tuple[0]
+    soft_threshold_min_swap_percent = soft_threshold_min_swap_tuple[0]
 else:
-    swap_min_sigterm_kb = swap_min_sigterm_tuple[0]
-    swap_kb_dict['swap_min_sigterm_kb'] = swap_min_sigterm_kb
+    soft_threshold_min_swap_kb = soft_threshold_min_swap_tuple[0]
+    swap_kb_dict['soft_threshold_min_swap_kb'] = soft_threshold_min_swap_kb
 
-swap_kill_is_percent = swap_min_sigkill_tuple[1]
+swap_kill_is_percent = hard_threshold_min_swap_tuple[1]
 if swap_kill_is_percent:
-    swap_min_sigkill_percent = swap_min_sigkill_tuple[0]
+    hard_threshold_min_swap_percent = hard_threshold_min_swap_tuple[0]
 else:
-    swap_min_sigkill_kb = swap_min_sigkill_tuple[0]
-    swap_kb_dict['swap_min_sigkill_kb'] = swap_min_sigkill_kb
+    hard_threshold_min_swap_kb = hard_threshold_min_swap_tuple[0]
+    swap_kb_dict['hard_threshold_min_swap_kb'] = hard_threshold_min_swap_kb
 
 
-swap_warn_is_percent = swap_min_warnings_tuple[1]
+swap_warn_is_percent = warning_threshold_min_swap_tuple[1]
 if swap_warn_is_percent:
-    swap_min_warnings_percent = swap_min_warnings_tuple[0]
+    warning_threshold_min_swap_percent = warning_threshold_min_swap_tuple[0]
 else:
-    swap_min_warnings_kb = swap_min_warnings_tuple[0]
-    swap_kb_dict['swap_min_warnings_kb'] = swap_min_warnings_kb
+    warning_threshold_min_swap_kb = warning_threshold_min_swap_tuple[0]
+    swap_kb_dict['warning_threshold_min_swap_kb'] = warning_threshold_min_swap_kb
 
 
 ##########################################################################
@@ -3112,7 +3113,7 @@ else:
 
 
 
-if print_config or check_config_flag:
+if print_config_at_startup or check_config_flag:
     check_config()
 
 
@@ -3130,15 +3131,15 @@ if print_config or check_config_flag:
 # for calculating the column width when printing mem and zram
 mem_len = len(str(round(mem_total / 1024.0)))
 
-if gui_notifications:
+if post_action_gui_notifications:
     notify_sig_dict = {SIGKILL: 'Killing',
                        SIGTERM: 'Terminating'}
 
 
 # convert rates from MiB/s to KiB/s
-rate_mem = rate_mem * 1024
-rate_swap = rate_swap * 1024
-rate_zram = rate_zram * 1024
+fill_rate_mem = fill_rate_mem * 1024
+fill_rate_swap = fill_rate_swap * 1024
+fill_rate_zram = fill_rate_zram * 1024
 
 
 warn_time_now = 0
@@ -3213,8 +3214,8 @@ stdout.flush()
 
 while True:
 
-    (masf_threshold, masf_info, mem_available, swap_min_sigkill_kb,
-     swap_min_sigterm_kb, swap_free, swap_total) = check_mem_swap_ex()
+    (masf_threshold, masf_info, mem_available, hard_threshold_min_swap_kb,
+     soft_threshold_min_swap_kb, swap_free, swap_total) = check_mem_swap_ex()
 
     if CHECK_ZRAM:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
@@ -3350,7 +3351,7 @@ while True:
             x0, psi_threshold, zram_threshold, zram_info, psi_info)
         continue
 
-    if gui_low_memory_warnings:
+    if low_memory_warnings_enabled:
 
         if (masf_threshold == 'WARN' or zram_threshold == 'WARN' or
                 psi_threshold == 'WARN'):
@@ -3358,7 +3359,7 @@ while True:
             warn_time_delta = time() - warn_time_now
             warn_time_now = time()
             warn_timer += warn_time_delta
-            if warn_timer > min_time_between_warnings:
+            if warn_timer > min_post_warning_delay:
 
                 send_notify_warn()
 
