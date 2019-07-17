@@ -4,6 +4,12 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/alerts/)
+[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/context:python)
+
+
+https://img.shields.io/lgtm/grade/python/github/hakavlad/nohang.svg
+
+shields.io
 
 Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
 
