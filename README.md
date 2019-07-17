@@ -292,7 +292,7 @@ See also `man journalctl`.
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
 
 
-## Additional tools: oom-sort, psi-top, psi-monitor, i-memhog
+## Additional tools: oom-sort, psi-top, psi-monitor
 
 
 ### oom-sort
@@ -502,10 +502,6 @@ some   0.13   7.80  14.68 | full   0.12   7.12  13.33
 some   0.29   7.58  14.58 | full   0.28   6.92  13.24
 ```
 </details>
-
-### i-memhog
-
-`i-memhog` is an interactive memory hog for testing purposes.
 
 ## Contribution
 

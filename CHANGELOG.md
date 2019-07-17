@@ -31,7 +31,6 @@
         - [x] `oom-sort`
         - [x] `psi-top`
         - [x] `psi-monitor`
-        - [x] `i-memhog`
     - [x] Improve poll rate algorithm
     - [x] Fixed Makefile for installation on CentOS 7 (remove gzip `-k` option).
     - [x] Added `max_post_sigterm_victim_lifetime` option: send SIGKILL to the victim if it doesn't respond to SIGTERM for a certain time
