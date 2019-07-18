@@ -838,8 +838,7 @@ def check_zram():
 
 
 def format_time(t):
-    """
-    """
+
 
     t = int(t)
 
@@ -857,6 +856,14 @@ def format_time(t):
         m = s0 // 60
         s = s0 % 60
         return '{} h {} min {} sec'.format(h, m, s)
+
+
+
+
+
+
+
+
 
 
 
@@ -3221,6 +3228,13 @@ CHECK_ZRAM = not ignore_zram
 log('Monitoring has started!')
 
 stdout.flush()
+
+
+
+
+x = format_time(3600 * 24 + 99)
+print(x)
+exit()
 
 
 ##########################################################################
