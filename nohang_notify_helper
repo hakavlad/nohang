@@ -119,7 +119,7 @@ except Exception:
 
 
 try:
-    from os import listdir, path, remove
+    from os import listdir, path
     from subprocess import Popen, TimeoutExpired
     from sys import argv
 except OSError:

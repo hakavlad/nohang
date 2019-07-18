@@ -3,19 +3,7 @@
 from ctypes import CDLL
 from time import sleep
 from sys import argv
-
-"""
-    Execute the command
-    find /sys/fs/cgroup -name memory.pressure
-    to find available memory.pressue files (except /proc/pressure/memory).
-    (actual for cgroup2)
-"""
-
-if len(argv) > 1:
-    psi_path = argv[1]
-else:
-    psi_path = '/proc/pressure/memory'
-
+import os
 
 def mlockall():
 
@@ -33,14 +21,11 @@ def mlockall():
             MCL_CURRENT | MCL_FUTURE
         )
         if result != 0:
-            print('WARNING: cannot lock all memory')
+            pass
         else:
             pass
     else:
         pass
-
-
-mlockall()
 
 
 def psi_path_to_metrics(psi_path):
@@ -62,8 +47,18 @@ def psi_path_to_metrics(psi_path):
             full_avg10, full_avg60, full_avg300)
 
 
-print('Path to PSI file: {}\n'.format(psi_path))
+if len(argv) > 1:
+    psi_path = argv[1]
+else:
+    psi_path = '/proc/pressure/memory'
 
+if not os.path.exists(psi_path):
+    print('PSI path does not exist. Exit.')
+    exit()
+
+mlockall()
+
+print('Path to PSI file: {}\n'.format(psi_path))
 
 print('      avg10  avg60 avg300         avg10  avg60 avg300')
 

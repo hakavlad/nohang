@@ -45,13 +45,13 @@ def pid_to_status_units(pid):
             if i is 1:
                 name = f_list[0].split('\t')[1]
 
-            if i is uid_index:
+            if i == uid_index:
                 uid = f_list[i].split('\t')[2]
 
-            if i is vm_rss_index:
+            if i == vm_rss_index:
                 vm_rss = f_list[i].split('\t')[1][:-3]
 
-            if i is vm_swap_index:
+            if i == vm_swap_index:
                 vm_swap = f_list[i].split('\t')[1][:-3]
 
     return name, uid, vm_rss, vm_swap

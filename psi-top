@@ -1,44 +1,8 @@
 #!/usr/bin/env python3
 
-from ctypes import CDLL
-from time import sleep, time
 import os
 
-"""
-    Execute the command
-    find /sys/fs/cgroup -name memory.pressure
-    to find available memory.pressue files (except /proc/pressure/memory).
-    (actual for cgroup2)
-"""
-
 psi_path = '/proc/pressure/memory'
-
-def mlockall():
-
-    MCL_CURRENT = 1
-    MCL_FUTURE = 2
-    MCL_ONFAULT = 4
-
-    libc = CDLL('libc.so.6', use_errno=True)
-
-    result = libc.mlockall(
-        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
-    )
-    if result != 0:
-        result = libc.mlockall(
-            MCL_CURRENT | MCL_FUTURE
-        )
-        if result != 0:
-            print('WARNING: cannot lock all memory')
-        else:
-            pass
-    else:
-        pass
-
-
-mlockall()
-
-t0 = time()
 
 def psi_path_to_metrics(psi_path):
 
@@ -57,7 +21,6 @@ def psi_path_to_metrics(psi_path):
 
     return (some_avg10, some_avg60, some_avg300,
             full_avg10, full_avg60, full_avg300)
-
 
 
 def cgroup2_root():
@@ -93,7 +56,19 @@ def psi_path_to_cgroup2(path):
 
 i = cgroup2_root()
 
-print('cgroup2 root dir:', i)
+if i is None:
+    print('cgroup2 not mounted')
+else:
+    print('cgroup2 root dir:', i)
+
+
+psi_support = os.path.exists(psi_path)
+
+if not psi_support:
+    print('PSI is not supported, /proc/pressure/memory does not exist. Exit.')
+    exit(1)
+
+
 if i is not None:
     y = get_psi_mem_files(i)
     for path in y:
@@ -105,14 +80,16 @@ print('      avg10  avg60 avg300         avg10  avg60 avg300  cgroup2')
 
 print('      -----  ----- ------         -----  ----- ------  ---------')
 
-(some_avg10, some_avg60, some_avg300, full_avg10, full_avg60, full_avg300) = psi_path_to_metrics('/proc/pressure/memory')
+(some_avg10, some_avg60, some_avg300, full_avg10, full_avg60, full_avg300
+ ) = psi_path_to_metrics('/proc/pressure/memory')
+
 print('some {} {} {} | full {} {} {}  {}'.format(
     some_avg10.rjust(6),
     some_avg60.rjust(6),
     some_avg300.rjust(6),
     full_avg10.rjust(6),
     full_avg60.rjust(6),
-    full_avg300.rjust(6), '[SYSTEM]'))
+    full_avg300.rjust(6), '[SYSTEM_WIDE]'))
 
 
 for psi_path in path_list:
@@ -126,8 +103,3 @@ for psi_path in path_list:
         full_avg10.rjust(6),
         full_avg60.rjust(6),
         full_avg300.rjust(6), psi_path_to_cgroup2(psi_path)))
-
-
-print(time() - t0)
-
-

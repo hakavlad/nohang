@@ -344,7 +344,7 @@ def log(*msg):
         sleep(0.01)
     if separate_log:
         try:
-            info(*msg)
+            logging.info(*msg)
         except OSError:
             sleep(0.01)
 
@@ -835,22 +835,30 @@ def check_zram():
     return (mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR) / 1024.0
 
 
+
+
 def format_time(t):
     """
     """
+
     t = int(t)
+
     if t < 60:
         return '{} sec'.format(t)
-    elif t >= 60 and t < 3600:
+
+    elif (t < 3600 and t >= 60):
         m = t // 60
         s = t % 60
         return '{} min {} sec'.format(m, s)
+
     else:
         h = t // 3600
         s0 = t - h * 3600
         m = s0 // 60
         s = s0 % 60
         return '{} h {} min {} sec'.format(h, m, s)
+
+
 
 
 def string_to_float_convert_test(string):
@@ -1001,11 +1009,6 @@ def send_notify(threshold, name, pid):
     name: str process name
     pid: str process pid
     """
-
-    # wait for memory release after corrective action
-    # may be useful if free memory was about 0 immediately after
-    # corrective action
-    sleep(0.05)
 
     title = 'Freeze prevention'
     body = '<b>{}</b> [{}] <b>{}</b>'.format(
@@ -1237,9 +1240,14 @@ def find_victim_info(pid, victim_badness, name):
                     state = line.split('\t')[1].rstrip()
                     continue
 
+
+                """
                 if n is ppid_index:
-                    ppid = line.split('\t')[1]
+                    # ppid = line.split('\t')[1]
                     continue
+                """
+
+
 
                 if n is uid_index:
                     uid = line.split('\t')[2]
@@ -1299,8 +1307,13 @@ def find_victim_info(pid, victim_badness, name):
                 if i is state_index:
                     state = f_list[i].split('\t')[1].rstrip()
 
+
+                """
                 if i is ppid_index:
-                    ppid = f_list[i].split('\t')[1]
+                    pass
+                    # ppid = f_list[i].split('\t')[1]
+                """
+
 
                 if i is uid_index:
                     uid = f_list[i].split('\t')[2]
@@ -1901,10 +1914,14 @@ def implement_corrective_action(
                 pid)).replace('$SERVICE', service)
             exit_status = exe(cmd)
 
+            """
             if exit_status == 0:
                 success = True
             else:
                 success = False
+            """
+
+
 
             response_time = time() - time0
 
@@ -1937,18 +1954,16 @@ def implement_corrective_action(
 
             except FileNotFoundError:
                 vwd = True
-                success = False
+                # success = False
                 response_time = time() - time0
-                send_result = 'no such process; response time: {} ms'.format(
-                    round(response_time * 1000))
+                # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'FileNotFoundError'
             except ProcessLookupError:
                 vwd = True
-                success = False
+                # success = False
                 response_time = time() - time0
-                send_result = 'no such process; response time: {} ms'.format(
-                    round(response_time * 1000))
+                # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'ProcessLookupError'
 
@@ -1974,7 +1989,7 @@ def implement_corrective_action(
 
         # print(v_dict)
 
-        response_time = time() - time0
+        # response_time = time() - time0
 
         # log('success:         ' + str(success))
         # log('victim will die: ' + str(vwd))
@@ -2934,8 +2949,6 @@ separate_log = conf_parse_bool('separate_log')
 if separate_log:
 
     import logging
-    from logging import basicConfig
-    from logging import info
 
     log_dir = '/var/log/nohang'
 
@@ -2957,7 +2970,7 @@ if separate_log:
         print('ERROR: log PermissionError')
 
     try:
-        basicConfig(
+        logging.basicConfig(
             filename=logfile,
             level=logging.INFO,
             format="%(asctime)s: %(message)s")
