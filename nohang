@@ -1947,7 +1947,7 @@ def implement_corrective_action(
                     '\n  Send {} to the victim; {}'.format(
                         sig_dict[threshold], send_result)
 
-                success = True
+                # success = True
 
                 if threshold is SIGKILL:
                     vwd = True
@@ -1955,14 +1955,14 @@ def implement_corrective_action(
             except FileNotFoundError:
                 vwd = True
                 # success = False
-                response_time = time() - time0
+                # response_time = time() - time0
                 # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'FileNotFoundError'
             except ProcessLookupError:
                 vwd = True
                 # success = False
-                response_time = time() - time0
+                # response_time = time() - time0
                 # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'ProcessLookupError'
