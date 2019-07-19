@@ -3,3 +3,6 @@ language: python
 
 script:
   - sudo make install
+  - sudo nohang -v
+  - sudo nohang -cc
+  - sudo nohang -p
