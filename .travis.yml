@@ -3,7 +3,11 @@ language: python
 
 script:
   - sudo make install
+  - sudo make systemd
+  - nohang -h
   - nohang -v
   - nohang -cc
+  - nohang -cc /etc/nohang/nohang.conf
   - nohang -p
+  - oom-sort -h
   - oom-sort
