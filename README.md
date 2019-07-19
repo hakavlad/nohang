@@ -4,7 +4,6 @@
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=master)](https://travis-ci.org/hakavlad/nohang)
-[![Coverage Status](https://coveralls.io/repos/github/hakavlad/nohang/badge.svg?branch=master)](https://coveralls.io/github/hakavlad/nohang?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/context:python)
 
@@ -508,4 +507,3 @@ some   0.29   7.58  14.58 | full   0.28   6.92  13.24
 ## Contribution
 
 Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
-
