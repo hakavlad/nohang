@@ -3,6 +3,7 @@
 # Nohang
 
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/hakavlad/nohang/badge.svg?branch=master)](https://coveralls.io/github/hakavlad/nohang?branch=master)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/alerts/)
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/context:python)
 
