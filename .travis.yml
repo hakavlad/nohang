@@ -1,1 +1,5 @@
 language: python
+
+
+script:
+  - make install
