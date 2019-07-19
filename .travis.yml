@@ -2,4 +2,4 @@ language: python
 
 
 script:
-  - make install
+  - sudo make install
