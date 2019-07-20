@@ -33,12 +33,6 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems whitten in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
 
-The tools listed above may work at the same time on one computer.
-
-#### See also
-
-- `memlockd` is a daemon that locks files into memory. Then if a machine starts paging heavily the chance of being able to login successfully is significantly increased.
-
 ## Some features
 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.
