@@ -492,4 +492,6 @@ some   0.29   7.58  14.58 | full   0.28   6.92  13.24
 
 Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
 
-## [Changelog](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
+## Changelog
+
+See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
