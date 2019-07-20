@@ -394,7 +394,6 @@ It needs Linux 4.20+
 
 ```
 $ psi-top
-WARNING: cannot lock all memory
 cgroup2 root dir: /sys/fs/cgroup/unified
       avg10  avg60 avg300         avg10  avg60 avg300  cgroup2
       -----  ----- ------         -----  ----- ------  ---------
@@ -454,7 +453,6 @@ It needs Linux 4.20+
 
 ```
 $ psi-monitor
-WARNING: cannot lock all memory
 Path to PSI file: /proc/pressure/memory
 
       avg10  avg60 avg300         avg10  avg60 avg300
@@ -493,3 +491,5 @@ some   0.29   7.58  14.58 | full   0.28   6.92  13.24
 ## Contribution
 
 Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
+
+## [Changelog](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
