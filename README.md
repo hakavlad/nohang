@@ -136,7 +136,7 @@ optional arguments:
                         path to the config file, default values:
                         ./nohang.conf, /etc/nohang/nohang.conf
   -cc CONFIG, --check-config CONFIG
-                        ckeck and print config
+                        check and print config
 ```
 
 ## How to configure nohang
