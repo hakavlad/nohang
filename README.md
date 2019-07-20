@@ -42,16 +42,8 @@ The tools listed above may work at the same time on one computer.
 ## Some features
 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL.
-- Impact on the badness of processes via matching their
-    - names,
-    - cgroup_v1,
-    - cgroup_v2,
-    - realpathes,
-    - environs,
-    - cmdlines and
-    - euids
-    with specified regular expressions
-- If the name or cgroup_v1 of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
+- Customizing victim selection: impact on the badness of processes via matching their names, cgroup_v1, cgroup_v2, exe realpathes, environs, cmdlines and euids with specified regular expressions
+- Customizing corrective actions: if the name or cgroup_v1 of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
     - `sysmemctl restart foo`
     - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID)
     - `kill -TERM $PID && script.sh` (in addition to sending any signal, you can run a specified script)
@@ -59,8 +51,8 @@ The tools listed above may work at the same time on one computer.
     - Notification of corrective actions taken and displaying the name and PID of the victim
     - Low memory warnings (displays available memory)
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger)
-- Initial [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support ([demo](https://youtu.be/2m2c9TGva1Y))
-- Easy configuration with a ~~well~~ commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
+- [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support ([demo](https://youtu.be/2m2c9TGva1Y))
+- Easy configuration with a commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf)
 
 ## Requirements
 
@@ -85,7 +77,7 @@ To use `PSI`:
 
 Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be unstable.
 
-To download the latest stable version (v0.1):
+To download the latest release version (v0.1):
 ```bash
 $ wget -ct0 https://github.com/hakavlad/nohang/archive/v0.1.tar.gz
 $ tar xvzf v0.1.tar.gz

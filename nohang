@@ -357,9 +357,9 @@ def print_version():
     except FileNotFoundError:
         v = None
     if v is None:
-        print('Nohang unknown version')
+        print('nohang unknown version')
     else:
-        print('Nohang ' + v)
+        print('nohang ' + v)
     exit()
 
 
