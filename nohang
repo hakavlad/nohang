@@ -2300,7 +2300,7 @@ else:
 if os.path.exists('./nohang_notify_helper'):
     notify_helper_path = './nohang_notify_helper'
 else:
-    notify_helper_path = '/usr/sbin/nohang_notify_helper'
+    notify_helper_path = 'nohang_notify_helper'
 
 
 
@@ -2396,7 +2396,7 @@ for s in mem_list:
 
 if mem_list_names[2] != 'MemAvailable':
     errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied')
-    # exit(1)
+    exit(1)
 
 swap_total_index = mem_list_names.index('SwapTotal')
 swap_free_index = swap_total_index + 1

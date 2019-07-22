@@ -1,20 +1,15 @@
 [Unit]
 Description=Highly configurable OOM prevention daemon
-After=sysinit.target
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
-ExecStart=/usr/sbin/nohang --config /etc/nohang/nohang.conf
+ExecStart=/usr/local/bin/nohang --config /etc/nohang/nohang.conf
 Slice=nohang.slice
 Restart=always
 KillMode=mixed
-MemoryMax=50M
+MemoryMax=100M
 TasksMax=50
-Nice=-20
-IOSchedulingClass=1
-IOSchedulingPriority=0
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=99
+Nice=-15
 CPUSchedulingResetOnFork=true
 
 [Install]
