@@ -3,7 +3,7 @@ Description=Highly configurable OOM prevention daemon
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 
 [Service]
-ExecStart=/usr/local/bin/nohang --config /etc/nohang/nohang.conf
+ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
 Slice=nohang.slice
 Restart=always
 KillMode=mixed
