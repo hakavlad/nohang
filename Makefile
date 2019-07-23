@@ -33,7 +33,7 @@ install:
 	gzip -c oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_BIN:|$(DESTDIR)$(BINDIR)|g;s|:TARGET_CONF:|$(DESTDIR)$(CONFDIR)|g" nohang.service.in > nohang.service
+	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang.service.in > nohang.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-rm -fv nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
