@@ -16,7 +16,7 @@ from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 # define functions
 
 
-
+exit(1)
 
 def check_config():
     """
