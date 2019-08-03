@@ -10,6 +10,7 @@ before_install:
 script:
   - sudo make install
   - sudo make systemd
+  - sudo systemctl stop nohang.service
 
   - make pylint
 
