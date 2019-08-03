@@ -14,7 +14,7 @@ script:
   - pylint3 -E oom-sort
   - pylint3 -E psi-top
   - pylint3 -E psi-monitor
-  - pylint3 -E nohang_notify_helper
+  - pylint3 -E disable=unbalanced-tuple-unpacking nohang_notify_helper
 
   - oom-sort -h
   - oom-sort
