@@ -1,13 +1,19 @@
+dist: bionic
+
 language: python
+
+sudo: required
 
 script:
   - sudo make install
   - nohang -h
   - nohang -v
   - nohang -cc /etc/nohang/nohang.conf
+  - nohang -cc test.conf
   - nohang -p
   - sudo nohang -p
   - oom-sort -h
   - oom-sort
   - sudo bash -c "nohang & tail /dev/zero & sleep 30 && pkill python3"
+  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 30 && pkill python3"
   - sudo make uninstall

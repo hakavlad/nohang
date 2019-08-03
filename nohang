@@ -3399,5 +3399,5 @@ while True:
                 send_notify_warn()
 
                 warn_timer = 0
-    x = 0 / 0
+
     sleep_after_check_mem()
