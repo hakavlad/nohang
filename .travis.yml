@@ -4,9 +4,8 @@ language: python
 
 sudo: required
 
-install:
-  - sudo apt update
-  - sudo apt install -y pylint3
+before_install:
+  - sudo apt-get install -y pylint3
 
 script:
   - sudo make install
