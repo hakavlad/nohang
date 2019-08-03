@@ -11,11 +11,7 @@ script:
   - sudo make install
   - sudo make systemd
 
-  - pylint3 -E nohang
-  - pylint3 -E oom-sort
-  - pylint3 -E psi-top
-  - pylint3 -E psi-monitor
-  - pylint3 -E disable=unbalanced-tuple-unpacking nohang_notify_helper
+  - make pylint
 
   - oom-sort -h
   - oom-sort

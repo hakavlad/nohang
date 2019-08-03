@@ -60,3 +60,10 @@ systemd:
 	-systemctl enable nohang.service
 	-systemctl restart nohang
 	-systemctl status nohang
+
+pylint:
+	-pylint3 -E nohang
+	-pylint3 -E nohang_notify_helper
+	-pylint3 -E oom-sort
+	-pylint3 -E psi-top
+	-pylint3 -E psi-monitor
