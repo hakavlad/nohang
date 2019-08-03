@@ -125,8 +125,11 @@ try:
 except OSError:
     exit(1)
 
-
-_, uid, debug, title, body = argv
+if len(argv) == 5:
+    _, uid, debug, title, body = argv
+else:
+    print('{}: invalid input'.format(argv[0]))
+    exit(1)
 
 uid = uid.partition('--euid=')[2]
 
