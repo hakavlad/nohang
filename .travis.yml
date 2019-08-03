@@ -4,18 +4,36 @@ language: python
 
 sudo: required
 
+addons:
+  apt:
+    packages:
+    - pylint3
+
 script:
   - sudo make install
-  - /bin/sleep 60 &
-  - nohang -h
-  - nohang -v
-  - nohang -cc /etc/nohang/nohang.conf
-  - nohang -cc test.conf
-  - nohang -p
-  - sudo nohang -p
+
+  - pylint3 -E nohang
+  - pylint3 -E oom-sort
+  - pylint3 -E psi-top
+  - pylint3 -E psi-monitor
+  - pylint3 -E nohang_notify_helper
+
   - oom-sort -h
   - oom-sort
+
+  - nohang -h
+  - nohang -v
+
+  - nohang -cc /etc/nohang/nohang.conf
+  - nohang -cc test.conf
+
+  - nohang -p
+  - sudo nohang -p
+
   - sudo bash -c "nohang & tail /dev/zero & sleep 20 && pkill python3"
-  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 20 && pkill python3"
+
+  - /bin/sleep 60 &
+  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 30 && pkill python3"
   - sudo cat /var/log/nohang/nohang.log
+
   - sudo make uninstall
