@@ -9,6 +9,7 @@ before_install:
 
 script:
   - sudo make install
+  - sudo make systemd
 
   - pylint3 -E nohang
   - pylint3 -E oom-sort
