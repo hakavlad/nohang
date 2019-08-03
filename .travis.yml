@@ -6,7 +6,9 @@ sudo: required
 
 script:
   - sudo make install
+  - /bin/sleep 60 &
   - nohang -h
+  - /usr/b
   - nohang -v
   - nohang -cc /etc/nohang/nohang.conf
   - nohang -cc test.conf
@@ -14,6 +16,7 @@ script:
   - sudo nohang -p
   - oom-sort -h
   - oom-sort
-  - sudo bash -c "nohang & tail /dev/zero & sleep 30 && pkill python3"
-  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 30 && pkill python3"
+  - sudo bash -c "nohang & tail /dev/zero & sleep 20 && pkill python3"
+  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 20 && pkill python3"
+  - sudo cat /var/log/nohang.log
   - sudo make uninstall
