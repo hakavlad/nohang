@@ -2,7 +2,6 @@ language: python
 
 script:
   - sudo make install
-  - sudo make systemd
   - nohang -h
   - nohang -v
   - nohang -cc /etc/nohang/nohang.conf
@@ -10,4 +9,5 @@ script:
   - sudo nohang -p
   - oom-sort -h
   - oom-sort
+  - sudo bash -c "nohang & tail /dev/zero & sleep 30 && pkill python3"
   - sudo make uninstall
