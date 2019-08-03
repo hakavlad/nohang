@@ -4,12 +4,9 @@ language: python
 
 sudo: required
 
-addons:
-  apt:
-    packages:
-    - pylint3
-
 script:
+  - sudo apt install -y pylint3
+
   - sudo make install
 
   - pylint3 -E nohang
