@@ -9,6 +9,7 @@ KillMode=mixed
 OOMPolicy=continue
 Nice=-15
 CPUSchedulingResetOnFork=true
+MemoryMin=50%
 
 [Install]
 WantedBy=multi-user.target

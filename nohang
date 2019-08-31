@@ -611,7 +611,7 @@ def pid_to_status(pid):
 
             for n, line in enumerate(f):
 
-                if n is 0:
+                if n == 0:
                     name = line.split('\t')[1][:-1]
 
                 if n is state_index:
@@ -663,7 +663,7 @@ def pid_to_status_unicode(pid):
 
             for i in range(len(f_list)):
 
-                if i is 0:
+                if i == 0:
                     name = f_list[i].split('\t')[1]
 
                 if i is state_index:
@@ -793,7 +793,7 @@ def check_mem_and_swap():
     """find mem_available, swap_total, swap_free"""
     with open('/proc/meminfo') as f:
         for n, line in enumerate(f):
-            if n is 2:
+            if n == 2:
                 mem_available = int(line.split(':')[1][:-4])
                 continue
             if n is swap_total_index:

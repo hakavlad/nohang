@@ -42,7 +42,7 @@ def pid_to_status_units(pid):
 
         for i in range(len(f_list)):
 
-            if i is 1:
+            if i == 1:
                 name = f_list[0].split('\t')[1]
 
             if i == uid_index:
