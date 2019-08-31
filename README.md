@@ -103,8 +103,15 @@ For Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/noha
 
 ```bash
 $ yay -S nohang-git
-$ sudo systemctl start nohang
-$ sudo systemctl enable nohang
+$ sudo systemctl enable --now nohang
+```
+
+For Fedora, there's an [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/):
+
+```bash
+$ sudo dnf copr enable atim/nohang
+$ sudo dnf install nohang
+$ sudo systemctl enable --now nohang
 ```
 
 ## Command line options
