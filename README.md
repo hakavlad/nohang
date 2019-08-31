@@ -106,7 +106,7 @@ $ yay -S nohang-git
 $ sudo systemctl enable --now nohang
 ```
 
-For Fedora, there's an [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/):
+For Fedora, there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/):
 
 ```bash
 $ sudo dnf copr enable atim/nohang
