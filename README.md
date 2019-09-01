@@ -36,16 +36,16 @@ Also look at this discussions:
 
 ## Solution
 
-Use one of userspace OOM killer.
+Use one of the userspace OOM killers.
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
-- Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
+- Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
 
 ## Some features
 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL;
-- Customizing victim selection: impact on the badness of processes via matching their names, cgroup_v1, cgroup_v2, exe realpathes, environs, cmdlines and euids with specified regular expressions;
+- Customizing victim selection: impact on the badness of processes via matching their names, cgroups, exe realpathes, environs, cmdlines and euids with specified regular expressions;
 - Customizing corrective actions: if the name or cgroup_v1 of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
     - `sysmemctl restart foo`;
     - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID);
