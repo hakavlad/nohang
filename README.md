@@ -29,12 +29,17 @@ How can I prevent this in the future? Can't it at least keep a responsive core o
 
 — [engineering.fb.com](https://engineering.fb.com/production-engineering/oomd/)
 
-Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)
+Also look at this discussions:
+
+- [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)
+
+- Let's talk about the elephant in the room - the Linux kernel's inability to gracefully handle low memory pressure: [Original KKML post](https://lkml.org/lkml/2019/8/4/15) [r/linux](https://www.reddit.com/r/linux/comments/cmg48b/lets_talk_about_the_elephant_in_the_room_the/)
 
 ## Solution
 
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
+- Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - Use of `nohang` (maybe this is a good choice for modern desktops and servers if you need fine tuning).
 
 ## Some features
