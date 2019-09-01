@@ -46,7 +46,7 @@ Use one of the userspace OOM killers.
 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL;
 - Customizing victim selection: impact on the badness of processes via matching their names, cgroups, exe realpathes, environs, cmdlines and euids with specified regular expressions;
-- Customizing corrective actions: if the name or cgroup_v1 of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
+- Customizing corrective actions: if the name or control group of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
     - `sysmemctl restart foo`;
     - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID);
     - `kill -TERM $PID && script.sh` (in addition to sending any signal, you can run a specified script).
