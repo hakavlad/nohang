@@ -81,16 +81,7 @@ To use `PSI`:
 
 ## Download, install, uninstall
 
-Please use the latest [release version](https://github.com/hakavlad/nohang/releases). Current version may be unstable.
-
-To download the latest release version (v0.1):
-```bash
-$ wget -ct0 https://github.com/hakavlad/nohang/archive/v0.1.tar.gz
-$ tar xvzf v0.1.tar.gz
-$ cd nohang-0.1
-```
-
-or to clone the latest unstable:
+Clone the current version:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
