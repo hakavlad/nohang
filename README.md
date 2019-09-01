@@ -79,7 +79,7 @@ To use `PSI`:
 - VmRSS is about 10 - 12 MiB instead of the settings, about 10 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
-## Download, install, uninstall
+## How to install nohang
 
 To install the latest version:
 ```bash
