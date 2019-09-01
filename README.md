@@ -30,10 +30,9 @@ How can I prevent this in the future? Can't it at least keep a responsive core o
 — [engineering.fb.com](https://engineering.fb.com/production-engineering/oomd/)
 
 Also look at this discussions:
-- [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)
-- Let's talk about the elephant in the room - the Linux kernel's inability to gracefully handle low memory pressure:
-
-[original LKML post](https://lkml.org/lkml/2019/8/4/15) | [r/linux](https://www.reddit.com/r/linux/comments/cmg48b/lets_talk_about_the_elephant_in_the_room_the/)
+- Why are low memory conditions handled so badly? [[r/linux](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)]
+- Memory management "more effective" on Windows than Linux? (in preventing total system lockup) [[r/linux](https://www.reddit.com/r/linux/comments/aqd9mh/memory_management_more_effective_on_windows_than/)]
+- Let's talk about the elephant in the room - the Linux kernel's inability to gracefully handle low memory pressure [[original LKML post](https://lkml.org/lkml/2019/8/4/15) | [r/linux](https://www.reddit.com/r/linux/comments/cmg48b/lets_talk_about_the_elephant_in_the_room_the/) | [Hacker News](https://news.ycombinator.com/item?id=20620545) | [slashdot](https://linux.slashdot.org/story/19/08/06/1839206/linux-performs-poorly-in-low-ram--memory-pressure-situations-on-the-desktop) | [phoronix](https://www.phoronix.com/forums/forum/phoronix/general-discussion/1118164-yes-linux-does-bad-in-low-ram-memory-pressure-situations-on-the-desktop) | [opennet.ru](https://www.opennet.ru/opennews/art.shtml?num=51231) | [linux.org.ru](https://www.linux.org.ru/forum/talks/15151526)]
 
 ## Solution
 
