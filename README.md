@@ -79,7 +79,7 @@ To use `PSI`:
 - VmRSS is about 10 - 12 MiB instead of the settings, about 10 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
-## How to install nohang
+## How to install
 
 To install the latest version:
 ```bash
@@ -140,7 +140,7 @@ optional arguments:
                         check and print config
 ```
 
-## How to configure nohang
+## How to configure
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
@@ -285,14 +285,11 @@ Process with highest badness (found in 55 ms):
 ## Logging
 
 To view the latest entries in the log (for systemd users):
-
 ```bash
 $ sudo journalctl -eu nohang
 ```
-See also `man journalctl`.
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
-
 
 ## Additional tools: oom-sort, psi-top, psi-monitor
 
