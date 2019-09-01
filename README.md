@@ -103,14 +103,14 @@ To uninstall:
 $ sudo make uninstall
 ```
 
-For Arch Linux, there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 
 ```bash
 $ yay -S nohang-git
 $ sudo systemctl enable --now nohang
 ```
 
-For RPM distros there are [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
+For RPM distros (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
 To install on Fedora 30+:
 
