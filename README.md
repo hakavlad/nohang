@@ -81,14 +81,10 @@ To use `PSI`:
 
 ## Download, install, uninstall
 
-Clone the current version:
+To install the latest version:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
-```
-
-To install:
-```bash
 $ sudo make install
 ```
 
@@ -103,7 +99,6 @@ $ sudo make uninstall
 ```
 
 For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
-
 ```bash
 $ yay -S nohang-git
 $ sudo systemctl enable --now nohang
@@ -112,7 +107,6 @@ $ sudo systemctl enable --now nohang
 For RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
 To install on Fedora 30+:
-
 ```bash
 $ sudo dnf copr enable atim/nohang
 $ sudo dnf install nohang
@@ -120,7 +114,6 @@ $ sudo systemctl enable --now nohang
 ```
 
 To install on CentOS 7:
-
 ```bash
 sudo yum install yum-plugin-copr
 sudo yum copr enable atim/nohang
