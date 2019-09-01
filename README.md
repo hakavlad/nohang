@@ -110,7 +110,7 @@ $ yay -S nohang-git
 $ sudo systemctl enable --now nohang
 ```
 
-For RPM distros (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
+For RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
 To install on Fedora 30+:
 
