@@ -50,7 +50,7 @@ Also look at [Why are low memory conditions handled so badly?](https://www.reddi
 
 ## Demo
 
-Nohang v0.1 prevents Out Of Memory with GUI notifications: ([https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU)).
+Nohang v0.1 prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU).
 
 ## Requirements
 
