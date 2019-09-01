@@ -25,6 +25,10 @@ How can I prevent this in the future? Can't it at least keep a responsive core o
 
 — [serverfault](https://serverfault.com/questions/390623/how-do-i-prevent-linux-from-freezing-when-out-of-memory#comment417508_390625)
 
+> "The traditional Linux OOM killer works fine in some cases, but in others it kicks in too late, resulting in the system entering a [livelock](https://en.wikipedia.org/wiki/Deadlock#Livelock) for an indeterminate period."
+
+— [engineering.fb.com](https://engineering.fb.com/production-engineering/oomd/)
+
 Also look at [Why are low memory conditions handled so badly?](https://www.reddit.com/r/linux/comments/56r4xj/why_are_low_memory_conditions_handled_so_badly/)
 
 ## Solution
