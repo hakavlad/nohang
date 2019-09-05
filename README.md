@@ -42,7 +42,7 @@ Use one of the userspace OOM killers.
 - Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
 
-Of course, you can also buy more RAM, use zram/zswap and use limits for cgroups.
+Of course, you can also [download more RAM](https://downloadmoreram.com/), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
 
 ## Some features
 
@@ -118,11 +118,11 @@ $ sudo systemctl enable --now nohang
 
 To install on CentOS 7:
 ```bash
-sudo yum install yum-plugin-copr
-sudo yum copr enable atim/nohang
-sudo yum install nohang
-sudo systemctl enable nohang
-sudo systemctl start nohang
+$ sudo yum install yum-plugin-copr
+$ sudo yum copr enable atim/nohang
+$ sudo yum install nohang
+$ sudo systemctl enable nohang
+$ sudo systemctl start nohang
 ```
 
 ## Command line options
