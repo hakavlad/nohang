@@ -3,9 +3,7 @@
 # nohang
 
 [![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=master)](https://travis-ci.org/hakavlad/nohang)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/alerts/)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/context:python)
 
 Nohang is a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
 
@@ -42,7 +40,7 @@ Use one of the userspace OOM killers.
 - Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
 
-Of course, you can also [download more RAM](https://downloadmoreram.com/), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
+Of course, you can also [download more RAM](https://downloadmoreram.com/), tune [virtual memory](https://www.kernel.org/doc/Documentation/sysctl/vm.txt), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
 
 ## Some features
 
