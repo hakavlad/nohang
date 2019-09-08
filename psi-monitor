@@ -2,8 +2,28 @@
 
 from ctypes import CDLL
 from time import sleep
-from sys import argv
+from sys import argv, exit
 import os
+import logging
+
+separate_log = False
+
+log_file = './psi-monitor.log'
+
+period = 2
+
+###############################################################################
+
+
+def cgroup2_root():
+    """
+    """
+    with open('/proc/mounts') as f:
+        for line in f:
+            if ' cgroup2 ' in line:
+                # if line.startswith('cgroup2 '):
+                return line[7:].rpartition(' cgroup2 ')[0].strip()
+
 
 def mlockall():
 
@@ -28,13 +48,13 @@ def mlockall():
         pass
 
 
-def psi_path_to_metrics(psi_path):
+def psi_file_mem_to_metrics(psi_path):
 
     with open(psi_path) as f:
         psi_list = f.readlines()
     # print(psi_list)
     some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
-    #print(some_list, full_list)
+    # print(some_list, full_list)
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
     some_avg300 = some_list[3].split('=')[1]
@@ -47,31 +67,126 @@ def psi_path_to_metrics(psi_path):
             full_avg10, full_avg60, full_avg300)
 
 
-if len(argv) > 1:
-    psi_path = argv[1]
-else:
-    psi_path = '/proc/pressure/memory'
+def psi_file_cpu_to_metrics(psi_path):
 
-if not os.path.exists(psi_path):
-    print('PSI path does not exist. Exit.')
-    exit()
+    with open(psi_path) as f:
+        psi_list = f.readlines()
+    # print(psi_list)
+    some_list = psi_list[0].split(' ')
+    # print(some_list, full_list)
+    some_avg10 = some_list[1].split('=')[1]
+    some_avg60 = some_list[2].split('=')[1]
+    some_avg300 = some_list[3].split('=')[1]
+
+    return (some_avg10, some_avg60, some_avg300)
+
+
+def log(*msg):
+    """
+    """
+
+    print(*msg)
+
+    if separate_log:
+        logging.info(*msg)
+
+###############################################################################
+
+
+if separate_log:
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format="%(asctime)s: %(message)s")
+
+
+try:
+    target = argv[1]
+    log('Set target to {}'.format(argv[1]))
+except IndexError:
+    log('Set target to SYSTEM_WIDE to monitor /proc/pressure')
+    target = 'SYSTEM_WIDE'
+
+
+if target == 'SYSTEM_WIDE':
+    cpu_file = "/proc/pressure/cpu"
+    memory_file = "/proc/pressure/memory"
+    io_file = "/proc/pressure/io"
+else:
+    cpu_file = cgroup2_root() + target + "/cpu.pressure"
+    memory_file = cgroup2_root() + target + "/memory.pressure"
+    io_file = cgroup2_root() + target + "/io.pressure"
+
 
 mlockall()
 
-print('Path to PSI file: {}\n'.format(psi_path))
+try:
+    (c_some_avg10, c_some_avg60, c_some_avg300
+     ) = psi_file_cpu_to_metrics(cpu_file)
 
-print('      avg10  avg60 avg300         avg10  avg60 avg300')
+    (m_some_avg10, m_some_avg60, m_some_avg300,
+     m_full_avg10, m_full_avg60, m_full_avg300
+     ) = psi_file_mem_to_metrics(memory_file)
+
+    (i_some_avg10, i_some_avg60, i_some_avg300,
+     i_full_avg10, i_full_avg60, i_full_avg300
+     ) = psi_file_mem_to_metrics(io_file)
+except Exception:
+    log('Cannot open pressure files')
+    log('Exit')
+    exit()
+
+
+log('Starting psi-monitor, target: {}, period: {}'.format(target, period))
+log('----------------------------------------------------------------------'
+    '--------------------------------------------')
+log(' some cpu pressure   || some memory pressure | full memory pressure ||'
+    '  some io pressure    |  full io pressure')
+log('---------------------||----------------------|----------------------||'
+    '----------------------|---------------------')
+log(' avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300 ||'
+    '  avg10  avg60 avg300 |  avg10  avg60 avg300')
+log('------ ------ ------ || ------ ------ ------ | ------ ------ ------ ||'
+    ' ------ ------ ------ | ------ ------ ------')
+
 
 while True:
-    (some_avg10, some_avg60, some_avg300,
-     full_avg10, full_avg60, full_avg300) = psi_path_to_metrics(psi_path)
 
-    print('some {} {} {} | full {} {} {}'.format(
-        some_avg10.rjust(6),
-        some_avg60.rjust(6),
-        some_avg300.rjust(6),
-        full_avg10.rjust(6),
-        full_avg60.rjust(6),
-        full_avg300.rjust(6)))
+    (c_some_avg10, c_some_avg60, c_some_avg300
+     ) = psi_file_cpu_to_metrics(cpu_file)
 
-    sleep(2)
+    (m_some_avg10, m_some_avg60, m_some_avg300,
+     m_full_avg10, m_full_avg60, m_full_avg300
+     ) = psi_file_mem_to_metrics(memory_file)
+
+    (i_some_avg10, i_some_avg60, i_some_avg300,
+     i_full_avg10, i_full_avg60, i_full_avg300
+     ) = psi_file_mem_to_metrics(io_file)
+
+    log('{} {} {} || {} {} {} | {} {} {} || {} {} {} | {} {} {}'.format(
+
+        c_some_avg10.rjust(6),
+        c_some_avg60.rjust(6),
+        c_some_avg300.rjust(6),
+
+        m_some_avg10.rjust(6),
+        m_some_avg60.rjust(6),
+        m_some_avg300.rjust(6),
+        m_full_avg10.rjust(6),
+        m_full_avg60.rjust(6),
+        m_full_avg300.rjust(6),
+
+        i_some_avg10.rjust(6),
+        i_some_avg60.rjust(6),
+        i_some_avg300.rjust(6),
+        i_full_avg10.rjust(6),
+        i_full_avg60.rjust(6),
+        i_full_avg300.rjust(6)
+
+    ))
+
+    try:
+        sleep(period)
+    except KeyboardInterrupt:
+        log('Exit')
+        exit()
