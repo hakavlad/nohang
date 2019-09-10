@@ -86,7 +86,7 @@ To install the latest version:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
-$ sudo make install
+$ sudo make install  # `sudo make install-desktop` to enable GUI notifications by default
 ```
 
 To enable and start on systems with systemd:
