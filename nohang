@@ -420,11 +420,14 @@ def pid_to_state(pid):
     """
     try:
         with open('/proc/' + pid + '/stat', 'rb') as f:
-            return f.read(20).decode('utf-8', 'ignore').rpartition(')')[2][1]
+            return f.read(40).decode('utf-8', 'ignore').rpartition(')')[2][1]
     except FileNotFoundError:
         return ''
     except ProcessLookupError:
         return ''
+    except IndexError:
+        with open('/proc/' + pid + '/stat', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore').rpartition(')')[2][1]
 
 
 def pid_to_name(pid):
