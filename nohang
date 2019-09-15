@@ -29,12 +29,16 @@ def check_config():
 
     log('1. Thresholds below which a signal should be sent to the victim')
 
-    log('    soft_threshold_min_mem:   {} MiB, {} %'.format(round(soft_threshold_min_mem_mb), round(soft_threshold_min_mem_percent, 1)))
-    log('    hard_threshold_min_mem:   {} MiB, {} %'.format(round(hard_threshold_min_mem_mb), round(hard_threshold_min_mem_percent, 1)))
+    log('    soft_threshold_min_mem:   {} MiB, {} %'.format(
+        round(soft_threshold_min_mem_mb), round(soft_threshold_min_mem_percent, 1)))
+    log('    hard_threshold_min_mem:   {} MiB, {} %'.format(
+        round(hard_threshold_min_mem_mb), round(hard_threshold_min_mem_percent, 1)))
     log('    soft_threshold_min_swap:  {}'.format(soft_threshold_min_swap))
     log('    hard_threshold_min_swap:  {}'.format(hard_threshold_min_swap))
-    log('    soft_threshold_max_zram:  {} MiB, {} %'.format(round(soft_threshold_max_zram_mb), round(soft_threshold_max_zram_percent, 1)))
-    log('    hard_threshold_max_zram:  {} MiB, {} %'.format(round(hard_threshold_max_zram_mb), round(hard_threshold_max_zram_percent, 1)))
+    log('    soft_threshold_max_zram:  {} MiB, {} %'.format(
+        round(soft_threshold_max_zram_mb), round(soft_threshold_max_zram_percent, 1)))
+    log('    hard_threshold_max_zram:  {} MiB, {} %'.format(
+        round(hard_threshold_max_zram_mb), round(hard_threshold_max_zram_percent, 1)))
 
     log('2. Response on PSI memory metrics')
 
@@ -61,7 +65,8 @@ def check_config():
     log('    post_soft_action_delay:         {} sec'.format(post_soft_action_delay))
     log('    post_zombie_delay:              {} sec'.format(post_zombie_delay))
     log('    victim_cache_time:              {} sec'.format(victim_cache_time))
-    log('    ignore_positive_oom_score_adj:  {}'.format(ignore_positive_oom_score_adj))
+    log('    ignore_positive_oom_score_adj:  {}'.format(
+        ignore_positive_oom_score_adj))
 
     log('5. Impact on the badness of processes')
 
@@ -132,12 +137,16 @@ def check_config():
 
     log('7. GUI notifications')
 
-    log('    post_action_gui_notifications:  {}'.format(post_action_gui_notifications))
-    log('    low_memory_warnings_enabled:    {}'.format(low_memory_warnings_enabled))
+    log('    post_action_gui_notifications:  {}'.format(
+        post_action_gui_notifications))
+    log('    low_memory_warnings_enabled:    {}'.format(
+        low_memory_warnings_enabled))
     log('    warning_exe:                    {}'.format(warning_exe))
-    log('    warning_threshold_min_mem:      {} MiB, {} %'.format(round(warning_threshold_min_mem_mb), round(warning_threshold_min_mem_percent, 1)))
+    log('    warning_threshold_min_mem:      {} MiB, {} %'.format(round(
+        warning_threshold_min_mem_mb), round(warning_threshold_min_mem_percent, 1)))
     log('    warning_threshold_min_swap:     {}'.format(warning_threshold_min_swap))
-    log('    warning_threshold_max_zram:     {} MiB, {} %'.format(round(warning_threshold_max_zram_mb), round(warning_threshold_max_zram_percent, 1)))
+    log('    warning_threshold_max_zram:     {} MiB, {} %'.format(round(
+        warning_threshold_max_zram_mb), round(warning_threshold_max_zram_percent, 1)))
     log('    warning_threshold_max_psi:      {}'.format(warning_threshold_max_psi))
     log('    min_post_warning_delay:         {} sec'.format(min_post_warning_delay))
 
@@ -170,12 +179,6 @@ def check_config():
     if check_config_flag:
         log('config is OK')
         exit()
-
-
-
-
-
-
 
 
 def encoder(string):
@@ -303,8 +306,7 @@ def exe(cmd):
     return err
 
 
-
-def go (func, *a):
+def go(func, *a):
     """ run func in new thread
     """
     t1 = time()
@@ -312,10 +314,12 @@ def go (func, *a):
         Thread(target=func, args=a).start()
     except RuntimeError:
         print('RuntimeError: cannot spawn a new thread')
+        return 1
     t2 = time()
     log('New thread spawned in {} ms'.format(
         round((t2 - t1) * 1000, 1)
-        ))
+    ))
+    return 0
 
 
 def write(path, string):
@@ -755,7 +759,6 @@ def mlockall():
         # log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
-
 def update_stat_dict_and_print(key):
     """
     """
@@ -853,8 +856,6 @@ def check_zram():
     return (mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR) / 1024.0
 
 
-
-
 '''
 def format_time(t):
     t = int(t)
@@ -870,8 +871,6 @@ def format_time(t):
     s = s0 % 60
     return '{} h {} min {} sec'.format(h, m, s)
 '''
-
-
 
 
 def format_time(t):
@@ -890,13 +889,6 @@ def format_time(t):
     m = t // 60
     s = t % 60
     return '{} min {} sec'.format(m, s)
-
-
-
-
-
-
-
 
 
 def string_to_float_convert_test(string):
@@ -1278,14 +1270,11 @@ def find_victim_info(pid, victim_badness, name):
                     state = line.split('\t')[1].rstrip()
                     continue
 
-
                 """
                 if n is ppid_index:
                     # ppid = line.split('\t')[1]
                     continue
                 """
-
-
 
                 if n is uid_index:
                     uid = line.split('\t')[2]
@@ -1345,13 +1334,11 @@ def find_victim_info(pid, victim_badness, name):
                 if i is state_index:
                     state = f_list[i].split('\t')[1].rstrip()
 
-
                 """
                 if i is ppid_index:
                     pass
                     # ppid = f_list[i].split('\t')[1]
                 """
-
 
                 if i is uid_index:
                     uid = f_list[i].split('\t')[2]
@@ -1489,27 +1476,32 @@ def check_mem_swap_ex():
 
     # if hard_threshold_min_swap is set in percent
     if swap_kill_is_percent:
-        hard_threshold_min_swap_kb = swap_total * hard_threshold_min_swap_percent / 100.0
+        hard_threshold_min_swap_kb = swap_total * \
+            hard_threshold_min_swap_percent / 100.0
     else:
         hard_threshold_min_swap_kb = swap_kb_dict['hard_threshold_min_swap_kb']
 
     if swap_term_is_percent:
-        soft_threshold_min_swap_kb = swap_total * soft_threshold_min_swap_percent / 100.0
+        soft_threshold_min_swap_kb = swap_total * \
+            soft_threshold_min_swap_percent / 100.0
     else:
         soft_threshold_min_swap_kb = swap_kb_dict['soft_threshold_min_swap_kb']
 
     if swap_warn_is_percent:
-        warning_threshold_min_swap_kb = swap_total * warning_threshold_min_swap_percent / 100.0
+        warning_threshold_min_swap_kb = swap_total * \
+            warning_threshold_min_swap_percent / 100.0
     else:
         warning_threshold_min_swap_kb = swap_kb_dict['warning_threshold_min_swap_kb']
 
     if swap_total > hard_threshold_min_swap_kb:
-        swap_sigkill_pc = percent(hard_threshold_min_swap_kb / (swap_total + 0.1))
+        swap_sigkill_pc = percent(
+            hard_threshold_min_swap_kb / (swap_total + 0.1))
     else:
         swap_sigkill_pc = '-'
 
     if swap_total > soft_threshold_min_swap_kb:
-        swap_sigterm_pc = percent(soft_threshold_min_swap_kb / (swap_total + 0.1))
+        swap_sigterm_pc = percent(
+            soft_threshold_min_swap_kb / (swap_total + 0.1))
     else:
         swap_sigterm_pc = '-'
 
@@ -1599,16 +1591,6 @@ def check_zram_ex():
             return 'WARN', None, mem_used_zram
 
     return None, None, mem_used_zram
-
-
-
-
-
-
-
-
-
-
 
 
 def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
@@ -1702,15 +1684,6 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
 
     return (None, None, psi_t0, psi_kill_exceeded_timer,
             psi_term_exceeded_timer, x0)
-
-
-
-
-
-
-
-
-
 
 
 def is_victim_alive(victim_id):
@@ -1959,8 +1932,6 @@ def implement_corrective_action(
                 success = False
             """
 
-
-
             response_time = time() - time0
 
             exit_status = None
@@ -2021,12 +1992,7 @@ def implement_corrective_action(
         else:
             pass
 
-
-
         last_action_dict['t'] = kill_timestamp = time()
-
-
-
 
         # print(v_dict)
 
@@ -2035,7 +2001,6 @@ def implement_corrective_action(
         # log('success:         ' + str(success))
         # log('victim will die: ' + str(vwd))
         # log('response_time:   ' + str(response_time) + ' sec')
-
 
         # НАЧАЛО ОТСЛЕЖИВАНИЯ СОСТОЯНИЯ ЖЕРТВЫ. Можно вынести в отд фц. Приним
         # айди, логирует, возвращает что-то.
@@ -2323,18 +2288,9 @@ else:
     notify_helper_path = 'nohang_notify_helper'
 
 
-
-
-
 last_action_dict = dict()
 
 last_action_dict['t'] = time()
-
-
-
-
-
-
 
 
 # will store corrective actions stat
@@ -2362,13 +2318,10 @@ print_proc_table_flag = False
 check_config_flag = False
 
 
-
 if os.path.exists('./nohang.conf'):
     config = os.getcwd() + '/nohang.conf'
 else:
     config = '/etc/nohang/nohang.conf'
-
-
 
 
 if len(argv) == 1:
@@ -2678,7 +2631,8 @@ print_config_at_startup = conf_parse_bool('print_config_at_startup')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 debug_sleep = conf_parse_bool('debug_sleep')
 low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
-post_action_gui_notifications = conf_parse_bool('post_action_gui_notifications')
+post_action_gui_notifications = conf_parse_bool(
+    'post_action_gui_notifications')
 
 
 psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
@@ -2688,34 +2642,28 @@ zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
 ignore_zram = not zram_checking_enabled
 
 
-
-
-
-
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
-ignore_positive_oom_score_adj = conf_parse_bool('ignore_positive_oom_score_adj')
+ignore_positive_oom_score_adj = conf_parse_bool(
+    'ignore_positive_oom_score_adj')
 
 
+(soft_threshold_min_mem_kb, soft_threshold_min_mem_mb,
+ soft_threshold_min_mem_percent) = calculate_percent('soft_threshold_min_mem')
 
+(hard_threshold_min_mem_kb, hard_threshold_min_mem_mb,
+ hard_threshold_min_mem_percent) = calculate_percent('hard_threshold_min_mem')
 
+(soft_threshold_max_zram_kb, soft_threshold_max_zram_mb,
+ soft_threshold_max_zram_percent) = calculate_percent('soft_threshold_max_zram')
 
-(soft_threshold_min_mem_kb, soft_threshold_min_mem_mb, soft_threshold_min_mem_percent
- ) = calculate_percent('soft_threshold_min_mem')
+(hard_threshold_max_zram_kb, hard_threshold_max_zram_mb,
+ hard_threshold_max_zram_percent) = calculate_percent('hard_threshold_max_zram')
 
-(hard_threshold_min_mem_kb, hard_threshold_min_mem_mb, hard_threshold_min_mem_percent
- ) = calculate_percent('hard_threshold_min_mem')
+(warning_threshold_min_mem_kb, warning_threshold_min_mem_mb,
+ warning_threshold_min_mem_percent) = calculate_percent('warning_threshold_min_mem')
 
-(soft_threshold_max_zram_kb, soft_threshold_max_zram_mb, soft_threshold_max_zram_percent
- ) = calculate_percent('soft_threshold_max_zram')
-
-(hard_threshold_max_zram_kb, hard_threshold_max_zram_mb, hard_threshold_max_zram_percent
- ) = calculate_percent('hard_threshold_max_zram')
-
-(warning_threshold_min_mem_kb, warning_threshold_min_mem_mb, warning_threshold_min_mem_percent
- ) = calculate_percent('warning_threshold_min_mem')
-
-(warning_threshold_max_zram_kb, warning_threshold_max_zram_mb, warning_threshold_max_zram_percent
- ) = calculate_percent('warning_threshold_max_zram')
+(warning_threshold_max_zram_kb, warning_threshold_max_zram_mb,
+ warning_threshold_max_zram_percent) = calculate_percent('warning_threshold_max_zram')
 
 
 if 'post_zombie_delay' in config_dict:
@@ -2760,7 +2708,8 @@ else:
 
 
 if 'fill_rate_swap' in config_dict:
-    fill_rate_swap = string_to_float_convert_test(config_dict['fill_rate_swap'])
+    fill_rate_swap = string_to_float_convert_test(
+        config_dict['fill_rate_swap'])
     if fill_rate_swap is None:
         errprint('Invalid fill_rate_swap value, not float\nExit')
         exit(1)
@@ -2773,7 +2722,8 @@ else:
 
 
 if 'fill_rate_zram' in config_dict:
-    fill_rate_zram = string_to_float_convert_test(config_dict['fill_rate_zram'])
+    fill_rate_zram = string_to_float_convert_test(
+        config_dict['fill_rate_zram'])
     if fill_rate_zram is None:
         errprint('Invalid fill_rate_zram value, not float\nExit')
         exit(1)
@@ -2862,7 +2812,8 @@ if 'warning_threshold_max_psi' in config_dict:
         errprint('Invalid warning_threshold_max_psi value, not float\nExit')
         exit(1)
     if warning_threshold_max_psi < 0 or warning_threshold_max_psi > 100:
-        errprint('warning_threshold_max_psi must be in the range [0; 100]\nExit')
+        errprint(
+            'warning_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
     errprint('warning_threshold_max_psi not in config\nExit')
@@ -2881,9 +2832,6 @@ if 'min_badness' in config_dict:
 else:
     errprint('min_badness not in config\nExit')
     exit(1)
-
-
-
 
 
 if 'min_post_warning_delay' in config_dict:
@@ -3129,9 +3077,12 @@ psi_support = os.path.exists(psi_path)
 
 # Get KiB levels if it's possible.
 
-soft_threshold_min_swap_tuple = get_swap_threshold_tuple(soft_threshold_min_swap)
-hard_threshold_min_swap_tuple = get_swap_threshold_tuple(hard_threshold_min_swap)
-warning_threshold_min_swap_tuple = get_swap_threshold_tuple(warning_threshold_min_swap)
+soft_threshold_min_swap_tuple = get_swap_threshold_tuple(
+    soft_threshold_min_swap)
+hard_threshold_min_swap_tuple = get_swap_threshold_tuple(
+    hard_threshold_min_swap)
+warning_threshold_min_swap_tuple = get_swap_threshold_tuple(
+    warning_threshold_min_swap)
 
 
 swap_kb_dict = dict()
@@ -3162,22 +3113,8 @@ else:
 ##########################################################################
 
 
-
-
-
-
-
-
 if print_config_at_startup or check_config_flag:
     check_config()
-
-
-
-
-
-
-
-
 
 
 ##########################################################################
@@ -3262,8 +3199,6 @@ CHECK_ZRAM = not ignore_zram
 log('Monitoring has started!')
 
 stdout.flush()
-
-
 
 
 ##########################################################################
