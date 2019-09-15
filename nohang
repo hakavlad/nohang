@@ -9,6 +9,7 @@ from sys import stdout, stderr, argv, exit
 from re import search
 from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
+from threading import Thread
 
 
 ##########################################################################
@@ -291,6 +292,7 @@ def signal_handler_inner(signum, frame):
 def exe(cmd):
     """
     """
+
     log('Execute the command: {}'.format(cmd))
     t0 = time()
     write_self_oom_score_adj(self_oom_score_adj_max)
@@ -299,6 +301,21 @@ def exe(cmd):
     dt = time() - t0
     log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
     return err
+
+
+
+def go (func, *a):
+    """ run func in new thread
+    """
+    t1 = time()
+    try:
+        Thread(target=func, args=a).start()
+    except RuntimeError:
+        print('RuntimeError: cannot spawn a new thread')
+    t2 = time()
+    log('New thread spawned in {} ms'.format(
+        round((t2 - t1) * 1000, 1)
+        ))
 
 
 def write(path, string):
@@ -1071,7 +1088,7 @@ def send_notification(title, body):
         title,
         encoder(body))
 
-    exe(cmd)
+    go(exe, cmd)
 
 
 def get_pid_list():
@@ -1933,7 +1950,7 @@ def implement_corrective_action(
 
             cmd = command.replace('$PID', pid).replace('$NAME', pid_to_name(
                 pid)).replace('$SERVICE', service)
-            exit_status = exe(cmd)
+            go(exe, cmd)
 
             """
             if exit_status == 0:
@@ -1945,6 +1962,8 @@ def implement_corrective_action(
 
 
             response_time = time() - time0
+
+            exit_status = None
 
             preventing_oom_message = 'Implement a corrective act' \
                 'ion:\n  Run the command: {}' \
@@ -2084,7 +2103,7 @@ def implement_corrective_action(
 
             log('Execute post_kill_exe')
 
-            exe(cmd)
+            go(exe, cmd)
 
         if post_action_gui_notifications:
             if soft_match:
