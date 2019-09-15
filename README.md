@@ -59,7 +59,8 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 ## Demo
 
-Nohang v0.1 prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU).
+- Old demo: `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU).
+- New demo: `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0).
 
 ## Requirements
 
