@@ -2769,12 +2769,15 @@ debug_sleep = conf_parse_bool('debug_sleep')
 low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
 
 
+post_action_gui_notifications = conf_parse_bool(
+    'post_action_gui_notifications')
+
+
 if low_memory_warnings_enabled or post_action_gui_notifications:
     from subprocess import Popen, TimeoutExpired
 
 
-post_action_gui_notifications = conf_parse_bool(
-    'post_action_gui_notifications')
+
 
 
 debug_threading = conf_parse_bool('debug_threading')
