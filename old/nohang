@@ -17,265 +17,6 @@ from threading import Thread
 # define functions
 
 
-def exe(cmd):
-    """ execute cmd
-    """
-    log('Execute the command: {}'.format(cmd))
-    t0 = time()
-    write_self_oom_score_adj(self_oom_score_adj_max)
-    err = os.system(cmd)
-    write_self_oom_score_adj(self_oom_score_adj_min)
-    dt = time() - t0
-    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
-    return err
-
-
-def go(func, *a):
-    """ run func in new thread
-    """
-    t1 = time()
-    th = Thread(target=func, args=a)
-    th_name = th.getName()
-    if debug_threading:
-        log('Starting {}'.format(th_name))
-    try:
-        th.start()
-        t2 = time()
-        if debug_threading:
-            log('{} has started in {} ms'.format(
-                th_name, round((t2 - t1) * 1000, 1)))
-    except RuntimeError:
-        if debug_threading:
-            log('RuntimeError: cannot start {}'.format(th_name))
-
-
-def re_pid_environ(pid):
-    """
-    read environ of 1 process
-    returns tuple with USER, DBUS, DISPLAY like follow:
-    ('user', 'DISPLAY=:0',
-     'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
-    returns None if these vars is not in /proc/[pid]/environ
-    """
-
-    try:
-        with open('/proc/' + pid + '/environ') as f:
-            env = f.read()
-    except FileNotFoundError:
-        log('notify helper: FileNotFoundError')
-        return None
-    except ProcessLookupError:
-        log('notify helper: ProcessLookupError')
-        return None
-
-    if display_env in env and dbus_env in env and user_env in env:
-
-        env_list = env.split('\x00')
-
-        # iterating over a list of process environment variables
-        for i in env_list:
-
-            # exclude Display Manager's user
-            if i.startswith('HOME=/var'):
-                return None
-
-            if i.startswith(user_env):
-                user = i
-                if user == 'USER=root':
-                    return None
-                continue
-
-            if i.startswith(display_env):
-                display = i[:10]
-                continue
-
-            if i.startswith(dbus_env):
-                dbus = i
-                continue
-
-        try:
-            return user.partition('USER=')[2], display, dbus
-        except UnboundLocalError:
-            log('notify helper: UnboundLocalError')
-            return None
-
-
-def root_notify_env():
-    """return set(user, display, dbus)"""
-    unsorted_envs_list = []
-    # iterates over processes, find processes with suitable env
-    for pid in os.listdir('/proc'):
-
-        if os.path.exists('/proc/' + pid + '/exe') is True:
-            one_env = re_pid_environ(pid)
-            unsorted_envs_list.append(one_env)
-
-    env = set(unsorted_envs_list)
-    env.discard(None)
-
-    # deduplicate dbus
-    new_env = []
-    end = []
-    for i in env:
-        key = i[0] + i[1]
-        if key not in end:
-            end.append(key)
-            new_env.append(i)
-        else:
-            continue
-
-    return new_env
-
-
-def pop(cmd, username):
-    """
-    """
-    if swap_total == 0:
-        wait_time = 2
-    else:
-        wait_time = 20
-
-    t3 = time()
-
-    with Popen(cmd) as proc:
-        try:
-            proc.wait(timeout=wait_time)
-        except TimeoutExpired:
-            proc.kill()
-            if debug_gui_notifications:
-                log('TimeoutExpired: notify user: {}'.format(username))
-
-    t4 = time()
-
-    if debug_gui_notifications:
-        log('Popen time: {} sec; cmd: {}'.format(round(t4 - t3, 3), cmd))
-
-
-def send_notification(title, body):
-    """
-    """
-    if self_uid != 0:
-        cmd = ['notify-send', '--icon=dialog-warning', title, body]
-        username = '(UID={})'.format(self_uid)
-        pop(cmd, username)
-        return None
-
-    t1 = time()
-
-    if envd['t'] is None:
-
-        list_with_envs = root_notify_env()
-        envd['list_with_envs'] = list_with_envs
-        envd['t'] = time()
-
-    elif time() - envd['t'] > env_cache_time:
-
-        list_with_envs = root_notify_env()
-        envd['list_with_envs'] = list_with_envs
-        envd['t'] = time()
-
-    else:
-
-        list_with_envs = envd['list_with_envs']
-
-    list_len = len(list_with_envs)
-
-    t2 = time()
-    if debug_gui_notifications:
-        log('Find env time: {} ms'.format(round((t2 - t1) * 1000)))
-
-    # if somebody logged in with GUI
-    if list_len > 0:
-
-        for i in list_with_envs:
-            if debug_gui_notifications:
-                log('Send a GUI notification:\n ',
-                    'title:   ', [title],
-                    '\n  body:    ', [body],
-                    '\n  user/env:', i
-                    )
-
-        # iterating over logged-in users
-        for i in list_with_envs:
-            username, display_env, dbus_env = i[0], i[1], i[2]
-            display_tuple = display_env.partition('=')
-            dbus_tuple = dbus_env.partition('=')
-            display_value = display_tuple[2]
-            dbus_value = dbus_tuple[2]
-
-            cmd = [
-                'sudo', '-u', username,
-                'env',
-                'DISPLAY=' + display_value,
-                'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
-                'notify-send',
-                '--icon=dialog-warning',
-                title,
-                body
-            ]
-
-            go(pop, cmd, username)
-
-
-def send_notify_warn():
-    """ Implement Low memory warnings
-    """
-    log('Warning threshold exceeded')
-
-    if check_warning_exe:
-        go(exe, warning_exe)
-
-    else:
-
-        title = 'Low memory'
-
-        body = 'MemAvail: {}%\nSwapFree: {}%'.format(
-            round(mem_available / mem_total * 100),
-            round(swap_free / (swap_total + 0.1) * 100)
-        )
-
-        go(send_notification, title, body)
-
-
-def send_notify(threshold, name, pid):
-    """
-    Notificate about OOM Preventing.
-
-    threshold: key for notify_sig_dict
-    name: str process name
-    pid: str process pid
-    """
-
-    title = 'Freeze prevention'
-    body = '<b>{}</b> [{}] <b>{}</b>'.format(
-        notify_sig_dict[threshold],
-        pid,
-        name.replace(
-            # symbol '&' can break notifications in some themes,
-            # therefore it is replaced by '*'
-            '&', '*'
-        )
-    )
-
-    go(send_notification, title, body)
-
-
-def send_notify_etc(pid, name, command):
-    """
-    Notificate about OOM Preventing.
-
-    command: str command that will be executed
-    name: str process name
-    pid: str process pid
-    """
-    title = 'Freeze prevention'
-    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the co' \
-        'mmand:\n<b>{}</b>'.format(
-            pid, name.replace('&', '*'), command.replace('&', '*'))
-
-    go(send_notification, title, body)
-
-
 def check_config():
     """
     """
@@ -440,6 +181,15 @@ def check_config():
         exit()
 
 
+def encoder(string):
+    """
+    """
+    encoded = ''
+    for i in string:
+        encoded += str(ord(i)) + ':'
+    return encoded[:-1]
+
+
 def get_swap_threshold_tuple(string):
     # re (Num %, True) or (Num KiB, False)
     """Returns KiB value if abs val was set in config, or tuple with %"""
@@ -542,6 +292,36 @@ def signal_handler_inner(signum, frame):
         sig_dict[signum]))
 
 
+def exe(cmd):
+    """
+    """
+
+    log('Execute the command: {}'.format(cmd))
+    t0 = time()
+    write_self_oom_score_adj(self_oom_score_adj_max)
+    err = os.system(cmd)
+    write_self_oom_score_adj(self_oom_score_adj_min)
+    dt = time() - t0
+    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
+    return err
+
+
+def go(func, *a):
+    """ run func in new thread
+    """
+    t1 = time()
+    try:
+        Thread(target=func, args=a).start()
+    except RuntimeError:
+        print('RuntimeError: cannot spawn a new thread')
+        return 1
+    t2 = time()
+    log('New thread spawned in {} ms'.format(
+        round((t2 - t1) * 1000, 1)
+    ))
+    return 0
+
+
 def write(path, string):
     """
     """
@@ -577,9 +357,15 @@ def func_print_proc_table():
 def log(*msg):
     """
     """
-    print(*msg)
+    try:
+        print(*msg)
+    except OSError:
+        sleep(0.01)
     if separate_log:
-        logging.info(*msg)
+        try:
+            logging.info(*msg)
+        except OSError:
+            sleep(0.01)
 
 
 def print_version():
@@ -1221,6 +1007,80 @@ def zram_stat(zram_id):
     except FileNotFoundError:
         mem_used_total = rline1('/sys/block/' + zram_id + '/mem_used_total')
     return disksize, mem_used_total  # BYTES, str
+
+
+def send_notify_warn():
+    """
+    Look for process with maximum 'badness' and warn user with notification.
+    (implement Low memory warnings)
+    """
+    log('Warning threshold exceeded')
+
+    if check_warning_exe:
+        exe(warning_exe)
+
+    else:
+
+        title = 'Low memory'
+
+        body = 'MemAvail: {}%\nSwapFree: {}%'.format(
+            round(mem_available / mem_total * 100),
+            round(swap_free / (swap_total + 0.1) * 100)
+        )
+
+        send_notification(title, body)
+
+
+def send_notify(threshold, name, pid):
+    """
+    Notificate about OOM Preventing.
+
+    threshold: key for notify_sig_dict
+    name: str process name
+    pid: str process pid
+    """
+
+    title = 'Freeze prevention'
+    body = '<b>{}</b> [{}] <b>{}</b>'.format(
+        notify_sig_dict[threshold],
+        pid,
+        name.replace(
+            # symbol '&' can break notifications in some themes,
+            # therefore it is replaced by '*'
+            '&', '*'
+        )
+    )
+
+    send_notification(title, body)
+
+
+def send_notify_etc(pid, name, command):
+    """
+    Notificate about OOM Preventing.
+
+    command: str command that will be executed
+    name: str process name
+    pid: str process pid
+    """
+    title = 'Freeze prevention'
+    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the co' \
+        'mmand:\n<b>{}</b>'.format(
+            pid, name.replace('&', '*'), command.replace('&', '*'))
+
+    send_notification(title, body)
+
+
+def send_notification(title, body):
+    """
+    """
+    cmd = '{} "--euid={}" "--debug={}" "--title={}" "--body={}" &'.format(
+        notify_helper_path,
+        self_uid,
+        debug_gui_notifications,
+        title,
+        encoder(body))
+
+    go(exe, cmd)
 
 
 def get_pid_list():
@@ -2303,7 +2163,11 @@ def sleep_after_check_mem():
         log('Sleep {} sec (t_mem={}, t_swap={}{})'.format(round(t, 2), round(
             t_mem, 2), round(t_swap, 2), z))
 
-    stdout.flush()
+    try:
+        stdout.flush()
+    except OSError:
+        pass
+
     sleep(t)
 
 
@@ -2767,17 +2631,8 @@ print_config_at_startup = conf_parse_bool('print_config_at_startup')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 debug_sleep = conf_parse_bool('debug_sleep')
 low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
-
-
-if low_memory_warnings_enabled or post_action_gui_notifications:
-    from subprocess import Popen, TimeoutExpired
-
-
 post_action_gui_notifications = conf_parse_bool(
     'post_action_gui_notifications')
-
-
-debug_threading = conf_parse_bool('debug_threading')
 
 
 psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
@@ -2836,20 +2691,6 @@ if 'victim_cache_time' in config_dict:
         exit(1)
 else:
     errprint('victim_cache_time not in config\nExit')
-    exit(1)
-
-
-if 'env_cache_time' in config_dict:
-    env_cache_time = string_to_float_convert_test(
-        config_dict['env_cache_time'])
-    if env_cache_time is None:
-        errprint('Invalid env_cache_time value, not float\nExit')
-        exit(1)
-    if env_cache_time < 0:
-        errprint('fill_rate_mem MUST be >= 0\nExit')
-        exit(1)
-else:
-    errprint('fill_rate_mem not in config\nExit')
     exit(1)
 
 
@@ -3358,14 +3199,6 @@ CHECK_ZRAM = not ignore_zram
 log('Monitoring has started!')
 
 stdout.flush()
-
-
-display_env = 'DISPLAY='
-dbus_env = 'DBUS_SESSION_BUS_ADDRESS='
-user_env = 'USER='
-
-envd = dict()
-envd['list_with_envs'] = envd['t'] = None
 
 
 ##########################################################################

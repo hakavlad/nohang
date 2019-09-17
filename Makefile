@@ -12,7 +12,6 @@ install:
 	install -d $(DESTDIR)$(BINDIR)
 
 	install -m0755 nohang $(DESTDIR)$(BINDIR)/nohang
-	install -m0755 nohang_notify_helper $(DESTDIR)$(BINDIR)/nohang_notify_helper
 	install -m0755 oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 psi-top $(DESTDIR)$(BINDIR)/psi-top
 	install -m0755 psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
@@ -43,7 +42,6 @@ install-desktop:
 	install -d $(DESTDIR)$(BINDIR)
 
 	install -m0755 nohang $(DESTDIR)$(BINDIR)/nohang
-	install -m0755 nohang_notify_helper $(DESTDIR)$(BINDIR)/nohang_notify_helper
 	install -m0755 oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 psi-top $(DESTDIR)$(BINDIR)/psi-top
 	install -m0755 psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
@@ -76,7 +74,6 @@ uninstall:
 	-systemctl disable nohang.service || true
 	-systemctl daemon-reload
 	rm -fv $(DESTDIR)$(BINDIR)/nohang
-	rm -fv $(DESTDIR)$(BINDIR)/nohang_notify_helper
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
 	rm -fv $(DESTDIR)$(BINDIR)/psi-top
 	rm -fv $(DESTDIR)$(BINDIR)/psi-monitor
@@ -95,7 +92,6 @@ systemd:
 
 pylint:
 	-pylint3 -E nohang
-	-pylint3 -E nohang_notify_helper
 	-pylint3 -E oom-sort
 	-pylint3 -E psi-top
 	-pylint3 -E psi-monitor
