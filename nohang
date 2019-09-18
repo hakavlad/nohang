@@ -184,17 +184,6 @@ def send_notification(title, body):
     if debug_gui_notifications:
         log('Find env time: {} ms'.format(round((t2 - t1) * 1000)))
 
-    # if somebody logged in with GUI
-    if list_len > 0:
-
-        for i in list_with_envs:
-            if debug_gui_notifications:
-                log('Send a GUI notification:\n ',
-                    'title:   ', [title],
-                    '\n  body:    ', [body],
-                    '\n  user/env:', i
-                    )
-
         # iterating over logged-in users
         for i in list_with_envs:
             username, display_env, dbus_env = i[0], i[1], i[2]
@@ -2439,8 +2428,8 @@ separate_log = False  # will be overwritten after parse config
 cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 
 
-self_oom_score_adj_min = '-600'
-self_oom_score_adj_max = '-6'
+self_oom_score_adj_min = '-100'
+self_oom_score_adj_max = '-10'
 
 
 write_self_oom_score_adj(self_oom_score_adj_min)
