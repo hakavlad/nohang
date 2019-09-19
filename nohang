@@ -3,7 +3,7 @@
 
 import os
 from ctypes import CDLL
-from time import sleep, time
+from time import sleep, monotonic
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from re import search
@@ -21,11 +21,11 @@ def exe(cmd):
     """ execute cmd
     """
     log('Execute the command: {}'.format(cmd))
-    t0 = time()
+    t0 = monotonic()
     write_self_oom_score_adj(self_oom_score_adj_max)
     err = os.system(cmd)
     write_self_oom_score_adj(self_oom_score_adj_min)
-    dt = time() - t0
+    dt = monotonic() - t0
     log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
     return err
 
@@ -33,14 +33,14 @@ def exe(cmd):
 def go(func, *a):
     """ run func in new thread
     """
-    t1 = time()
+    t1 = monotonic()
     th = Thread(target=func, args=a)
     th_name = th.getName()
     if debug_threading:
         log('Starting {}'.format(th_name))
     try:
         th.start()
-        t2 = time()
+        t2 = monotonic()
         if debug_threading:
             log('{} has started in {} ms'.format(
                 th_name, round((t2 - t1) * 1000, 1)))
@@ -135,7 +135,7 @@ def pop(cmd, username):
     else:
         wait_time = 20
 
-    t3 = time()
+    t3 = monotonic()
 
     with Popen(cmd) as proc:
         try:
@@ -145,7 +145,7 @@ def pop(cmd, username):
             if debug_gui_notifications:
                 log('TimeoutExpired: notify user: {}'.format(username))
 
-    t4 = time()
+    t4 = monotonic()
 
     if debug_gui_notifications:
         log('Popen time: {} sec; cmd: {}'.format(round(t4 - t3, 3), cmd))
@@ -160,29 +160,40 @@ def send_notification(title, body):
         pop(cmd, username)
         return None
 
-    t1 = time()
+    t1 = monotonic()
 
     if envd['t'] is None:
 
         list_with_envs = root_notify_env()
         envd['list_with_envs'] = list_with_envs
-        envd['t'] = time()
+        envd['t'] = monotonic()
+        cached_env = ''
 
-    elif time() - envd['t'] > env_cache_time:
+    elif monotonic() - envd['t'] > env_cache_time:
 
         list_with_envs = root_notify_env()
         envd['list_with_envs'] = list_with_envs
-        envd['t'] = time()
+        envd['t'] = monotonic()
+        cached_env = ''
 
     else:
 
         list_with_envs = envd['list_with_envs']
+        cached_env = ' (cached)'
+
+    t2 = monotonic()
+
+    if debug_gui_notifications:
+
+        log('Found env in {} ms{}'.format(round((t2 - t1) * 1000), cached_env))
+        log('Title:     {}'.format([title]))
+        log('Body:      {}'.format([body]))
+        log('Env list:  {}'.format(list_with_envs))
 
     list_len = len(list_with_envs)
 
-    t2 = time()
-    if debug_gui_notifications:
-        log('Find env time: {} ms'.format(round((t2 - t1) * 1000)))
+    # if somebody logged in with GUI
+    if list_len > 0:
 
         # iterating over logged-in users
         for i in list_with_envs:
@@ -204,6 +215,10 @@ def send_notification(title, body):
             ]
 
             go(pop, cmd, username)
+
+    else:
+        if debug_gui_notifications:
+            log('Nobody logged-in with GUI. Nothing to do.')
 
 
 def send_notify_warn():
@@ -980,7 +995,7 @@ def update_stat_dict_and_print(key):
     if print_statistics:
 
         stats_msg = 'Total stat (what happened in the last {}):'.format(
-            format_time(time() - start_time))
+            format_time(monotonic() - start_time))
 
         for i in stat_dict:
             stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
@@ -1239,7 +1254,7 @@ def find_victim(_print_proc_table):
     Return pid and badness
     """
 
-    ft1 = time()
+    ft1 = monotonic()
 
     pid_list = get_pid_list()
 
@@ -1374,7 +1389,7 @@ def find_victim(_print_proc_table):
     log(
         'Process with highest badness (found in {} ms):\n  PID: {}, Na'
         'me: {}, badness: {}'.format(
-            round((time() - ft1) * 1000),
+            round((monotonic() - ft1) * 1000),
             pid,
             victim_name,
             victim_badness
@@ -1387,7 +1402,7 @@ def find_victim(_print_proc_table):
 def find_victim_info(pid, victim_badness, name):
     """
     """
-    status0 = time()
+    status0 = monotonic()
 
     try:
 
@@ -1573,7 +1588,7 @@ def find_victim_info(pid, victim_badness, name):
         '\n  Realpath:  {}' \
         '{}{}' \
         '\n  Lifetime:  {}'.format(
-            round((time() - status0) * 1000),
+            round((monotonic() - status0) * 1000),
             name,
             state,
             pid,
@@ -1726,13 +1741,13 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0):
     """
     """
 
-    delta0 = time() - x0
-    x0 = time()
+    delta0 = monotonic() - x0
+    x0 = monotonic()
 
     psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
     # print(psi_avg_value)
 
-    psi_post_action_delay_timer = time() - last_action_dict['t']  # psi_t0
+    psi_post_action_delay_timer = monotonic() - last_action_dict['t']  # psi_t0
 
     if psi_post_action_delay_timer >= psi_post_action_delay:
         psi_post_action_delay_exceeded = True
@@ -1872,7 +1887,7 @@ def implement_corrective_action(
 
     debug_corrective_action = True
 
-    time0 = time()
+    time0 = monotonic()
 
     # 1. Очистка словаря от мертвых. Итерация по словарю, отслеживание умирающих.
     # 2. Итерация по оставшемуся словарю. Поиск дельт. Если хоть у одного
@@ -1908,7 +1923,7 @@ def implement_corrective_action(
 
     for victim_id in v_dict:
         tx = v_dict[victim_id]['time']
-        ddt = time() - tx
+        ddt = monotonic() - tx
         if ddt < victim_cache_time:
 
             if debug_corrective_action:
@@ -2000,7 +2015,7 @@ def implement_corrective_action(
 
         if threshold is SIGTERM:
             if victim_id in v_dict:
-                dt = time() - v_dict[victim_id]['time']
+                dt = monotonic() - v_dict[victim_id]['time']
                 if dt > max_soft_exit_time:
                     log('max_soft_exit_time is exceeded: the '
                         'victim will get SIGKILL')
@@ -2061,7 +2076,7 @@ def implement_corrective_action(
                 success = False
             """
 
-            response_time = time() - time0
+            response_time = monotonic() - time0
 
             exit_status = None
 
@@ -2078,7 +2093,7 @@ def implement_corrective_action(
             try:
                 os.kill(int(pid), threshold)
 
-                response_time = time() - time0
+                response_time = monotonic() - time0
 
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
@@ -2095,14 +2110,14 @@ def implement_corrective_action(
             except FileNotFoundError:
                 vwd = True
                 # success = False
-                # response_time = time() - time0
+                # response_time = monotonic() - time0
                 # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'FileNotFoundError'
             except ProcessLookupError:
                 vwd = True
                 # success = False
-                # response_time = time() - time0
+                # response_time = monotonic() - time0
                 # send_result = 'no such process; response time: {} ms'.format(round(response_time * 1000))
                 key = 'The victim died in the search process: ' \
                       'ProcessLookupError'
@@ -2116,16 +2131,16 @@ def implement_corrective_action(
         if not vwd:
             if victim_id not in v_dict:
                 v_dict[victim_id] = dict()
-            v_dict[victim_id]['time'] = time()
+            v_dict[victim_id]['time'] = monotonic()
             v_dict[victim_id]['name'] = name
         else:
             pass
 
-        last_action_dict['t'] = kill_timestamp = time()
+        last_action_dict['t'] = kill_timestamp = monotonic()
 
         # print(v_dict)
 
-        # response_time = time() - time0
+        # response_time = monotonic() - time0
 
         # log('success:         ' + str(success))
         # log('victim will die: ' + str(vwd))
@@ -2140,7 +2155,7 @@ def implement_corrective_action(
 
         while True:
             sleep(0.005)
-            d = time() - kill_timestamp
+            d = monotonic() - kill_timestamp
             #print('Прошло времени:', d)
             iva = is_victim_alive(victim_id)
 
@@ -2207,7 +2222,7 @@ def implement_corrective_action(
 
     else:
 
-        response_time = time() - time0
+        response_time = monotonic() - time0
         victim_badness_is_too_small = 'victim badness ({}) < min_b' \
             'adness ({}); nothing to do; response time: {} ms'.format(
                 victim_badness,
@@ -2364,7 +2379,7 @@ def calculate_percent(arg_key):
 v_dict = dict()
 
 
-start_time = time()
+start_time = monotonic()
 
 
 help_mess = """usage: nohang [-h] [-v] [-p] [-c CONFIG] [-cc CONFIG]
@@ -2415,7 +2430,7 @@ else:
 
 last_action_dict = dict()
 
-last_action_dict['t'] = time()
+last_action_dict['t'] = monotonic()
 
 
 # will store corrective actions stat
@@ -2764,9 +2779,6 @@ post_action_gui_notifications = conf_parse_bool(
 
 if low_memory_warnings_enabled or post_action_gui_notifications:
     from subprocess import Popen, TimeoutExpired
-
-
-
 
 
 debug_threading = conf_parse_bool('debug_threading')
@@ -3327,7 +3339,7 @@ for i in sig_list:
     signal(i, signal_handler)
 
 
-x0 = time()
+x0 = monotonic()
 delta0 = 0
 
 
@@ -3341,7 +3353,7 @@ if psi_support and not ignore_psi:
 
 psi_kill_exceeded_timer = 0
 psi_term_exceeded_timer = 0
-psi_t0 = time()
+psi_t0 = monotonic()
 psi_threshold = zram_threshold = zram_info = psi_info = None
 
 
@@ -3380,7 +3392,7 @@ while True:
 
         if CHECK_PSI:
             psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
-            if time() - psi_t0 >= psi_post_action_delay:
+            if monotonic() - psi_t0 >= psi_post_action_delay:
                 psi_post_action_delay_exceeded = True
             else:
                 psi_post_action_delay_exceeded = False
@@ -3389,7 +3401,7 @@ while True:
                 psi_avg_string = 'PSI avg: {} | '.format(
                     str(psi_avg_value).rjust(6))
 
-        wt1 = time()
+        wt1 = monotonic()
 
         delta = (mem_available + swap_free) - new_mem
 
@@ -3407,7 +3419,7 @@ while True:
         else:
             mem_report = False
 
-        wt2 = time()
+        wt2 = monotonic()
 
         if mem_report:
 
@@ -3507,8 +3519,8 @@ while True:
         if (masf_threshold == 'WARN' or zram_threshold == 'WARN' or
                 psi_threshold == 'WARN'):
 
-            warn_time_delta = time() - warn_time_now
-            warn_time_now = time()
+            warn_time_delta = monotonic() - warn_time_now
+            warn_time_now = monotonic()
             warn_timer += warn_time_delta
             if warn_timer > min_post_warning_delay:
 
