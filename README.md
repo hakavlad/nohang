@@ -66,7 +66,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 For basic usage:
 - `Linux` 3.14+ (since `MemAvailable` appeared in `/proc/meminfo`)
-- `Python` 3.3+ (not tested with previous)
+- `Python` 3.3+
 
 To show GUI notifications:
 - [notification server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (most of desktop environments use their own implementations)
