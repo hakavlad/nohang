@@ -65,8 +65,8 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 ## Requirements
 
 For basic usage:
-- `Linux` 3.14+ (since `MemAvailable` appeared in `/proc/meminfo`)
-- `Python` 3.3+
+- `Linux` >= 3.14 (since `MemAvailable` appeared in `/proc/meminfo`)
+- `Python` >= 3.3
 
 To show GUI notifications:
 - [notification server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (most of desktop environments use their own implementations)
@@ -74,7 +74,7 @@ To show GUI notifications:
 - `sudo` if nohang started with UID=0
 
 To use `PSI`:
-- `Linux` 4.20+
+- `Linux` >= 4.20
 
 ## Memory and CPU usage
 
@@ -82,29 +82,6 @@ To use `PSI`:
 - CPU usage depends on the level of available memory and monitoring intensity.
 
 ## How to install
-
-To install the latest version:
-```bash
-$ git clone https://github.com/hakavlad/nohang.git
-$ cd nohang
-$ sudo make install  # `sudo make install-desktop` to enable GUI notifications by default
-```
-
-To enable and start on systems with systemd:
-```bash
-$ sudo make systemd
-```
-
-To uninstall:
-```bash
-$ sudo make uninstall
-```
-
-For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
-```bash
-$ yay -S nohang-git
-$ sudo systemctl enable --now nohang
-```
 
 For RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
@@ -122,6 +99,33 @@ $ sudo yum copr enable atim/nohang
 $ sudo yum install nohang
 $ sudo systemctl enable nohang
 $ sudo systemctl start nohang
+```
+
+For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+```bash
+$ yay -S nohang-git
+$ sudo systemctl enable --now nohang
+```
+
+To install on Debian and Ubuntu please make a deb package.
+
+To install the latest version on any distro:
+```bash
+$ git clone https://github.com/hakavlad/nohang.git
+$ cd nohang
+$ sudo make install  # `sudo make install-desktop` to enable GUI notifications by default
+```
+
+To enable and start on systems with systemd:
+```bash
+$ sudo make systemd
+```
+
+To enable and start on systems without systemd please make a PR to fix Makefile.
+
+To uninstall:
+```bash
+$ sudo make uninstall
 ```
 
 ## Command line options
