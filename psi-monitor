@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
 
-from ctypes import CDLL
-from time import sleep
-from sys import argv, exit
 import os
-import logging
+from time import sleep
+from ctypes import CDLL
+from argparse import ArgumentParser
 
-separate_log = False
-
-log_file = './psi-monitor.log'
-
-period = 2
 
 ###############################################################################
 
@@ -18,14 +12,15 @@ period = 2
 def cgroup2_root():
     """
     """
-    with open('/proc/mounts') as f:
+    with open(mounts) as f:
         for line in f:
-            if ' cgroup2 ' in line:
-                # if line.startswith('cgroup2 '):
-                return line[7:].rpartition(' cgroup2 ')[0].strip()
+            if cgroup2_separator in line:
+                return line.partition(cgroup2_separator)[0].partition(' ')[2]
 
 
 def mlockall():
+    """
+    """
 
     MCL_CURRENT = 1
     MCL_FUTURE = 2
@@ -49,6 +44,8 @@ def mlockall():
 
 
 def psi_file_mem_to_metrics(psi_path):
+    """
+    """
 
     with open(psi_path) as f:
         psi_list = f.readlines()
@@ -68,6 +65,8 @@ def psi_file_mem_to_metrics(psi_path):
 
 
 def psi_file_cpu_to_metrics(psi_path):
+    """
+    """
 
     with open(psi_path) as f:
         psi_list = f.readlines()
@@ -93,48 +92,108 @@ def log(*msg):
 ###############################################################################
 
 
+parser = ArgumentParser()
+
+parser.add_argument(
+    '-t',
+    '--target',
+    help="""target (cgroup2 or SYTSTEM_WIDE)""",
+    default='SYSTEM_WIDE',
+    type=str
+)
+
+
+parser.add_argument(
+    '-p',
+    '--period',
+    help="""period in sec""",
+    default=2,
+    type=float
+)
+
+
+parser.add_argument(
+    '-l',
+    '--log',
+    help="""path to log file""",
+    default=None,
+    type=str
+)
+
+
+args = parser.parse_args()
+
+target = args.target
+
+period = args.period
+
+log_file = args.log
+
+
+if log_file is None:
+    separate_log = False
+else:
+    separate_log = True
+    import logging
+
+
+def sleeeep():
+    try:
+        sleep(period)
+    except KeyboardInterrupt:
+        log('Exit')
+        exit()
+
+
+###############################################################################
+
 if separate_log:
     logging.basicConfig(
         filename=log_file,
         level=logging.INFO,
         format="%(asctime)s: %(message)s")
 
+###############################################################################
 
-try:
-    target = argv[1]
-    log('Set target to {}'.format(argv[1]))
-except IndexError:
-    log('Set target to SYSTEM_WIDE to monitor /proc/pressure')
-    target = 'SYSTEM_WIDE'
+
+log('target:    {}'.format(target))
+log('period:    {}'.format(period))
+if log_file is not None:
+    log('log file:  {}'.format(log_file))
+
+
+if not os.path.exists('/proc/pressure'):
+    log('ERROR: /proc/pressure does not exist, PSI is not supported, exit')
+    exit()
 
 
 if target == 'SYSTEM_WIDE':
+
     cpu_file = "/proc/pressure/cpu"
     memory_file = "/proc/pressure/memory"
     io_file = "/proc/pressure/io"
+
 else:
-    cpu_file = cgroup2_root() + target + "/cpu.pressure"
-    memory_file = cgroup2_root() + target + "/memory.pressure"
-    io_file = cgroup2_root() + target + "/io.pressure"
+
+    mounts = '/proc/mounts'
+    cgroup2_separator = ' cgroup2 rw,'
+    cgroup2_mountpoint = cgroup2_root()
+
+    if cgroup2_mountpoint is None:
+
+        log('ERROR: unified cgroup hierarchy is not mounted, exit')
+        exit()
+
+    else:
+
+        log('cgroup2 mountpoint: {}'.format(cgroup2_mountpoint))
+
+    cpu_file = cgroup2_mountpoint + target + "/cpu.pressure"
+    memory_file = cgroup2_mountpoint + target + "/memory.pressure"
+    io_file = cgroup2_mountpoint + target + "/io.pressure"
 
 
 mlockall()
-
-try:
-    (c_some_avg10, c_some_avg60, c_some_avg300
-     ) = psi_file_cpu_to_metrics(cpu_file)
-
-    (m_some_avg10, m_some_avg60, m_some_avg300,
-     m_full_avg10, m_full_avg60, m_full_avg300
-     ) = psi_file_mem_to_metrics(memory_file)
-
-    (i_some_avg10, i_some_avg60, i_some_avg300,
-     i_full_avg10, i_full_avg60, i_full_avg300
-     ) = psi_file_mem_to_metrics(io_file)
-except Exception:
-    log('Cannot open pressure files')
-    log('Exit')
-    exit()
 
 
 log('Starting psi-monitor, target: {}, period: {}'.format(target, period))
@@ -151,6 +210,22 @@ log('------ ------ ------ || ------ ------ ------ | ------ ------ ------ ||'
 
 
 while True:
+
+    if not os.path.exists(cpu_file):
+        log('ERROR: cpu pressure file does not exist:    {}'.format(cpu_file))
+        sleeeep()
+        continue
+
+    if not os.path.exists(memory_file):
+        log('ERROR: memory pressure file does not exist: {}'.format(
+            memory_file))
+        sleeeep()
+        continue
+
+    if not os.path.exists(io_file):
+        log('ERROR: io pressure file does not exist:     {}'.format(cpu_file))
+        sleeeep()
+        continue
 
     (c_some_avg10, c_some_avg60, c_some_avg300
      ) = psi_file_cpu_to_metrics(cpu_file)
@@ -185,8 +260,4 @@ while True:
 
     ))
 
-    try:
-        sleep(period)
-    except KeyboardInterrupt:
-        log('Exit')
-        exit()
+    sleeeep()
