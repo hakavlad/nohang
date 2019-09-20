@@ -83,31 +83,30 @@ To use `PSI`:
 
 ## How to install
 
-For RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
-
-To install on Fedora 30+:
+#### To install on Fedora 30+:
 ```bash
-$ sudo dnf copr enable atim/nohang
 $ sudo dnf install nohang
 $ sudo systemctl enable --now nohang
 ```
 
-To install on CentOS 7:
+#### To install on CentOS 7:
+
+Nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
-$ sudo yum install yum-plugin-copr
-$ sudo yum copr enable atim/nohang
 $ sudo yum install nohang
 $ sudo systemctl enable nohang
 $ sudo systemctl start nohang
 ```
 
-For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
+
+#### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
 $ yay -S nohang-git
 $ sudo systemctl enable --now nohang
 ```
 
-To install on Debian and Ubuntu please make a deb package.
+#### To install on Debian and Ubuntu please make a deb package.
 
 To install the latest version on any distro:
 ```bash
