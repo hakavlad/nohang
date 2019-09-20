@@ -74,7 +74,7 @@ To show GUI notifications:
 - `sudo` if nohang started with UID=0
 
 To use `PSI`:
-- `Linux` >= 4.20
+- `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
 ## Memory and CPU usage
 
@@ -405,7 +405,7 @@ Kthreads, zombies and Pid 1 will not be displayed.
 
 ### psi-top
 
-It needs Linux 4.20+
+It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
 <details>
  <summary>Output example</summary>
@@ -464,7 +464,7 @@ some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-log
 
 ### psi-monitor
 
-It needs Linux 4.20+
+It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
 <details>
  <summary>Output example</summary>
