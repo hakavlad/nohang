@@ -2,10 +2,13 @@
 
 import os
 
-psi_path = '/proc/pressure/memory'
+
+###############################################################################
+
 
 def psi_path_to_metrics(psi_path):
-
+    """
+    """
     with open(psi_path) as f:
         psi_list = f.readlines()
     # print(psi_list)
@@ -26,17 +29,15 @@ def psi_path_to_metrics(psi_path):
 def cgroup2_root():
     """
     """
-    with open('/proc/mounts') as f:
+    with open(mounts) as f:
         for line in f:
-            if ' cgroup2 ' in line:
-            # if line.startswith('cgroup2 '):
-                return line[7:].rpartition(' cgroup2 ')[0].strip()
+            if cgroup2_separator in line:
+                return line.partition(cgroup2_separator)[0].partition(' ')[2]
 
 
 def get_psi_mem_files(cgroup2_path):
     """
     """
-
     path_list = []
 
     for root, dirs, files in os.walk(cgroup2_path):
@@ -51,15 +52,23 @@ def get_psi_mem_files(cgroup2_path):
 def psi_path_to_cgroup2(path):
     """
     """
-    return path.partition(i)[2][:-16]
+    return path.partition(cgroup2_mountpoint)[2][:-16]
 
 
-i = cgroup2_root()
+###############################################################################
 
-if i is None:
-    print('cgroup2 not mounted')
+
+psi_path = '/proc/pressure/memory'
+mounts = '/proc/mounts'
+cgroup2_separator = ' cgroup2 rw,'
+
+cgroup2_mountpoint = cgroup2_root()
+
+
+if cgroup2_mountpoint is None:
+    print('cgroup2 is not mounted')
 else:
-    print('cgroup2 root dir:', i)
+    print('cgroup2 mountpoint:', cgroup2_mountpoint)
 
 
 psi_support = os.path.exists(psi_path)
@@ -69,19 +78,18 @@ if not psi_support:
     exit(1)
 
 
-if i is not None:
-    y = get_psi_mem_files(i)
+if cgroup2_mountpoint is not None:
+    y = get_psi_mem_files(cgroup2_mountpoint)
     for path in y:
-        pass # print(psi_path_to_cgroup2(path))
+        pass  # print(psi_path_to_cgroup2(path))
 
-path_list = get_psi_mem_files(i)
+path_list = get_psi_mem_files(cgroup2_mountpoint)
 
 print('      avg10  avg60 avg300         avg10  avg60 avg300  cgroup2')
-
 print('      -----  ----- ------         -----  ----- ------  ---------')
 
 (some_avg10, some_avg60, some_avg300, full_avg10, full_avg60, full_avg300
- ) = psi_path_to_metrics('/proc/pressure/memory')
+ ) = psi_path_to_metrics(psi_path)
 
 print('some {} {} {} | full {} {} {}  {}'.format(
     some_avg10.rjust(6),
