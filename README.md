@@ -149,17 +149,16 @@ optional arguments:
 
 The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
 
-1. Memory levels to respond to as an OOM threat
-2. Response on PSI memory metrics
-3. The frequency of checking the level of available memory (and CPU usage)
-4. The prevention of killing innocent victims
-5. Impact on the badness of processes via matching their names, cgroups, realpaths, cmdlines and UIDs with certain regular expressions
-6. The execution of a specific command or sending any signal instead of sending the SIGTERM signal
-7. GUI notifications:
-   - notifications of corrective actions taken
-   - low memory warnings (or executing certain command instead)
-8. Verbosity
-9. Misc
+1. Common zram settings
+2. Common PSI settings
+3. Poll rate
+4. Warnings and notifications
+5. Soft threshold
+6. Hard threshold
+7. Customize victim selection
+8. Customize soft corrective actions
+9. Misc settings
+10. Verbosity, debug, logging
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
 

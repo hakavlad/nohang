@@ -9,44 +9,67 @@ from sys import stdout, stderr, argv, exit
 from re import search
 from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
-from threading import Thread
 
 
-##########################################################################
+###############################################################################
 
 # define functions
 
 
 def exe(cmd):
-    """ execute cmd
+    """ execute cmd in subprocess.Popen()
     """
-    log('Execute the command: {}'.format(cmd))
-    t0 = monotonic()
-    write_self_oom_score_adj(self_oom_score_adj_max)
-    err = os.system(cmd)
-    write_self_oom_score_adj(self_oom_score_adj_min)
-    dt = monotonic() - t0
-    log('Exit status: {}; exe duration: {} sec'.format(err, round(dt, 3)))
-    return err
+
+    cmd_num_dict['cmd_num'] += 1
+    cmd_num = cmd_num_dict['cmd_num']
+    log('Execute the command({}) in {}: {}'.format(
+        cmd_num,
+        threading.current_thread().getName(),
+        cmd))
+    t3 = monotonic()
+    with Popen(cmd, shell=True) as proc:
+        try:
+            proc.wait(timeout=exe_timeout)
+            exit_status = proc.poll()
+            t4 = monotonic()
+            log('Command({}) execution completed in {} sec; exit status' \
+                ': {}'.format(cmd_num, round(t4 - t3, 3), exit_status))
+        except TimeoutExpired:
+            proc.kill()
+            t4 = monotonic()
+            log('TimeoutExpired for the command({}) in {} sec'.format(
+                cmd_num, round(t4 - t3, 3)))
 
 
-def go(func, *a):
-    """ run func in new thread
+def start_thread(func, *a, **k):
+    """ run function in a new thread
     """
-    t1 = monotonic()
-    th = Thread(target=func, args=a)
+
+    th = threading.Thread(target=func, args=a, kwargs=k)
     th_name = th.getName()
+
     if debug_threading:
-        log('Starting {}'.format(th_name))
+
+        log('Starting {} from {}'.format(
+            th_name, threading.current_thread().getName()
+            ))
+
     try:
+
+        t1 = monotonic()
         th.start()
         t2 = monotonic()
+
         if debug_threading:
-            log('{} has started in {} ms'.format(
-                th_name, round((t2 - t1) * 1000, 1)))
+            log('{} has started in {} ms, {} threads currently alive'.format(
+                th_name, round((t2 - t1) * 1000, 1), threading.active_count()
+                ))
+
     except RuntimeError:
-        if debug_threading:
-            log('RuntimeError: cannot start {}'.format(th_name))
+
+        log('RuntimeError: cannot start {}'.format(th_name))
+
+        return 1
 
 
 def re_pid_environ(pid):
@@ -57,7 +80,6 @@ def re_pid_environ(pid):
      'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus')
     returns None if these vars is not in /proc/[pid]/environ
     """
-
     try:
         with open('/proc/' + pid + '/environ') as f:
             env = f.read()
@@ -128,8 +150,9 @@ def root_notify_env():
 
 
 def pop(cmd, username):
+    """ run cmd in subprocess.Popen()
     """
-    """
+
     if swap_total == 0:
         wait_time = 2
     else:
@@ -140,6 +163,7 @@ def pop(cmd, username):
     with Popen(cmd) as proc:
         try:
             proc.wait(timeout=wait_time)
+            err = proc.poll()
         except TimeoutExpired:
             proc.kill()
             if debug_gui_notifications:
@@ -147,8 +171,12 @@ def pop(cmd, username):
 
     t4 = monotonic()
 
+    err = 0
+
     if debug_gui_notifications:
-        log('Popen time: {} sec; cmd: {}'.format(round(t4 - t3, 3), cmd))
+        pass
+        #log('Popen time: {} sec; exit status: {}; cmd: {}'.format(round(t4 - t3, 3), err, cmd))
+        log('Popen time: {} sec; exit status: {}; cmd: {}'.format(round(t4 - t3, 3), err, cmd))
 
 
 def send_notification(title, body):
@@ -214,7 +242,7 @@ def send_notification(title, body):
                 body
             ]
 
-            go(pop, cmd, username)
+            start_thread(pop, cmd, username)
 
     else:
         if debug_gui_notifications:
@@ -227,7 +255,7 @@ def send_notify_warn():
     log('Warning threshold exceeded')
 
     if check_warning_exe:
-        go(exe, warning_exe)
+        start_thread(exe, warning_exe)
 
     else:
 
@@ -238,7 +266,7 @@ def send_notify_warn():
             round(swap_free / (swap_total + 0.1) * 100)
         )
 
-        go(send_notification, title, body)
+        start_thread(send_notification, title, body)
 
 
 def send_notify(threshold, name, pid):
@@ -261,7 +289,7 @@ def send_notify(threshold, name, pid):
         )
     )
 
-    go(send_notification, title, body)
+    start_thread(send_notification, title, body)
 
 
 def send_notify_etc(pid, name, command):
@@ -277,43 +305,27 @@ def send_notify_etc(pid, name, command):
         'mmand:\n<b>{}</b>'.format(
             pid, name.replace('&', '*'), command.replace('&', '*'))
 
-    go(send_notification, title, body)
+    start_thread(send_notification, title, body)
 
 
 def check_config():
     """
     """
-
     log('#' * 79)
 
-    log('0. Common zram settings')
+    log('\n1. Common zram settings')
 
-    log('    zram_checking_enabled:  {}'.format(zram_checking_enabled))
+    log('    zram_checking_enabled:   {}'.format(zram_checking_enabled))
 
-    log('1. Thresholds below which a signal should be sent to the victim')
-
-    log('    soft_threshold_min_mem:   {} MiB, {} %'.format(
-        round(soft_threshold_min_mem_mb), round(soft_threshold_min_mem_percent, 1)))
-    log('    hard_threshold_min_mem:   {} MiB, {} %'.format(
-        round(hard_threshold_min_mem_mb), round(hard_threshold_min_mem_percent, 1)))
-    log('    soft_threshold_min_swap:  {}'.format(soft_threshold_min_swap))
-    log('    hard_threshold_min_swap:  {}'.format(hard_threshold_min_swap))
-    log('    soft_threshold_max_zram:  {} MiB, {} %'.format(
-        round(soft_threshold_max_zram_mb), round(soft_threshold_max_zram_percent, 1)))
-    log('    hard_threshold_max_zram:  {} MiB, {} %'.format(
-        round(hard_threshold_max_zram_mb), round(hard_threshold_max_zram_percent, 1)))
-
-    log('2. Response on PSI memory metrics')
+    log('\n2. Common PSI settings')
 
     log('    psi_checking_enabled:    {}'.format(psi_checking_enabled))
     log('    psi_path:                {}'.format(psi_path))
     log('    psi_metrics:             {}'.format(psi_metrics))
-    log('    soft_threshold_max_psi:  {}'.format(soft_threshold_max_psi))
-    log('    hard_threshold_max_psi:  {}'.format(hard_threshold_max_psi))
     log('    psi_excess_duration:     {} sec'.format(psi_excess_duration))
     log('    psi_post_action_delay:   {} sec'.format(psi_post_action_delay))
 
-    log('3. The frequency of checking the amount of available memory')
+    log('\n3. Poll rate')
 
     log('    fill_rate_mem:   {}'.format(fill_rate_mem))
     log('    fill_rate_swap:  {}'.format(fill_rate_swap))
@@ -322,18 +334,56 @@ def check_config():
     log('    min_sleep:       {} sec'.format(min_sleep))
     log('    over_sleep:      {} sec'.format(over_sleep))
 
-    log('4. The prevention of killing innocent victims')
+    log('\n4. Warnings and notifications')
 
-    log('    min_badness:                    {}'.format(min_badness))
-    log('    post_soft_action_delay:         {} sec'.format(post_soft_action_delay))
-    log('    post_zombie_delay:              {} sec'.format(post_zombie_delay))
-    log('    victim_cache_time:              {} sec'.format(victim_cache_time))
-    log('    ignore_positive_oom_score_adj:  {}'.format(
-        ignore_positive_oom_score_adj))
+    log('    post_action_gui_notifications:  {}'.format(
+        post_action_gui_notifications))
 
-    log('5. Impact on the badness of processes')
+    log('    low_memory_warnings_enabled:    {}'.format(
+        low_memory_warnings_enabled))
+    log('    warning_exe:                    {}'.format(warning_exe))
+    log('    warning_threshold_min_mem:      {} MiB, {} %'.format(round(
+        warning_threshold_min_mem_mb), round(
+            warning_threshold_min_mem_percent, 1)))
+    log('    warning_threshold_min_swap:     {}'.format
+        (warning_threshold_min_swap))
+    log('    warning_threshold_max_zram:     {} MiB, {} %'.format(round(
+        warning_threshold_max_zram_mb), round(
+            warning_threshold_max_zram_percent, 1)))
+    log('    warning_threshold_max_psi:      {}'.format(
+        warning_threshold_max_psi))
+    log('    min_post_warning_delay:         {} sec'.format(
+        min_post_warning_delay))
 
-    log('5.1. Matching process names with RE patterns')
+    log('    env_cache_time:                 {}'.format(env_cache_time))
+
+    log('\n5. Soft threshold')
+
+    log('    soft_threshold_min_mem:   {} MiB, {} %'.format(round(soft_threshold_min_mem_mb), round(soft_threshold_min_mem_percent, 1)))
+    log('    soft_threshold_min_swap:  {}'.format(soft_threshold_min_swap))
+    log('    soft_threshold_max_zram:  {} MiB, {} %'.format(round(soft_threshold_max_zram_mb), round(soft_threshold_max_zram_percent, 1)))
+    log('    soft_threshold_max_psi:   {}'.format(soft_threshold_max_psi))
+
+    log('\n6. Hard threshold')
+
+    log('    hard_threshold_min_mem:   {} MiB, {} %'.format(round(hard_threshold_min_mem_mb), round(hard_threshold_min_mem_percent, 1)))
+    log('    hard_threshold_min_swap:  {}'.format(hard_threshold_min_swap))
+    log('    hard_threshold_max_zram:  {} MiB, {} %'.format(round(hard_threshold_max_zram_mb), round(hard_threshold_max_zram_percent, 1)))
+    log('    hard_threshold_max_psi:   {}'.format(hard_threshold_max_psi))
+
+    log('\n7. Customize victim selection: adjusting badness of processes')
+
+    log('\n7.1. Ignore positive oom_score_adj')
+
+    log('    ignore_positive_oom_score_adj:  {}'.format(ignore_positive_oom_score_adj))
+
+    log('\n7.2. Forbid negative badness')
+
+    log('    forbid_negative_badness:        {}'.format(forbid_negative_badness))
+
+    log('\n7.3. ')
+
+    log('7.3.1. Matching process names with RE patterns')
     if len(badness_adj_re_name_list) > 0:
         log('    regexp:         badness_adj:')
         for i in badness_adj_re_name_list:
@@ -341,7 +391,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.2. Matching CGroup_v1-line with RE patterns')
+    log('7.3.2. Matching CGroup_v1-line with RE patterns')
     if len(badness_adj_re_cgroup_v1_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_cgroup_v1_list:
@@ -349,7 +399,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.3. Matching CGroup_v2-line with RE patterns')
+    log('7.3.3. Matching CGroup_v2-line with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_cgroup_v1_list:
@@ -357,7 +407,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.4. Matching eUIDs with RE patterns')
+    log('7.3.4. Matching eUIDs with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_uid_list:
@@ -365,7 +415,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.5. Matching realpath with RE patterns')
+    log('7.3.5. Matching realpath with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_realpath_list:
@@ -373,7 +423,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.6. Matching cmdlines with RE patterns')
+    log('7.3.6. Matching cmdlines with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_cmdline_list:
@@ -381,7 +431,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('5.7. Matching environ with RE patterns')
+    log('7.3.7. Matching environ with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_environ_list:
@@ -389,7 +439,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('6. Customize corrective actions')
+    log('\n8. Customize corrective actions')
 
     if len(soft_actions_list) > 0:
         log('    Match by:   regexp:     command: ')
@@ -398,45 +448,43 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('7. GUI notifications')
+    log('\n9. Misc')
 
-    log('    post_action_gui_notifications:  {}'.format(
-        post_action_gui_notifications))
-    log('    low_memory_warnings_enabled:    {}'.format(
-        low_memory_warnings_enabled))
-    log('    warning_exe:                    {}'.format(warning_exe))
-    log('    warning_threshold_min_mem:      {} MiB, {} %'.format(round(
-        warning_threshold_min_mem_mb), round(warning_threshold_min_mem_percent, 1)))
-    log('    warning_threshold_min_swap:     {}'.format(warning_threshold_min_swap))
-    log('    warning_threshold_max_zram:     {} MiB, {} %'.format(round(
-        warning_threshold_max_zram_mb), round(warning_threshold_max_zram_percent, 1)))
-    log('    warning_threshold_max_psi:      {}'.format(warning_threshold_max_psi))
-    log('    min_post_warning_delay:         {} sec'.format(min_post_warning_delay))
+    log('    max_soft_exit_time:         {} sec'.format(max_soft_exit_time))
 
-    log('8. Verbosity')
+    log('    post_kill_exe:              {}'.format(post_kill_exe))
+
+    log('    min_badness:                {}'.format(min_badness))
+
+    log('    post_soft_action_delay:     {} sec'.format(
+        post_soft_action_delay))
+    log('    post_zombie_delay:          {} sec'.format(post_zombie_delay))
+    log('    victim_cache_time:          {} sec'.format(victim_cache_time))
+    log('    exe_timeout:                {} sec'.format(exe_timeout))
+
+    log('\n10. Verbosity')
 
     log('    print_config_at_startup:    {}'.format(print_config_at_startup))
+
     log('    print_mem_check_results:    {}'.format(print_mem_check_results))
-    log('    min_mem_report_interval:    {} sec'.format(min_mem_report_interval))
-    log('    debug_sleep:                {}'.format(debug_sleep))
-    log('    print_statistics:           {}'.format(print_statistics))
+    log('    min_mem_report_interval:    {} sec'.format(
+        min_mem_report_interval))
+
     log('    print_proc_table:           {}'.format(print_proc_table))
     log('    extra_table_info:           {}'.format(extra_table_info))
+
     log('    print_victim_status:        {}'.format(print_victim_status))
     log('    print_victim_cmdline:       {}'.format(print_victim_cmdline))
     log('    max_victim_ancestry_depth:  {}'.format(max_victim_ancestry_depth))
+
+    log('    print_statistics:           {}'.format(print_statistics))
+
     log('    debug_gui_notifications:    {}'.format(debug_gui_notifications))
-    log('    separate_log:               {}'.format(separate_log))
     log('    debug_psi:                  {}'.format(debug_psi))
+    log('    debug_sleep:                {}'.format(debug_sleep))
+    log('    debug_threading:            {}'.format(debug_threading))
+    log('    separate_log:               {}'.format(separate_log))
 
-    log('9. Misc')
-
-    log('    max_soft_exit_time:       {} sec'.format(max_soft_exit_time))
-    log('    post_kill_exe:            {}'.format(post_kill_exe))
-    log('    forbid_negative_badness:  {}'.format(
-        forbid_negative_badness))
-
-    #    log(':    {}'.format())
     log('#' * 79)
 
     if check_config_flag:
@@ -448,7 +496,6 @@ def get_swap_threshold_tuple(string):
     # re (Num %, True) or (Num KiB, False)
     """Returns KiB value if abs val was set in config, or tuple with %"""
     # return tuple with abs and bool: (abs %, True) or (abs MiB, False)
-
     if string.endswith('%'):
         valid = string_to_float_convert_test(string[:-1])
         if valid is None:
@@ -949,6 +996,11 @@ def errprint(*text):
     """
     """
     print(*text, file=stderr, flush=True)
+    try:
+        if separate_log:
+            logging.info(*msg)
+    except NameError:
+        pass
 
 
 def mlockall():
@@ -1652,11 +1704,8 @@ def check_mem_swap_ex():
     if (mem_available <= hard_threshold_min_mem_kb and
             swap_free <= hard_threshold_min_swap_kb):
 
-        mem_info = 'Memory status that requ' \
-            'ires corrective actions (hard threshold exceeded):' \
-            '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
-            'kill [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
-            'p_min_sigkill [{} MiB, {} %]'.format(
+        mem_info = 'Memory status that requires corrective actions:\n  MemAvailable [{} MiB, {} %] <= hard_threshold_min_mem [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= hard_threshold_min_swap [{} MiB, {} %]'.format(
+
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(hard_threshold_min_mem_kb),
@@ -1669,14 +1718,13 @@ def check_mem_swap_ex():
         return (SIGKILL, mem_info, mem_available, hard_threshold_min_swap_kb,
                 soft_threshold_min_swap_kb, swap_free, swap_total)
 
+
+
     if (mem_available <= soft_threshold_min_mem_kb and
             swap_free <= soft_threshold_min_swap_kb):
 
-        mem_info = 'Memory status that requi' \
-            'res corrective actions (soft threshold exceeded):' \
-            '\n  MemAvailable [{} MiB, {} %] <= mem_min_sig' \
-            'term [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= swa' \
-            'p_min_sigterm [{} MiB, {} %]'.format(
+        mem_info = 'Memory status that requires corrective actions:\n  MemAvailable [{} MiB, {} %] <= soft_threshold_min_mem [{} MiB, {} %]\n  SwapFree [{} MiB, {} %] <= soft_threshold_min_swap [{} MiB, {} %]'.format(
+
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(soft_threshold_min_mem_kb),
@@ -1688,6 +1736,7 @@ def check_mem_swap_ex():
 
         return (SIGTERM, mem_info, mem_available, hard_threshold_min_swap_kb,
                 soft_threshold_min_swap_kb, swap_free, swap_total)
+
 
     if low_memory_warnings_enabled:
 
@@ -1707,10 +1756,8 @@ def check_zram_ex():
 
     if mem_used_zram >= hard_threshold_max_zram_kb:
 
-        mem_info = 'Memory status that requir' \
-            'es corrective actions (hard threshold exceeded):' \
-            '\n  MemUsedZram [{} MiB, {} %] >= zram_max_sig' \
-            'kill [{} MiB, {} %]'.format(
+        mem_info = 'Memory status that requires corrective actions:\n  MemUsedZram [{} MiB, {} %] >= hard_threshold_max_zram [{} MiB, {} %]'.format(
+
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(hard_threshold_max_zram_kb),
@@ -1718,11 +1765,10 @@ def check_zram_ex():
 
         return SIGKILL, mem_info, mem_used_zram
 
+
     if mem_used_zram >= soft_threshold_max_zram_kb:
 
-        mem_info = 'Memory status that requires corrective actions (soft th' \
-            'reshold exceeded):\n  MemUsedZram [{} MiB, {} %] >= zram_max_s' \
-            'igterm [{} M, {} %]'.format(
+        mem_info = 'Memory status that requires corrective actions:\n  MemUsedZram [{} MiB, {} %] >= soft_threshold_max_zram [{} M, {} %]'.format(
                 kib_to_mib(mem_used_zram),
                 percent(mem_used_zram / mem_total),
                 kib_to_mib(soft_threshold_max_zram_kb),
@@ -1871,6 +1917,20 @@ def is_victim_alive(victim_id):
     return 0
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def implement_corrective_action(
         threshold,
         mem_info_list,
@@ -1882,6 +1942,8 @@ def implement_corrective_action(
         zram_threshold,
         zram_info,
         psi_info):
+    """ great and terrible function
+    """
 
     log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
@@ -2067,7 +2129,7 @@ def implement_corrective_action(
 
             cmd = command.replace('$PID', pid).replace('$NAME', pid_to_name(
                 pid)).replace('$SERVICE', service)
-            go(exe, cmd)
+            start_thread(exe, cmd)
 
             """
             if exit_status == 0:
@@ -2212,7 +2274,7 @@ def implement_corrective_action(
 
             log('Execute post_kill_exe')
 
-            go(exe, cmd)
+            start_thread(exe, cmd)
 
         if post_action_gui_notifications:
             if soft_match:
@@ -2244,6 +2306,23 @@ def implement_corrective_action(
     log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
 
     return psi_t0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def sleep_after_check_mem():
@@ -2372,7 +2451,7 @@ def calculate_percent(arg_key):
     return mem_min_kb, mem_min_mb, mem_min_percent
 
 
-##########################################################################
+###############################################################################
 
 
 # {victim_id : {'time': timestamp, 'name': name}
@@ -2547,7 +2626,7 @@ except ValueError:
 log('config: ' + config)
 
 
-##########################################################################
+###############################################################################
 
 # parsing the config with obtaining the parameters dictionary
 
@@ -2750,12 +2829,11 @@ else:
     soft_actions = True
 
 
-##########################################################################
+###############################################################################
 
 
-# post_zombie_delay = 0.1
 
-# victim_cache_time = 50
+
 
 
 # extracting parameters from the dictionary
@@ -2777,8 +2855,6 @@ post_action_gui_notifications = conf_parse_bool(
     'post_action_gui_notifications')
 
 
-if low_memory_warnings_enabled or post_action_gui_notifications:
-    from subprocess import Popen, TimeoutExpired
 
 
 debug_threading = conf_parse_bool('debug_threading')
@@ -2850,11 +2926,33 @@ if 'env_cache_time' in config_dict:
         errprint('Invalid env_cache_time value, not float\nExit')
         exit(1)
     if env_cache_time < 0:
-        errprint('fill_rate_mem MUST be >= 0\nExit')
+        errprint('env_cache_time MUST be >= 0\nExit')
         exit(1)
 else:
-    errprint('fill_rate_mem not in config\nExit')
+    errprint('env_cache_time not in config\nExit')
     exit(1)
+
+
+
+
+
+
+if 'exe_timeout' in config_dict:
+    exe_timeout = string_to_float_convert_test(
+        config_dict['exe_timeout'])
+    if exe_timeout is None:
+        errprint('Invalid exe_timeout value, not float\nExit')
+        exit(1)
+    if exe_timeout <= 0:
+        errprint('exe_timeout MUST be > 0\nExit')
+        exit(1)
+else:
+    errprint('exe_timeout not in config\nExit')
+    exit(1)
+
+
+
+
 
 
 if 'fill_rate_mem' in config_dict:
@@ -3230,7 +3328,24 @@ if print_proc_table_flag:
     func_print_proc_table()
 
 
+
+
+
 ##########################################################################
+
+
+
+
+if (low_memory_warnings_enabled or \
+    post_action_gui_notifications or \
+    check_warning_exe or \
+    soft_actions or \
+    post_kill_exe != ''):
+
+    import threading
+    from subprocess import Popen, TimeoutExpired
+
+
 
 
 psi_support = os.path.exists(psi_path)
@@ -3298,7 +3413,7 @@ fill_rate_zram = fill_rate_zram * 1024
 
 
 warn_time_now = 0
-warn_time_delta = 1000
+warn_time_delta = 1000 # ?
 warn_timer = 0
 
 
@@ -3370,6 +3485,15 @@ user_env = 'USER='
 
 envd = dict()
 envd['list_with_envs'] = envd['t'] = None
+
+
+
+
+cmd_num_dict = dict()
+cmd_num_dict['cmd_num'] = 0
+
+
+
 
 
 ##########################################################################
