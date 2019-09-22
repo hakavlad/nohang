@@ -89,7 +89,7 @@ $ sudo dnf install nohang
 $ sudo systemctl enable --now nohang
 ```
 
-#### To install on CentOS 7:
+#### To install on CentOS 7 and RHEL 8:
 
 Nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
@@ -295,7 +295,7 @@ $ sudo journalctl -eu nohang
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
 
-## Additional tools: oom-sort, psi-top, psi-monitor
+## Additional diagnostic tools
 
 
 ### oom-sort
