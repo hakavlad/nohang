@@ -383,6 +383,12 @@ def check_config():
 
     log('\n7.3. ')
 
+
+
+
+
+
+
     log('7.3.1. Matching process names with RE patterns')
     if len(badness_adj_re_name_list) > 0:
         log('    regexp:         badness_adj:')
@@ -402,29 +408,57 @@ def check_config():
     log('7.3.3. Matching CGroup_v2-line with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
         log('    regexp:              badness_adj:')
-        for i in badness_adj_re_cgroup_v1_list:
+        for i in badness_adj_re_cgroup_v2_list:
             log('    {}         {}'.format(i[1], i[0]))
     else:
         log('    (not set)')
 
     log('7.3.4. Matching eUIDs with RE patterns')
-    if len(badness_adj_re_cgroup_v2_list) > 0:
+    if len(badness_adj_re_uid_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_uid_list:
             log('    {}         {}'.format(i[1], i[0]))
     else:
         log('    (not set)')
 
+
+
+
     log('7.3.5. Matching realpath with RE patterns')
-    if len(badness_adj_re_cgroup_v2_list) > 0:
+    if len(badness_adj_re_realpath_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_realpath_list:
             log('    {}         {}'.format(i[1], i[0]))
     else:
         log('    (not set)')
 
+
+
+
+
+    log('7.3.5.1. Matching cwd with RE patterns')
+    if len(badness_adj_re_cwd_list) > 0:
+        log('    regexp:              badness_adj:')
+        for i in badness_adj_re_cwd_list:
+            log('    {}         {}'.format(i[1], i[0]))
+    else:
+        log('    (not set)')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     log('7.3.6. Matching cmdlines with RE patterns')
-    if len(badness_adj_re_cgroup_v2_list) > 0:
+    if len(badness_adj_re_cmdline_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_cmdline_list:
             log('    {}         {}'.format(i[1], i[0]))
@@ -432,12 +466,23 @@ def check_config():
         log('    (not set)')
 
     log('7.3.7. Matching environ with RE patterns')
-    if len(badness_adj_re_cgroup_v2_list) > 0:
+    if len(badness_adj_re_environ_list) > 0:
         log('    regexp:              badness_adj:')
         for i in badness_adj_re_environ_list:
             log('    {}         {}'.format(i[1], i[0]))
     else:
         log('    (not set)')
+
+
+
+
+
+
+
+
+
+
+
 
     log('\n8. Customize corrective actions')
 
@@ -690,6 +735,34 @@ def pid_to_starttime(pid):
     return float(starttime) / SC_CLK_TCK
 
 
+
+
+def pid_to_nssid(pid):
+    """ handle FNF error!
+    """
+    try:
+        nssid = rline1('/proc/' + pid + '/stat').rpartition(')')[
+            2].split(' ')[4]
+
+    except UnicodeDecodeError:
+        with open('/proc/' + pid + '/stat', 'rb') as f:
+            nssid = f.read().decode('utf-8', 'ignore').rpartition(
+                ')')[2].split(' ')[4]
+
+    return nssid
+
+
+
+
+
+
+
+
+
+
+
+
+
 def get_victim_id(pid):
     """victim_id is starttime + pid"""
     try:
@@ -808,6 +881,25 @@ def pid_to_realpath(pid):
         return ''
 
 
+def pid_to_cwd(pid):
+    """
+    """
+    try:
+        return os.path.realpath('/proc/' + pid + '/cwd')
+    except FileNotFoundError:
+        return ''
+
+
+
+
+
+
+
+
+
+
+
+
 def pid_to_uid(pid):
     """return euid"""
     try:
@@ -859,6 +951,18 @@ def pid_to_badness(pid):
             for re_tup in badness_adj_re_realpath_list:
                 if search(re_tup[1], realpath) is not None:
                     badness += int(re_tup[0])
+
+
+        if re_match_cwd:
+            cwd = pid_to_cwd(pid)
+            for re_tup in badness_adj_re_cwd_list:
+                if search(re_tup[1], cwd) is not None:
+                    badness += int(re_tup[0])
+
+
+
+
+
 
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
@@ -1343,6 +1447,14 @@ def find_victim(_print_proc_table):
         elif extra_table_info == 'realpath':
             extra_table_title = 'realpath'
 
+
+        elif extra_table_info == 'cwd':
+            extra_table_title = 'cwd'
+
+
+
+
+
         else:
             extra_table_title = ''
 
@@ -1394,8 +1506,25 @@ def find_victim(_print_proc_table):
             elif extra_table_info == 'realpath':
                 extra_table_line = pid_to_realpath(pid)
 
+            elif extra_table_info == 'cwd':
+                extra_table_line = pid_to_cwd(pid)
+
+
+
+
+
             else:
                 extra_table_line = ''
+
+
+
+            # nssid = pid_to_nssid(pid)
+            # nn = pid_to_name(nssid)
+            # extra_table_line = '{} ({})'.format(nssid, nn)
+
+
+
+
 
             log('#{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}'.format(
                 pid.rjust(7),
@@ -1594,6 +1723,11 @@ def find_victim_info(pid, victim_badness, name):
 
     try:
         realpath = os.path.realpath('/proc/' + pid + '/exe')
+
+        cwd = os.path.realpath('/proc/' + pid + '/cwd')
+
+        nssid = pid_to_nssid(pid)
+
         victim_lifetime = format_time(uptime() - pid_to_starttime(pid))
         victim_cgroup_v1 = pid_to_cgroup_v1(pid)
         victim_cgroup_v2 = pid_to_cgroup_v2(pid)
@@ -1637,7 +1771,9 @@ def find_victim_info(pid, victim_badness, name):
         '\n  VmSwap:    {} MiB' \
         '\n  CGroup_v1: {}' \
         '\n  CGroup_v2: {}' \
+        '\n  NSsid:     {} ({})' \
         '\n  Realpath:  {}' \
+        '\n  Cwd:       {}' \
         '{}{}' \
         '\n  Lifetime:  {}'.format(
             round((monotonic() - status0) * 1000),
@@ -1655,7 +1791,9 @@ def find_victim_info(pid, victim_badness, name):
             str(vm_swap).rjust(len_vm),
             victim_cgroup_v1,
             victim_cgroup_v2,
+            nssid, pid_to_name(nssid),
             realpath,
+            cwd,
             c1, cmdline,
             victim_lifetime)
 
@@ -1942,7 +2080,8 @@ def implement_corrective_action(
         zram_threshold,
         zram_info,
         psi_info):
-    """ great and terrible function
+    """
+    Great and terrible function.
     """
 
     log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
@@ -2522,8 +2661,24 @@ separate_log = False  # will be overwritten after parse config
 cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
 
 
+# del it
 self_oom_score_adj_min = '-100'
 self_oom_score_adj_max = '-10'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 write_self_oom_score_adj(self_oom_score_adj_min)
@@ -2644,6 +2799,12 @@ badness_adj_re_cgroup_v1_list = []
 badness_adj_re_cgroup_v2_list = []
 badness_adj_re_realpath_list = []
 
+badness_adj_re_cwd_list = []
+
+
+
+
+
 soft_actions_list = []
 
 # separator for optional parameters (that starts with @)
@@ -2755,6 +2916,28 @@ try:
                 valid_re(reg_exp)
                 badness_adj_re_realpath_list.append((badness_adj, reg_exp))
 
+
+
+            if line.startswith('@BADNESS_ADJ_RE_CWD'):
+                a = line.partition('@BADNESS_ADJ_RE_CWD')[2].strip(
+                    ' \n').partition(opt_separator)
+                badness_adj = a[0].strip(' ')
+                reg_exp = a[2].strip(' ')
+                valid_re(reg_exp)
+                badness_adj_re_cwd_list.append((badness_adj, reg_exp))
+
+
+
+
+
+
+
+
+
+
+
+
+
             if line.startswith('@BADNESS_ADJ_RE_ENVIRON'):
                 a = line.partition('@BADNESS_ADJ_RE_ENVIRON')[2].strip(
                     ' \n').partition(opt_separator)
@@ -2809,6 +2992,21 @@ if badness_adj_re_realpath_list == []:
     re_match_realpath = False
 else:
     re_match_realpath = True
+
+
+
+
+if badness_adj_re_cwd_list == []:
+    re_match_cwd = False
+else:
+    re_match_cwd = True
+
+
+
+
+
+
+
 
 
 if badness_adj_re_cgroup_v1_list == []:
@@ -3185,7 +3383,7 @@ if 'extra_table_info' in config_dict:
         extra_table_info != 'cgroup_v2' and
         extra_table_info != 'cmdline' and
         extra_table_info != 'environ' and
-            extra_table_info != 'realpath'):
+            extra_table_info != 'realpath' and extra_table_info != 'cwd'):
 
         errprint('Invalid config: invalid extra_table_info value\nExit')
         exit(1)
