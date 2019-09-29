@@ -11,29 +11,31 @@ all:
 install:
 	install -d $(DESTDIR)$(BINDIR)
 
-	install -m0755 nohang $(DESTDIR)$(BINDIR)/nohang
-	install -m0755 oom-sort $(DESTDIR)$(BINDIR)/oom-sort
-	install -m0755 psi-top $(DESTDIR)$(BINDIR)/psi-top
-	install -m0755 psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
+	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
+	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
+	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
+	install -m0755 tools/psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
 
 	install -d $(DESTDIR)$(CONFDIR)/nohang
 	-git describe --tags --long --dirty > version
 	-install -m0644 version $(DESTDIR)$(CONFDIR)/nohang/version
 	-rm -fv version
 
-	install -m0644 nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
-	install -m0644 nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf.default
-	install -m0644 nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf.default
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
 
 	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
-	install -m0644 nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
 
 	install -d $(DESTDIR)$(MANDIR)
-	gzip -c nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
-	gzip -c oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
+	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
+	gzip -c tools/psi-monitor.1 > $(DESTDIR)$(MANDIR)/psi-monitor.1.gz
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang.service.in > nohang.service
+	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang.service.in > nohang.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-rm -fv nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
@@ -41,29 +43,31 @@ install:
 install-desktop:
 	install -d $(DESTDIR)$(BINDIR)
 
-	install -m0755 nohang $(DESTDIR)$(BINDIR)/nohang
-	install -m0755 oom-sort $(DESTDIR)$(BINDIR)/oom-sort
-	install -m0755 psi-top $(DESTDIR)$(BINDIR)/psi-top
-	install -m0755 psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
+	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
+	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
+	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
+	install -m0755 tools/psi-monitor $(DESTDIR)$(BINDIR)/psi-monitor
 
 	install -d $(DESTDIR)$(CONFDIR)/nohang
 	-git describe --tags --long --dirty > version
 	-install -m0644 version $(DESTDIR)$(CONFDIR)/nohang/version
 	-rm -fv version
 
-	install -m0644 nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
-	install -m0644 nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf.default
-	install -m0644 nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf.default
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf.default
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf.default
 
 	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
-	install -m0644 nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
 
 	install -d $(DESTDIR)$(MANDIR)
-	gzip -c nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
-	gzip -c oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
+	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
+	gzip -c tools/psi-monitor.1 > $(DESTDIR)$(MANDIR)/psi-monitor.1.gz
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang.service.in > nohang.service
+	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang.service.in > nohang.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-rm -fv nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
@@ -79,6 +83,8 @@ uninstall:
 	rm -fv $(DESTDIR)$(BINDIR)/psi-monitor
 	rm -fv $(DESTDIR)$(MANDIR)/nohang.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/psi-top.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/psi-monitor.1.gz
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fvr $(DESTDIR)$(CONFDIR)/nohang/
 	rm -fvr $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
@@ -91,7 +97,7 @@ systemd:
 	-systemctl status nohang
 
 pylint:
-	-pylint3 -E nohang
-	-pylint3 -E oom-sort
-	-pylint3 -E psi-top
-	-pylint3 -E psi-monitor
+	-pylint3 -E nohang/nohang
+	-pylint3 -E tools/oom-sort
+	-pylint3 -E tools/psi-top
+	-pylint3 -E tools/psi-monitor
