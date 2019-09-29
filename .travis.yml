@@ -27,7 +27,7 @@ script:
   - sudo nohang -p
 
   - /bin/sleep 60 &
-  - sudo sh -c "timeout 30 nohang -c nohang/test.conf & tail /dev/zero"
+  - sudo bash -c "nohang -c test.conf & tail /dev/zero & sleep 30 && pkill python3"
   - sudo cat /var/log/nohang/nohang.log
 
   - sudo make uninstall
