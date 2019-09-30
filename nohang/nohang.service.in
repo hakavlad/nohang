@@ -5,10 +5,19 @@ Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 [Service]
 ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
 Restart=always
+RestartSec=0
 KillMode=mixed
-OOMPolicy=continue
 Nice=-15
 CPUSchedulingResetOnFork=true
+OOMScoreAdjust=-10
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=~@mount
+ProtectSystem=full
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
 
 [Install]
 WantedBy=multi-user.target
