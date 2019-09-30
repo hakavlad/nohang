@@ -45,7 +45,7 @@ def start_thread(func, *a, **k):
     """ run function in a new thread
     """
 
-    th = threading.Thread(target=func, args=a, kwargs=k)
+    th = threading.Thread(target=func, args=a, kwargs=k, daemon=True)
     th_name = th.getName()
 
     if debug_threading:
