@@ -645,13 +645,6 @@ def write(path, string):
         f.write(string)
 
 
-def write_self_oom_score_adj(new_value):
-    """
-    """
-    if root:
-        write('/proc/self/oom_score_adj', new_value)
-
-
 def valid_re(reg_exp):
     """Validate regular expression.
     """
@@ -2659,29 +2652,6 @@ separate_log = False  # will be overwritten after parse config
 
 
 cgroup_v1_index, cgroup_v2_index = find_cgroup_indexes()
-
-
-# del it
-self_oom_score_adj_min = '-100'
-self_oom_score_adj_max = '-10'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-write_self_oom_score_adj(self_oom_score_adj_min)
 
 
 pid_list = get_pid_list()

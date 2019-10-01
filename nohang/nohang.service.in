@@ -1,6 +1,7 @@
 [Unit]
 Description=Highly configurable OOM prevention daemon
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
+After=system.slice
 
 [Service]
 ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
@@ -11,13 +12,12 @@ Nice=-15
 CPUSchedulingResetOnFork=true
 OOMScoreAdjust=-10
 RestrictRealtime=yes
-RestrictSUIDSGID=yes
 MemoryDenyWriteExecute=yes
-SystemCallFilter=~@mount
-ProtectSystem=full
-ProtectControlGroups=true
 ProtectKernelModules=true
-ProtectKernelTunables=true
+SystemCallFilter=~@mount ~@clock ~@reboot ~@resources ~@setuid ~@swap
+SystemCallArchitectures=native
+ReadOnlyPaths=/
+ReadWritePaths=/tmp /var /run /dev/shm
 
 [Install]
 WantedBy=multi-user.target
