@@ -14,8 +14,8 @@ OOMScoreAdjust=-10
 RestrictRealtime=yes
 MemoryDenyWriteExecute=yes
 ProtectKernelModules=true
-SystemCallFilter=~@mount ~@clock ~@reboot ~@resources ~@setuid ~@swap
 SystemCallArchitectures=native
+SystemCallFilter=~@mount
 ReadOnlyPaths=/
 ReadWritePaths=/tmp /var /run /dev/shm
 
