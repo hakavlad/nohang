@@ -15,9 +15,10 @@ RestrictRealtime=yes
 MemoryDenyWriteExecute=yes
 ProtectKernelModules=true
 SystemCallArchitectures=native
-SystemCallFilter=~@mount
 ReadOnlyPaths=/
 ReadWritePaths=/tmp /var /run /dev/shm
+CapabilityBoundingSet=~CAP_SYS_ADMIN CAP_LINUX_IMMUTABLE CAP_SYS_BOOT CAP_SYS_CHROOT CAP_SYS_MODULE CAP_SYS_NICE CAP_SYS_TIME CAP_SYS_RESOURCE CAP_BLOCK_SUSPEND CAP_NET_ADMIN CAP_MKNOD CAP_AUDIT_CONTROL
+AmbientCapabilities=~CAP_SYS_ADMIN CAP_LINUX_IMMUTABLE CAP_SYS_BOOT CAP_SYS_CHROOT CAP_SYS_MODULE CAP_SYS_NICE CAP_SYS_TIME CAP_SYS_RESOURCE CAP_BLOCK_SUSPEND CAP_NET_ADMIN CAP_MKNOD CAP_AUDIT_CONTROL
 
 [Install]
 WantedBy=multi-user.target
