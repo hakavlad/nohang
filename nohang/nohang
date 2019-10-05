@@ -11,6 +11,7 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 
 
+
 ###############################################################################
 
 # define functions
@@ -19,25 +20,27 @@ from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 def exe(cmd):
     """ execute cmd in subprocess.Popen()
     """
+    cmd_list = shlex.split(cmd)
 
     cmd_num_dict['cmd_num'] += 1
     cmd_num = cmd_num_dict['cmd_num']
-    log('Execute the command({}) in {}: {}'.format(
+
+    log('Execute the command ({}) in {}: {}'.format(
         cmd_num,
         threading.current_thread().getName(),
-        cmd))
+        cmd_list))
     t3 = monotonic()
-    with Popen(cmd, shell=True) as proc:
+    with Popen(cmd_list) as proc:
         try:
             proc.wait(timeout=exe_timeout)
             exit_status = proc.poll()
             t4 = monotonic()
-            log('Command({}) execution completed in {} sec; exit status' \
+            log('Command ({}) execution completed in {} sec; exit status' \
                 ': {}'.format(cmd_num, round(t4 - t3, 3), exit_status))
         except TimeoutExpired:
             proc.kill()
             t4 = monotonic()
-            log('TimeoutExpired for the command({}) in {} sec'.format(
+            log('TimeoutExpired for the command ({}) in {} sec'.format(
                 cmd_num, round(t4 - t3, 3)))
 
 
@@ -61,9 +64,9 @@ def start_thread(func, *a, **k):
         t2 = monotonic()
 
         if debug_threading:
-            log('{} has started in {} ms, {} threads currently alive'.format(
-                th_name, round((t2 - t1) * 1000, 1), threading.active_count()
-                ))
+            log('{} has started in {} ms, {} threads are ' \
+                'currently alive'.format(th_name, round((
+                    t2 - t1) * 1000, 1), threading.active_count()))
 
     except RuntimeError:
 
@@ -153,6 +156,17 @@ def pop(cmd, username):
     """ run cmd in subprocess.Popen()
     """
 
+
+    cmd_num_dict['cmd_num'] += 1
+    cmd_num = cmd_num_dict['cmd_num']
+
+    log('Execute the Command-{} {} in {}'.format(
+        cmd_num,
+        cmd,
+        threading.current_thread().getName()
+        ))
+
+
     if swap_total == 0:
         wait_time = 2
     else:
@@ -164,18 +178,15 @@ def pop(cmd, username):
         try:
             proc.wait(timeout=wait_time)
             err = proc.poll()
+            t4 = monotonic()
         except TimeoutExpired:
             proc.kill()
+            t4 = monotonic()
+
             if debug_gui_notifications:
                 log('TimeoutExpired: notify user: {}'.format(username))
 
-    t4 = monotonic()
-
-    err = 0
-
     if debug_gui_notifications:
-        pass
-        #log('Popen time: {} sec; exit status: {}; cmd: {}'.format(round(t4 - t3, 3), err, cmd))
         log('Popen time: {} sec; exit status: {}; cmd: {}'.format(round(t4 - t3, 3), err, cmd))
 
 
@@ -279,15 +290,18 @@ def send_notify(threshold, name, pid):
     """
 
     title = 'Freeze prevention'
-    body = '<b>{}</b> [{}] <b>{}</b>'.format(
-        notify_sig_dict[threshold],
-        pid,
-        name.replace(
-            # symbol '&' can break notifications in some themes,
-            # therefore it is replaced by '*'
-            '&', '*'
-        )
-    )
+
+    if hide_corrective_action_type:
+        body = 'Corrective action applied'
+    else:
+        body = '<b>{}</b> [{}] <b>{}</b>'.format(
+            notify_sig_dict[threshold],
+            pid,
+            name.replace(
+                # symbol '&' can break notifications in some themes,
+                # therefore it is replaced by '*'
+                '&', '*'
+            ))
 
     start_thread(send_notification, title, body)
 
@@ -301,9 +315,12 @@ def send_notify_etc(pid, name, command):
     pid: str process pid
     """
     title = 'Freeze prevention'
-    body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the co' \
-        'mmand:\n<b>{}</b>'.format(
-            pid, name.replace('&', '*'), command.replace('&', '*'))
+    if hide_corrective_action_type:
+        body = 'Corrective action applied'
+    else:
+        body = '<b>Victim is</b> [{}] <b>{}</b>\nExecute the command:\n<b>' \
+               '{}</b>'.format(pid, name.replace(
+                   '&', '*'), command.replace('&', '*'))
 
     start_thread(send_notification, title, body)
 
@@ -3016,7 +3033,22 @@ print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
 print_config_at_startup = conf_parse_bool('print_config_at_startup')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 debug_sleep = conf_parse_bool('debug_sleep')
+
+hide_corrective_action_type = conf_parse_bool('hide_corrective_action_type')
+
+
+
+
 low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
+
+
+
+
+
+
+
+
+
 
 
 post_action_gui_notifications = conf_parse_bool(
@@ -3369,33 +3401,35 @@ if separate_log:
     import logging
 
     log_dir = '/var/log/nohang'
-
-    try:
-        os.mkdir(log_dir)
-    except PermissionError:
-        print('ERROR: can not create log dir')
-    except FileExistsError:
-        pass
-
     logfile = log_dir + '/nohang.log'
 
     try:
-        with open(logfile, 'a') as f:
-            pass
-    except FileNotFoundError:
-        print('ERROR: log FileNotFoundError')
+        os.mkdir(log_dir)
+    except FileExistsError:
+        pass
     except PermissionError:
-        print('ERROR: log PermissionError')
+        errprint('ERROR: cannot create {}'.format(log_dir))
+
+    try:
+        os.chmod(log_dir, mode=0o750)
+    except FileNotFoundError:
+        errprint('ERROR: file not found: {}'.format(log_dir))
+    except PermissionError:
+        errprint('ERROR: permission denied: {}'.format(log_dir))
 
     try:
         logging.basicConfig(
             filename=logfile,
             level=logging.INFO,
             format="%(asctime)s: %(message)s")
-    except PermissionError:
-        errprint('ERROR: Permission denied: {}'.format(logfile))
     except FileNotFoundError:
-        errprint('ERROR: FileNotFoundError: {}'.format(logfile))
+        errprint('ERROR: file not found: {}'.format(logfile))
+    except PermissionError:
+        errprint('ERROR: permission denied: {}'.format(logfile))
+
+
+
+
 
 
 if 'min_mem_report_interval' in config_dict:
@@ -3511,7 +3545,9 @@ if (low_memory_warnings_enabled or \
     post_kill_exe != ''):
 
     import threading
+    import shlex
     from subprocess import Popen, TimeoutExpired
+
 
 
 
