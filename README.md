@@ -59,8 +59,9 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 ## Demo
 
-- Old demo: `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU).
-- New demo: `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0).
+- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) (just old demo without swap space).
+- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) (running multiple fast memory hogs at the same time without swap space).
+- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) (opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram).
 
 ## Requirements
 
@@ -147,7 +148,7 @@ optional arguments:
 
 ## How to configure
 
-The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang.conf). The configuration includes the following sections:
+The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang/nohang.conf). The configuration includes the following sections:
 
 1. Common zram settings
 2. Common PSI settings
@@ -409,12 +410,13 @@ It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
  <summary>Output example</summary>
 
 ```
-$ psi-top
-cgroup2 root dir: /sys/fs/cgroup/unified
+$ $ psi-top
+cgroup2 mountpoint: /sys/fs/cgroup
       avg10  avg60 avg300         avg10  avg60 avg300  cgroup2
       -----  ----- ------         -----  ----- ------  ---------
-some  46.72  31.48  22.60 | full  45.67  30.53  21.55  [SYSTEM]
-some  44.29  28.54  20.08 | full  43.42  27.88  19.43  /user.slice
+some   0.00   0.21   1.56 | full   0.00   0.16   1.14  [SYSTEM_WIDE]
+some   0.00   0.21   1.56 | full   0.00   0.16   1.14
+some   0.00   0.15   1.11 | full   0.00   0.12   0.89  /user.slice
 some  45.92  28.77  20.19 | full  45.05  28.17  19.56  /user.slice/user-1000.slice
 some   1.44   4.67   9.24 | full   1.44   4.65   9.20  /user.slice/user-1000.slice/user@1000.service
 some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/pulseaudio.service
@@ -431,8 +433,6 @@ some   0.00   2.44   6.78 | full   0.00   2.43   6.74  /user.slice/user-1000.sli
 some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-mtp-volume-monitor.service
 some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /user.slice/user-1000.slice/user@1000.service/gvfs-afc-volume-monitor.service
 some  44.99  28.30  19.41 | full  44.10  27.70  18.79  /user.slice/user-1000.slice/session-2.scope
-some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /nohang.slice
-some   0.00   0.00   0.00 | full   0.00   0.00   0.00  /nohang.slice/nohang.service
 some   0.00   0.31   0.53 | full   0.00   0.31   0.53  /init.scope
 some   7.25  11.40  13.34 | full   7.23  11.32  13.24  /system.slice
 some   0.00   0.01   0.02 | full   0.00   0.01   0.02  /system.slice/systemd-udevd.service
@@ -469,41 +469,55 @@ It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
 ```
 $ psi-monitor
-Set target to SYSTEM_WIDE to monitor /proc/pressure
-Starting psi-monitor, target: SYSTEM_WIDE, period: 2
+Starting psi-monitor
+target: SYSTEM_WIDE
+period: 2
 ------------------------------------------------------------------------------------------------------------------
  some cpu pressure   || some memory pressure | full memory pressure ||  some io pressure    |  full io pressure
 ---------------------||----------------------|----------------------||----------------------|---------------------
  avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300
 ------ ------ ------ || ------ ------ ------ | ------ ------ ------ || ------ ------ ------ | ------ ------ ------
-  0.17   0.83   0.57 ||  11.54  49.25  32.03 |  11.27  45.70  29.59 ||  42.80  78.67  42.78 |  42.09  74.13  39.81
-  0.14   0.80   0.57 ||   9.63  47.67  31.81 |   9.41  44.24  29.39 ||  40.12  77.01  42.68 |  39.54  72.62  39.73
-  0.11   0.77   0.56 ||   7.88  46.11  31.60 |   7.70  42.79  29.19 ||  32.85  74.49  42.39 |  32.38  70.25  39.46
-  0.09   0.75   0.56 ||   6.45  44.60  31.38 |   6.31  41.39  28.99 ||  27.08  72.09  42.11 |  26.69  67.98  39.19
-  0.07   0.72   0.55 ||   5.28  43.14  31.16 |   5.16  40.04  28.79 ||  22.90  69.86  41.85 |  22.58  65.89  38.95
-  0.06   0.70   0.55 ||   4.33  41.73  30.95 |   4.23  38.73  28.60 ||  18.75  67.57  41.56 |  18.49  63.73  38.69
-  0.05   0.67   0.55 ||   7.35  41.05  30.88 |   7.26  38.15  28.54 ||  20.24  66.25  41.46 |  20.03  62.53  38.61
-  0.04   0.65   0.54 ||   6.38  39.77  30.68 |   6.31  36.96  28.36 ||  17.48  64.24  41.21 |  17.31  60.65  38.38
-  0.03   0.63   0.54 ||   5.22  38.47  30.47 |   5.17  35.75  28.17 ||  14.67  62.21  40.94 |  14.53  58.73  38.13
-  0.02   0.61   0.54 ||   4.27  37.21  30.27 |   4.23  34.58  27.97 ||  12.02  60.17  40.66 |  11.90  56.81  37.87
-  0.02   0.59   0.53 ||   3.50  36.00  30.06 |   3.46  33.45  27.78 ||  10.20  58.27  40.40 |  10.10  55.01  37.62
-  0.01   0.57   0.53 ||   2.86  34.82  29.85 |   2.83  32.36  27.59 ||   8.35  56.36  40.12 |   8.27  53.21  37.36
-^CExit
-$ psi-monitor /user.slice
-Set target to /user.slice
-Starting psi-monitor, target: /user.slice, period: 2
+  0.13   0.26   0.08 ||   3.36  10.31   3.47 |   2.68   7.69   2.56 ||  20.24  26.90   8.60 |  18.80  23.16   7.33
+  0.11   0.25   0.08 ||   2.75   9.97   3.45 |   2.20   7.44   2.54 ||  18.38  26.34   8.61 |  17.21  22.73   7.35
+  0.09   0.25   0.07 ||   2.25   9.65   3.43 |   1.80   7.20   2.52 ||  15.05  25.48   8.55 |  14.09  21.99   7.30
+  0.07   0.24   0.07 ||   1.84   9.33   3.40 |   1.47   6.96   2.51 ||  13.05  24.78   8.52 |  12.26  21.40   7.28
+^C
+Peak values:  avg10  avg60 avg300
+-----------  ------ ------ ------
+some cpu       0.13   0.26   0.08
+-----------  ------ ------ ------
+some memory    3.36  10.31   3.47
+full memory    2.68   7.69   2.56
+-----------  ------ ------ ------
+some io       20.24  26.90   8.61
+full io       18.80  23.16   7.35
+$ psi-monitor -t /user.slice -l pm.log
+Starting psi-monitor
+target: /user.slice
+period: 2
+log file: pm.log
+cgroup2 mountpoint: /sys/fs/cgroup
 ------------------------------------------------------------------------------------------------------------------
  some cpu pressure   || some memory pressure | full memory pressure ||  some io pressure    |  full io pressure
 ---------------------||----------------------|----------------------||----------------------|---------------------
  avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300
 ------ ------ ------ || ------ ------ ------ | ------ ------ ------ || ------ ------ ------ | ------ ------ ------
-  0.00   0.00   0.00 ||   7.20  12.43  18.37 |   6.82  11.85  17.21 ||  31.15  40.69  36.31 |  30.08  39.47  34.62
-  0.00   0.00   0.00 ||   5.90  12.03  18.24 |   5.59  11.46  17.09 ||  25.50  39.35  36.06 |  24.63  38.18  34.39
-  0.00   0.00   0.00 ||   4.83  11.63  18.12 |   4.57  11.09  16.97 ||  20.88  38.07  35.81 |  20.17  36.93  34.15
-  0.00   0.00   0.00 ||   3.95  11.25  17.99 |   3.74  10.72  16.86 ||  17.10  36.82  35.57 |  16.52  35.72  33.92
-  0.00   0.00   0.00 ||   3.24  10.88  17.87 |   3.06  10.37  16.74 ||  14.00  35.62  35.33 |  13.52  34.55  33.68
-  0.00   0.00   0.00 ||   2.65  10.53  17.75 |   2.51  10.03  16.63 ||  11.46  34.45  35.08 |  11.07  33.42  33.45
-^CExit
+ 28.32  11.97   3.03 ||   0.00   1.05   1.65 |   0.00   0.85   1.33 ||   0.55   7.79   7.21 |   0.54   7.52   6.80
+ 29.53  12.72   3.25 ||   0.00   1.01   1.64 |   0.00   0.82   1.32 ||   0.81   7.60   7.17 |   0.44   7.27   6.76
+ 29.80  13.32   3.44 ||   0.00   0.98   1.63 |   0.00   0.79   1.31 ||   0.66   7.35   7.12 |   0.36   7.03   6.71
+ 29.83  13.86   3.62 ||   0.00   0.95   1.62 |   0.00   0.77   1.30 ||   0.54   7.11   7.08 |   0.30   6.80   6.66
+ 29.86  14.39   3.80 ||   0.00   0.91   1.60 |   0.00   0.74   1.29 ||   0.44   6.88   7.03 |   0.24   6.58   6.62
+ 30.07  14.94   3.99 ||   0.00   0.88   1.59 |   0.00   0.72   1.28 ||   0.36   6.65   6.98 |   0.20   6.36   6.57
+^C
+Peak values:  avg10  avg60 avg300
+-----------  ------ ------ ------
+some cpu      30.07  14.94   3.99
+-----------  ------ ------ ------
+some memory    0.00   1.05   1.65
+full memory    0.00   0.85   1.33
+-----------  ------ ------ ------
+some io        0.81   7.79   7.21
+full io        0.54   7.52   6.80
 ```
 </details>
 
