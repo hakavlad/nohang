@@ -1,12 +1,74 @@
 #!/usr/bin/env python3
+"""psi-monitor"""
 
 import os
 from time import sleep
 from ctypes import CDLL
+from sys import stdout, exit
 from argparse import ArgumentParser
+from signal import signal, SIGTERM, SIGINT, SIGQUIT, SIGHUP
 
 
-###############################################################################
+def form(num):
+    """
+    """
+    s = str(num).split('.')
+    return '{}.{:0<2}'.format(s[0], s[1])
+
+
+def signal_handler(signum, frame):
+    """
+    """
+    def signal_handler_inner(signum, frame):
+        pass
+    for i in sig_list:
+        signal(i, signal_handler_inner)
+
+    log('')
+
+    lpd = len(peaks_dict)
+    if lpd != 15:
+        exit()
+
+    log('Peak values:  avg10  avg60 avg300')
+
+    log('-----------  ------ ------ ------')
+
+    log('some cpu     {:>6} {:>6} {:>6}'.format(
+        form(peaks_dict['c_some_avg10']),
+        form(peaks_dict['c_some_avg60']),
+        form(peaks_dict['c_some_avg300']),
+    ))
+
+    log('-----------  ------ ------ ------')
+
+    log('some memory  {:>6} {:>6} {:>6}'.format(
+        form(peaks_dict['m_some_avg10']),
+        form(peaks_dict['m_some_avg60']),
+        form(peaks_dict['m_some_avg300']),
+    ))
+
+    log('full memory  {:>6} {:>6} {:>6}'.format(
+        form(peaks_dict['m_full_avg10']),
+        form(peaks_dict['m_full_avg60']),
+        form(peaks_dict['m_full_avg300']),
+    ))
+
+    log('-----------  ------ ------ ------')
+
+    log('some io      {:>6} {:>6} {:>6}'.format(
+        form(peaks_dict['i_some_avg10']),
+        form(peaks_dict['i_some_avg60']),
+        form(peaks_dict['i_some_avg300']),
+    ))
+
+    log('full io      {:>6} {:>6} {:>6}'.format(
+        form(peaks_dict['i_full_avg10']),
+        form(peaks_dict['i_full_avg60']),
+        form(peaks_dict['i_full_avg300']),
+    ))
+
+    exit()
 
 
 def cgroup2_root():
@@ -26,21 +88,7 @@ def mlockall():
     MCL_FUTURE = 2
     MCL_ONFAULT = 4
 
-    libc = CDLL('libc.so.6', use_errno=True)
-
-    result = libc.mlockall(
-        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
-    )
-    if result != 0:
-        result = libc.mlockall(
-            MCL_CURRENT | MCL_FUTURE
-        )
-        if result != 0:
-            pass
-        else:
-            pass
-    else:
-        pass
+    CDLL('libc.so.6').mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)
 
 
 def psi_file_mem_to_metrics(psi_path):
@@ -49,17 +97,13 @@ def psi_file_mem_to_metrics(psi_path):
 
     with open(psi_path) as f:
         psi_list = f.readlines()
-    # print(psi_list)
     some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
-    # print(some_list, full_list)
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
     some_avg300 = some_list[3].split('=')[1]
-
     full_avg10 = full_list[1].split('=')[1]
     full_avg60 = full_list[2].split('=')[1]
     full_avg300 = full_list[3].split('=')[1]
-
     return (some_avg10, some_avg60, some_avg300,
             full_avg10, full_avg60, full_avg300)
 
@@ -70,26 +114,19 @@ def psi_file_cpu_to_metrics(psi_path):
 
     with open(psi_path) as f:
         psi_list = f.readlines()
-    # print(psi_list)
     some_list = psi_list[0].split(' ')
-    # print(some_list, full_list)
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
     some_avg300 = some_list[3].split('=')[1]
-
     return (some_avg10, some_avg60, some_avg300)
 
 
 def log(*msg):
     """
     """
-
     print(*msg)
-
     if separate_log:
         logging.info(*msg)
-
-###############################################################################
 
 
 parser = ArgumentParser()
@@ -136,16 +173,12 @@ else:
     separate_log = True
     import logging
 
-
-def sleeeep():
-    try:
-        sleep(period)
-    except KeyboardInterrupt:
-        log('Exit')
-        exit()
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
 
 
-###############################################################################
+for i in sig_list:
+    signal(i, signal_handler)
+
 
 if separate_log:
     logging.basicConfig(
@@ -153,13 +186,11 @@ if separate_log:
         level=logging.INFO,
         format="%(asctime)s: %(message)s")
 
-###############################################################################
-
-
-log('target:    {}'.format(target))
-log('period:    {}'.format(period))
+log('Starting psi-monitor')
+log('target: {}'.format(target))
+log('period: {}'.format(period))
 if log_file is not None:
-    log('log file:  {}'.format(log_file))
+    log('log file: {}'.format(log_file))
 
 
 if not os.path.exists('/proc/pressure'):
@@ -196,7 +227,6 @@ else:
 mlockall()
 
 
-log('Starting psi-monitor, target: {}, period: {}'.format(target, period))
 log('----------------------------------------------------------------------'
     '--------------------------------------------')
 log(' some cpu pressure   || some memory pressure | full memory pressure ||'
@@ -209,22 +239,25 @@ log('------ ------ ------ || ------ ------ ------ | ------ ------ ------ ||'
     ' ------ ------ ------ | ------ ------ ------')
 
 
+peaks_dict = dict()
+
+
 while True:
 
     if not os.path.exists(cpu_file):
         log('ERROR: cpu pressure file does not exist:    {}'.format(cpu_file))
-        sleeeep()
+        sleep(period)
         continue
 
     if not os.path.exists(memory_file):
         log('ERROR: memory pressure file does not exist: {}'.format(
             memory_file))
-        sleeeep()
+        sleep(period)
         continue
 
     if not os.path.exists(io_file):
         log('ERROR: io pressure file does not exist:     {}'.format(cpu_file))
-        sleeeep()
+        sleep(period)
         continue
 
     (c_some_avg10, c_some_avg60, c_some_avg300
@@ -238,26 +271,97 @@ while True:
      i_full_avg10, i_full_avg60, i_full_avg300
      ) = psi_file_mem_to_metrics(io_file)
 
-    log('{} {} {} || {} {} {} | {} {} {} || {} {} {} | {} {} {}'.format(
+    log('{:>6} {:>6} {:>6} || {:>6} {:>6} {:>6} | {:>6} {:>6} {:>6} || {:>6}'
+        ' {:>6} {:>6} | {:>6} {:>6} {:>6}'.format(
 
-        c_some_avg10.rjust(6),
-        c_some_avg60.rjust(6),
-        c_some_avg300.rjust(6),
+            c_some_avg10, c_some_avg60, c_some_avg300,
 
-        m_some_avg10.rjust(6),
-        m_some_avg60.rjust(6),
-        m_some_avg300.rjust(6),
-        m_full_avg10.rjust(6),
-        m_full_avg60.rjust(6),
-        m_full_avg300.rjust(6),
+            m_some_avg10, m_some_avg60, m_some_avg300,
+            m_full_avg10, m_full_avg60, m_full_avg300,
 
-        i_some_avg10.rjust(6),
-        i_some_avg60.rjust(6),
-        i_some_avg300.rjust(6),
-        i_full_avg10.rjust(6),
-        i_full_avg60.rjust(6),
-        i_full_avg300.rjust(6)
+            i_some_avg10, i_some_avg60, i_some_avg300,
+            i_full_avg10, i_full_avg60, i_full_avg300
 
-    ))
+        ))
 
-    sleeeep()
+    c_some_avg10 = float(c_some_avg10)
+    if ('c_some_avg10' not in peaks_dict or
+            peaks_dict['c_some_avg10'] < c_some_avg10):
+        peaks_dict['c_some_avg10'] = c_some_avg10
+
+    c_some_avg60 = float(c_some_avg60)
+    if ('c_some_avg60' not in peaks_dict or
+            peaks_dict['c_some_avg60'] < c_some_avg60):
+        peaks_dict['c_some_avg60'] = c_some_avg60
+
+    c_some_avg300 = float(c_some_avg300)
+    if ('c_some_avg300' not in peaks_dict or
+            peaks_dict['c_some_avg300'] < c_some_avg300):
+        peaks_dict['c_some_avg300'] = c_some_avg300
+
+    #######################################################################
+
+    m_some_avg10 = float(m_some_avg10)
+    if ('m_some_avg10' not in peaks_dict or
+            peaks_dict['m_some_avg10'] < m_some_avg10):
+        peaks_dict['m_some_avg10'] = m_some_avg10
+
+    m_some_avg60 = float(m_some_avg60)
+    if ('m_some_avg60' not in peaks_dict or
+            peaks_dict['m_some_avg60'] < m_some_avg60):
+        peaks_dict['m_some_avg60'] = m_some_avg60
+
+    m_some_avg300 = float(m_some_avg300)
+    if ('m_some_avg300' not in peaks_dict or
+            peaks_dict['m_some_avg300'] < m_some_avg300):
+        peaks_dict['m_some_avg300'] = m_some_avg300
+
+    m_full_avg10 = float(m_full_avg10)
+    if ('m_full_avg10' not in peaks_dict or
+            peaks_dict['m_full_avg10'] < m_full_avg10):
+        peaks_dict['m_full_avg10'] = m_full_avg10
+
+    m_full_avg60 = float(m_full_avg60)
+    if ('m_full_avg60' not in peaks_dict or
+            peaks_dict['m_full_avg60'] < m_full_avg60):
+        peaks_dict['m_full_avg60'] = m_full_avg60
+
+    m_full_avg300 = float(m_full_avg300)
+    if ('m_full_avg300' not in peaks_dict or
+            peaks_dict['m_full_avg300'] < m_full_avg300):
+        peaks_dict['m_full_avg300'] = m_full_avg300
+
+    #######################################################################
+
+    i_some_avg10 = float(i_some_avg10)
+    if ('i_some_avg10' not in peaks_dict or
+            peaks_dict['i_some_avg10'] < i_some_avg10):
+        peaks_dict['i_some_avg10'] = i_some_avg10
+
+    i_some_avg60 = float(i_some_avg60)
+    if ('i_some_avg60' not in peaks_dict or
+            peaks_dict['i_some_avg60'] < i_some_avg60):
+        peaks_dict['i_some_avg60'] = i_some_avg60
+
+    i_some_avg300 = float(i_some_avg300)
+    if ('i_some_avg300' not in peaks_dict or
+            peaks_dict['i_some_avg300'] < i_some_avg300):
+        peaks_dict['i_some_avg300'] = i_some_avg300
+
+    i_full_avg10 = float(i_full_avg10)
+    if ('i_full_avg10' not in peaks_dict or
+            peaks_dict['i_full_avg10'] < i_full_avg10):
+        peaks_dict['i_full_avg10'] = i_full_avg10
+
+    i_full_avg60 = float(i_full_avg60)
+    if ('i_full_avg60' not in peaks_dict or
+            peaks_dict['i_full_avg60'] < i_full_avg60):
+        peaks_dict['i_full_avg60'] = i_full_avg60
+
+    i_full_avg300 = float(i_full_avg300)
+    if ('i_full_avg300' not in peaks_dict or
+            peaks_dict['i_full_avg300'] < i_full_avg300):
+        peaks_dict['i_full_avg300'] = i_full_avg300
+
+    stdout.flush()
+    sleep(period)
