@@ -59,9 +59,11 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 ## Demo
 
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) (just old demo without swap space).
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) (running multiple fast memory hogs at the same time without swap space).
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) (opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram).
+`nohang` prevents Out Of Memory with GUI notifications:
+
+- [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) - just old demo without swap space.
+- [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) - running multiple fast memory hogs at the same time without swap space.
+- [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) - opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram.
 
 ## Requirements
 
@@ -113,12 +115,21 @@ To install the latest version on any distro:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
-$ sudo make install  # `sudo make install-desktop` to enable GUI notifications by default
+$ sudo make install
 ```
 
-To enable and start on systems with systemd:
-```bash
-$ sudo make systemd
+`nohang`  package comes with two systemd units that run with different config files: `nohang.conf` and `nohang-desktop.conf`.
+
+To enable and start unit without GUI notifications:
+```
+$ sudo systemctl enable nohang
+$ sudo systemctl start nohang
+```
+
+To enable and start unit with GUI notifications:
+```
+$ sudo systemctl enable nohang-desktop
+$ sudo systemctl start nohang-desktop
 ```
 
 To enable and start on systems without systemd please make a PR to fix Makefile.
