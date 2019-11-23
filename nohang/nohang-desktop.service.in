@@ -1,0 +1,28 @@
+[Unit]
+Description=Highly configurable OOM prevention daemon
+Documentation=man:nohang(1) https://github.com/hakavlad/nohang
+Conflicts=nohang.service
+After=system.slice
+
+[Service]
+ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang-desktop.conf
+Restart=always
+RestartSec=0
+KillMode=mixed
+TasksMax=100
+Nice=-15
+CPUSchedulingResetOnFork=true
+OOMScoreAdjust=-10
+UMask=0027
+PrivateTmp=true
+RestrictRealtime=yes
+MemoryDenyWriteExecute=yes
+ProtectKernelModules=true
+SystemCallArchitectures=native
+ReadOnlyPaths=/
+ReadWritePaths=/tmp /var /run /dev/shm
+CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID
+AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID
+
+[Install]
+WantedBy=multi-user.target

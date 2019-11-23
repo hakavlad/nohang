@@ -4,15 +4,10 @@ language: python
 
 sudo: required
 
-before_install:
-  - sudo apt-get install -y pylint3
-
 script:
   - sudo make install
-  - sudo make systemd
+  - sudo systemctl enable --now nohang
   - sudo systemctl stop nohang.service
-
-  - make pylint
 
   - oom-sort -h
   - oom-sort
@@ -21,6 +16,7 @@ script:
   - nohang -v
 
   - nohang -cc /etc/nohang/nohang.conf
+  - nohang -cc /etc/nohang/nohang-desktop.conf
   - nohang -cc nohang/test.conf
 
   - nohang -p
