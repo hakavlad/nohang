@@ -111,7 +111,7 @@ $ sudo systemctl enable --now nohang
 
 #### To install on Debian and Ubuntu please make a deb package.
 
-To install the latest version on any distro:
+#### To install the latest version on any distro:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
@@ -132,9 +132,9 @@ $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
 ```
 
-To enable and start on systems without systemd please make a PR to fix Makefile.
+#### To enable and start on systems without systemd please make a PR to fix Makefile.
 
-To uninstall:
+#### To uninstall:
 ```bash
 $ sudo make uninstall
 ```
@@ -471,7 +471,7 @@ some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-log
 ```
 </details>
 
-### psi-monitor
+### psi2log
 
 It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
@@ -479,8 +479,8 @@ It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
  <summary>Output example</summary>
 
 ```
-$ psi-monitor
-Starting psi-monitor
+$ psi2log
+Starting psi2log
 target: SYSTEM_WIDE
 period: 2
 ------------------------------------------------------------------------------------------------------------------
@@ -502,8 +502,8 @@ full memory    2.68   7.69   2.56
 -----------  ------ ------ ------
 some io       20.24  26.90   8.61
 full io       18.80  23.16   7.35
-$ psi-monitor -t /user.slice -l pm.log
-Starting psi-monitor
+$ psi2log -t /user.slice -l pm.log
+Starting psi2log
 target: /user.slice
 period: 2
 log file: pm.log
@@ -534,7 +534,8 @@ full io        0.54   7.52   6.80
 
 ## Contribution
 
-Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
+- Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
+- Pull requests in `dev` branch are welcome.
 
 ## Changelog
 
