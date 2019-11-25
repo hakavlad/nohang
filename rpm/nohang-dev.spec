@@ -46,7 +46,7 @@ Desktop version of %{name}.
 
 
 %prep
-%autosetup -n %{appname}-dev
+%autosetup -n %{appname}-dev-%{version}
 
 
 %build
