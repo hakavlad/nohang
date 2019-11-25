@@ -540,3 +540,7 @@ full io        0.54   7.52   6.80
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
+
+## Status
+
+Copr automated dev build: [![Copr automated dev build status](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/)
