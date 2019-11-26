@@ -59,9 +59,11 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 ## Demo
 
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) (just old demo without swap space).
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) (running multiple fast memory hogs at the same time without swap space).
-- `nohang` prevents Out Of Memory with GUI notifications: [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) (opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram).
+`nohang` prevents Out Of Memory with GUI notifications:
+
+- [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) - just old demo without swap space.
+- [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) - running multiple fast memory hogs at the same time without swap space.
+- [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) - opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram.
 
 ## Requirements
 
@@ -109,21 +111,30 @@ $ sudo systemctl enable --now nohang
 
 #### To install on Debian and Ubuntu please make a deb package.
 
-To install the latest version on any distro:
+#### To install the latest version on any distro:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
-$ sudo make install  # `sudo make install-desktop` to enable GUI notifications by default
+$ sudo make install
 ```
 
-To enable and start on systems with systemd:
-```bash
-$ sudo make systemd
+`nohang`  package comes with two systemd units that run with different config files: `nohang.conf` and `nohang-desktop.conf`.
+
+To enable and start unit without GUI notifications:
+```
+$ sudo systemctl enable nohang
+$ sudo systemctl start nohang
 ```
 
-To enable and start on systems without systemd please make a PR to fix Makefile.
+To enable and start unit with GUI notifications:
+```
+$ sudo systemctl enable nohang-desktop
+$ sudo systemctl start nohang-desktop
+```
 
-To uninstall:
+#### To enable and start on systems without systemd please make a PR to fix Makefile.
+
+#### To uninstall:
 ```bash
 $ sudo make uninstall
 ```
@@ -460,7 +471,7 @@ some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-log
 ```
 </details>
 
-### psi-monitor
+### psi2log
 
 It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
@@ -468,8 +479,8 @@ It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
  <summary>Output example</summary>
 
 ```
-$ psi-monitor
-Starting psi-monitor
+$ psi2log
+Starting psi2log
 target: SYSTEM_WIDE
 period: 2
 ------------------------------------------------------------------------------------------------------------------
@@ -491,8 +502,8 @@ full memory    2.68   7.69   2.56
 -----------  ------ ------ ------
 some io       20.24  26.90   8.61
 full io       18.80  23.16   7.35
-$ psi-monitor -t /user.slice -l pm.log
-Starting psi-monitor
+$ psi2log -t /user.slice -l pm.log
+Starting psi2log
 target: /user.slice
 period: 2
 log file: pm.log
@@ -523,8 +534,13 @@ full io        0.54   7.52   6.80
 
 ## Contribution
 
-Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
+- Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
+- Pull requests in `dev` branch are welcome.
 
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
+
+## Status
+
+Copr automated dev build: [![Copr automated dev build status](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/)

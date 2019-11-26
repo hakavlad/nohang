@@ -168,9 +168,9 @@ def pop(cmd, username):
 
 
     if swap_total == 0:
-        wait_time = 2
+        wait_time = 5
     else:
-        wait_time = 20
+        wait_time = 25
 
     t3 = monotonic()
 
@@ -271,11 +271,14 @@ def send_notify_warn():
     else:
 
         title = 'Low memory'
+        body = 'Save your unsaved data!'
 
+        """"
         body = 'MemAvail: {}%\nSwapFree: {}%'.format(
             round(mem_available / mem_total * 100),
             round(swap_free / (swap_total + 0.1) * 100)
         )
+        """
 
         start_thread(send_notification, title, body)
 
@@ -289,7 +292,7 @@ def send_notify(threshold, name, pid):
     pid: str process pid
     """
 
-    title = 'Freeze prevention'
+    title = 'System hang prevention'
 
     if hide_corrective_action_type:
         body = 'Corrective action applied'
@@ -314,7 +317,7 @@ def send_notify_etc(pid, name, command):
     name: str process name
     pid: str process pid
     """
-    title = 'Freeze prevention'
+    title = 'System hang prevention'
     if hide_corrective_action_type:
         body = 'Corrective action applied'
     else:

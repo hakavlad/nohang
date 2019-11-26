@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""psi-monitor"""
+"""psi2log"""
 
 import os
 from time import sleep
@@ -186,7 +186,7 @@ if separate_log:
         level=logging.INFO,
         format="%(asctime)s: %(message)s")
 
-log('Starting psi-monitor')
+log('Starting psi2log')
 log('target: {}'.format(target))
 log('period: {}'.format(period))
 if log_file is not None:
