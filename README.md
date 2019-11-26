@@ -543,5 +543,5 @@ See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
 
 ## dev branch status
 
-[![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=dev)](https://travis-ci.org/hakavlad/nohang)
+[![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=dev)](https://travis-ci.org/hakavlad/nohang/branches)
 [![Copr automated dev build status](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/atim/nohang-dev/package/nohang-dev/)
