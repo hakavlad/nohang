@@ -168,9 +168,9 @@ def pop(cmd, username):
 
 
     if swap_total == 0:
-        wait_time = 2
+        wait_time = 5
     else:
-        wait_time = 20
+        wait_time = 25
 
     t3 = monotonic()
 
