@@ -5,7 +5,7 @@
 
 Name:           %{appname}-dev
 Version:        0.1
-Release:        %{build_timestamp}%{?dist}
+Release:        1.%{build_timestamp}%{?dist}
 Summary:        Highly configurable OOM prevention daemon
 
 License:        MIT
