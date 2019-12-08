@@ -5,14 +5,16 @@ After=system.slice
 
 [Service]
 ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
+SyslogIdentifier=nohang
 Restart=always
 RestartSec=0
 KillMode=mixed
 TasksMax=100
-Nice=-15
+Nice=-5
 CPUSchedulingResetOnFork=true
-OOMScoreAdjust=-10
+OOMScoreAdjust=-5
 UMask=0027
+PrivateNetwork=true
 PrivateTmp=true
 RestrictRealtime=yes
 MemoryDenyWriteExecute=yes
