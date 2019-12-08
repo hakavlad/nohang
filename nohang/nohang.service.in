@@ -1,6 +1,7 @@
 [Unit]
 Description=Highly configurable OOM prevention daemon
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
+Conflicts=nohang-desktop.service
 After=system.slice
 
 [Service]
@@ -19,6 +20,8 @@ PrivateTmp=true
 RestrictRealtime=yes
 MemoryDenyWriteExecute=yes
 ProtectKernelModules=true
+RestrictNamespaces=yes
+LockPersonality=yes
 SystemCallArchitectures=native
 ReadOnlyPaths=/
 ReadWritePaths=/tmp /var /run /dev/shm
