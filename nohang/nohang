@@ -2368,7 +2368,7 @@ def implement_corrective_action(
         # После этого все должно быть супер охуенно.
 
         while True:
-            sleep(0.005)
+            sleep(0.01)
             d = monotonic() - kill_timestamp
             #print('Прошло времени:', d)
             iva = is_victim_alive(victim_id)
@@ -2383,11 +2383,13 @@ def implement_corrective_action(
 
             elif iva == 1:
                 #print('Жива и занимает память')
+
+                if vwd and d > sensitivity_test_time + 10:
+                    log("The victim doesn't respond on corrective action in {} sec".format(round(d, 3)))
+                    break
+
                 if not vwd and d > sensitivity_test_time:
-
-                    log("The victim doesn't respond on corrective action in {} sec".format(
-                        round(d, 3)))
-
+                    log("The victim doesn't respond on corrective action in {} sec".format(round(d, 3)))
                     break
 
             elif iva == 2:
