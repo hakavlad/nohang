@@ -7,26 +7,30 @@ After=system.slice
 [Service]
 ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
 SyslogIdentifier=nohang
+OOMScoreAdjust=-5
+KillMode=mixed
 Restart=always
 RestartSec=0
-KillMode=mixed
-TasksMax=100
-Nice=-5
-CPUSchedulingResetOnFork=true
-OOMScoreAdjust=-5
+TasksMax=50
 UMask=0027
+Nice=-5
+
+CPUSchedulingResetOnFork=true
+ProtectKernelModules=true
 PrivateNetwork=true
 PrivateTmp=true
-RestrictRealtime=yes
-MemoryDenyWriteExecute=yes
-ProtectKernelModules=true
-RestrictNamespaces=yes
 LockPersonality=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+MemoryDenyWriteExecute=yes
 SystemCallArchitectures=native
+
 ReadOnlyPaths=/
-ReadWritePaths=/tmp /var /run /dev/shm
-CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
-AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+ReadWritePaths=/tmp /var/tmp /var/log/nohang /dev/shm
+InaccessiblePaths=/home /root
+
+CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_DAC_READ_SEARCH CAP_SYS_PTRACE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_DAC_READ_SEARCH CAP_SYS_PTRACE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
 
 [Install]
 WantedBy=multi-user.target
