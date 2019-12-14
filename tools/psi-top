@@ -13,7 +13,7 @@ def psi_path_to_metrics(psi_path):
         psi_list = f.readlines()
     # print(psi_list)
     some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
-    #print(some_list, full_list)
+    # print(some_list, full_list)
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
     some_avg300 = some_list[3].split('=')[1]
