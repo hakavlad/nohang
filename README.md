@@ -98,7 +98,7 @@ Nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
 $ sudo yum install nohang
 $ sudo systemctl enable nohang
-$ sudo systemctl start --now nohang
+$ sudo systemctl start nohang
 ```
 
 Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
