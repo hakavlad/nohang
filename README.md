@@ -123,13 +123,13 @@ $ sudo make install
 To enable and start unit without GUI notifications:
 ```
 $ sudo systemctl enable nohang
-$ sudo systemctl start --now nohang
+$ sudo systemctl start now nohang
 ```
 
 To enable and start unit with GUI notifications:
 ```
 $ sudo systemctl enable nohang-desktop
-$ sudo systemctl start --now nohang-desktop
+$ sudo systemctl start now nohang-desktop
 ```
 
 #### To enable and start on systems without systemd please make a PR to fix Makefile.
