@@ -867,8 +867,8 @@ def pid_to_uid(pid):
 
 def pid_to_badness(pid):
     """Find and modify badness (if it needs)."""
+    oom_score_adj = None
     try:
-
         oom_score = int(rline1('/proc/' + pid + '/oom_score'))
         badness = oom_score
 
@@ -881,49 +881,113 @@ def pid_to_badness(pid):
             name = pid_to_name(pid)
             for re_tup in badness_adj_re_name_list:
                 if search(re_tup[1], name) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_cgroup_v1:
             cgroup_v1 = pid_to_cgroup_v1(pid)
             for re_tup in badness_adj_re_cgroup_v1_list:
                 if search(re_tup[1], cgroup_v1) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_cgroup_v2:
             cgroup_v2 = pid_to_cgroup_v2(pid)
             for re_tup in badness_adj_re_cgroup_v2_list:
                 if search(re_tup[1], cgroup_v2) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_realpath:
             realpath = pid_to_realpath(pid)
             for re_tup in badness_adj_re_realpath_list:
                 if search(re_tup[1], realpath) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_cwd:
             cwd = pid_to_cwd(pid)
             for re_tup in badness_adj_re_cwd_list:
                 if search(re_tup[1], cwd) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_cmdline:
             cmdline = pid_to_cmdline(pid)
             for re_tup in badness_adj_re_cmdline_list:
                 if search(re_tup[1], cmdline) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_environ:
             environ = pid_to_environ(pid)
             for re_tup in badness_adj_re_environ_list:
                 if search(re_tup[1], environ) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if re_match_uid:
             uid = pid_to_uid(pid)
             for re_tup in badness_adj_re_uid_list:
                 if search(re_tup[1], uid) is not None:
-                    badness += int(re_tup[0])
+                    badness_adj = int(re_tup[0])
+                    if badness_adj <= 0:
+                        badness += badness_adj
+                    else:
+                        if oom_score_adj is None:
+                            oom_score_adj = int(rline1(
+                                '/proc/' + pid + '/oom_score_adj'))
+                        if oom_score_adj >= 0:
+                            badness += badness_adj
 
         if forbid_negative_badness:
             if badness < 0:
