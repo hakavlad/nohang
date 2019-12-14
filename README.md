@@ -61,9 +61,9 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 
 `nohang` prevents Out Of Memory with GUI notifications:
 
-- [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) - just old demo without swap space.
-- [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) - running multiple fast memory hogs at the same time without swap space.
-- [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) - opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram.
+- [https://youtu.be/ChTNu9m7uMU](https://youtu.be/ChTNu9m7uMU) – just old demo without swap space.
+- [https://youtu.be/UCwZS5uNLu0](https://youtu.be/UCwZS5uNLu0) – running multiple fast memory hogs at the same time without swap space.
+- [https://youtu.be/PLVWgNrVNlc](https://youtu.be/PLVWgNrVNlc) – opening multiple chromium tabs with 2.3 GiB memory and 1.8 GiB swap space on zram.
 
 ## Requirements
 
@@ -73,7 +73,7 @@ For basic usage:
 
 To show GUI notifications:
 - [notification server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (most of desktop environments use their own implementations)
-- `libnotify` (Fedora, Arch Linux) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
+- `libnotify` (Arch Linux, Fedora, openSUSE) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
 - `sudo` if nohang started with UID=0
 
 To use `PSI`:
@@ -81,7 +81,7 @@ To use `PSI`:
 
 ## Memory and CPU usage
 
-- VmRSS is about 10 - 12 MiB instead of the settings, about 10 MiB by default.
+- VmRSS is about 10–12 MiB instead of the settings, about 10 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
 ## How to install
@@ -98,10 +98,10 @@ Nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
 $ sudo yum install nohang
 $ sudo systemctl enable nohang
-$ sudo systemctl start nohang
+$ sudo systemctl start --now nohang
 ```
 
-Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there's a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
+Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
 #### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
@@ -123,13 +123,13 @@ $ sudo make install
 To enable and start unit without GUI notifications:
 ```
 $ sudo systemctl enable nohang
-$ sudo systemctl start nohang
+$ sudo systemctl start --now nohang
 ```
 
 To enable and start unit with GUI notifications:
 ```
 $ sudo systemctl enable nohang-desktop
-$ sudo systemctl start nohang-desktop
+$ sudo systemctl start --now nohang-desktop
 ```
 
 #### To enable and start on systems without systemd please make a PR to fix Makefile.
