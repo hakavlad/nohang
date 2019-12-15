@@ -48,8 +48,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 - Customizing victim selection: impact on the badness of processes via matching their names, cgroups, exe realpathes, environs, cmdlines and euids with specified regular expressions;
 - Customizing corrective actions: if the name or control group of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
     - `sysmemctl restart foo`;
-    - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID);
-    - `kill -TERM $PID && script.sh` (in addition to sending any signal, you can run a specified script).
+    - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID).
 - GUI notifications:
     - Notification of corrective actions taken and displaying the name and PID of the victim;
     - Low memory warnings (displays available memory).
@@ -81,7 +80,7 @@ To use `PSI`:
 
 ## Memory and CPU usage
 
-- VmRSS is about 10–12 MiB instead of the settings, about 10 MiB by default.
+- VmRSS is about 10–14 MiB instead of the settings, about 10 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
 ## How to install
@@ -123,13 +122,13 @@ $ sudo make install
 To enable and start unit without GUI notifications:
 ```
 $ sudo systemctl enable nohang
-$ sudo systemctl start now nohang
+$ sudo systemctl start nohang
 ```
 
 To enable and start unit with GUI notifications:
 ```
 $ sudo systemctl enable nohang-desktop
-$ sudo systemctl start now nohang-desktop
+$ sudo systemctl start nohang-desktop
 ```
 
 #### To enable and start on systems without systemd please make a PR to fix Makefile.
