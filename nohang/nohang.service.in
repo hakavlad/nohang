@@ -5,7 +5,7 @@ Conflicts=nohang-desktop.service
 After=system.slice
 
 [Service]
-ExecStart=/usr/local/bin/nohang --config /etc/nohang/nohang.conf
+ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang.conf
 SyslogIdentifier=nohang
 
 KillMode=mixed
