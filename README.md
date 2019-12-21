@@ -83,20 +83,16 @@ To use `PSI`:
 - VmRSS is about 10–14 MiB instead of the settings, about 10 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
-## Security notes
+## Warnings
 
-We always strive to be transparent with you, our esteemed users, and we strive to keep you informed of the following current security issues:
-
-- the project was founded by an incompetent monkey;
-- the author of the project lives in Russia;
 - the daemon runs with super-user privileges and has full access to all private memory of all processes and sensitive user data;
-- the daemon starts with increased priority and negative oom_score_adj;
-- the daemon is written in Python;
-- unit test code coverage is 0%;
-- the main way to handle low memory is to terminate processes;
+- the daemon starts with increased priority;
 - the daemon does not forbid you to shoot yourself in the foot: with some settings, unwanted mass killings of processes can occur.
 - the daemon is not a panacea: there are no universal settings that reliably protect against all types of threats;
-- the draft code of conduct has not been adopted, so you may be offended.
+
+## Known problems
+
+- Awful documentation.
 
 ## How to install
 
