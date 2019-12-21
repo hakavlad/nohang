@@ -1,36 +1,49 @@
 [Unit]
-Description=Highly configurable OOM prevention daemon
+Description=Sophisticated low memory handler
 Documentation=man:nohang(1) https://github.com/hakavlad/nohang
 Conflicts=nohang.service
 After=system.slice
 
 [Service]
-ExecStart=:TARGET_BIN:/nohang --config :TARGET_CONF:/nohang/nohang-desktop.conf
+ExecStart=/usr/local/bin/nohang --config /etc/nohang/nohang-desktop.conf
 SyslogIdentifier=nohang-desktop
-OOMScoreAdjust=-5
+
 KillMode=mixed
+
 Restart=always
 RestartSec=0
-TasksMax=50
-UMask=0027
+
 Nice=-5
-
 CPUSchedulingResetOnFork=true
-ProtectKernelModules=true
-PrivateNetwork=true
-PrivateTmp=true
-LockPersonality=yes
 RestrictRealtime=yes
-RestrictNamespaces=yes
-MemoryDenyWriteExecute=yes
-SystemCallArchitectures=native
 
+TasksMax=20
+MemoryMax=200M
+
+# Restrict access to the file system
+UMask=0027
 ReadOnlyPaths=/
-ReadWritePaths=/tmp /var/tmp /var/log/nohang /dev/shm
+ReadWritePaths=/var/log
 InaccessiblePaths=/home /root
 
-CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_DAC_READ_SEARCH CAP_SYS_PTRACE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
-AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_DAC_READ_SEARCH CAP_SYS_PTRACE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+# Capabilities whitelist:
+#  CAP_KILL is required to send signals (SIGTERM and SIGKILL)
+#  CAP_IPC_LOCK  is required to mlockall()
+#  CAP_SYS_PTRACE are required to check /proc/[pid]/exe realpathes
+#  CAP_DAC_READ_SEARCH is required to read /proc/[pid]/environ files
+#  CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE are required to send GUI notifications
+
+CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+
+# It breaks GUI notifications on oldstable distros (Debian 8, CentOS 7)
+PrivateNetwork=true
+
+LockPersonality=yes
+RestrictNamespaces=yes
+ProtectKernelModules=true
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
