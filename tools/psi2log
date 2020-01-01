@@ -193,9 +193,12 @@ if log_file is not None:
     log('log file: {}'.format(log_file))
 
 
-if not os.path.exists('/proc/pressure'):
-    log('ERROR: /proc/pressure does not exist, PSI is not supported, exit')
-    exit()
+try:
+    psi_file_mem_to_metrics('/proc/pressure/memory')
+except Exception as e:
+    print('ERROR: {}'.format(e))
+    print('PSI metrics are not provided by the kernel. Exit.')
+    exit(1)
 
 
 if target == 'SYSTEM_WIDE':

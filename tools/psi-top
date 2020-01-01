@@ -73,8 +73,12 @@ else:
 
 psi_support = os.path.exists(psi_path)
 
-if not psi_support:
-    print('PSI is not supported, /proc/pressure/memory does not exist. Exit.')
+
+try:
+    psi_path_to_metrics(psi_path)
+except Exception as e:
+    print('ERROR: {}'.format(e))
+    print('PSI metrics are not provided by the kernel. Exit.')
     exit(1)
 
 

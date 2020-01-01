@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A highly configurable OOM prevention daemon."""
+"""A sophisticated low memory handler."""
 
 import os
 from ctypes import CDLL
@@ -663,6 +663,22 @@ def print_version():
     else:
         print('nohang ' + v)
     exit()
+
+
+def psi_file_mem_to_metrics(psi_path):
+    """
+    """
+    with open(psi_path) as f:
+        psi_list = f.readlines()
+    some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
+    some_avg10 = some_list[1].split('=')[1]
+    some_avg60 = some_list[2].split('=')[1]
+    some_avg300 = some_list[3].split('=')[1]
+    full_avg10 = full_list[1].split('=')[1]
+    full_avg60 = full_list[2].split('=')[1]
+    full_avg300 = full_list[3].split('=')[1]
+    return (some_avg10, some_avg60, some_avg300,
+            full_avg10, full_avg60, full_avg300)
 
 
 def pid_to_cgroup_v1(pid):
@@ -2881,7 +2897,20 @@ debug_threading = conf_parse_bool('debug_threading')
 
 
 psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
+
+
 ignore_psi = not psi_checking_enabled
+
+
+if psi_checking_enabled:
+
+    try:
+        psi_file_mem_to_metrics('/proc/pressure/memory')
+    except Exception as e:
+        print('WARNING: PSI metrics are not provided by the kernel: {}'.format(
+            e))
+        ignore_psi = True
+
 
 zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
 ignore_zram = not zram_checking_enabled
@@ -3171,6 +3200,15 @@ else:
 
 if 'psi_path' in config_dict:
     psi_path = config_dict['psi_path']
+    if not ignore_psi:
+        try:
+            psi_file_mem_to_metrics(psi_path)
+        except Exception as e:
+            print('WARNING: invalid psi_path "{}": {}'.format(
+                psi_path, e))
+            ignore_psi = True
+
+
 else:
     errprint('psi_path is not in config\nExit')
     exit(1)
