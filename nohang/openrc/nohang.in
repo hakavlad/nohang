@@ -1,0 +1,8 @@
+#!/sbin/openrc-run
+
+name="nohang daemon"
+description="Sophisticated low memory handler"
+command=:TARGET_SBINDIR:/nohang
+command_args="--monitor --config :TARGET_SYSCONFDIR:/nohang/nohang.conf"
+pidfile="/var/run/nohang"
+start_stop_daemon_args="--background --make-pidfile"
