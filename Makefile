@@ -35,7 +35,8 @@ install:
 	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
 	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/psi2log.1.gz
 
-	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
+ifeq ($(shell which systemctl), /usr/sbin/systemctl)
+	-install -d $(DESTDIR)$(SYSTEMDUNIT# DIR)
 	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang.service.in > nohang.service
 	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
@@ -45,14 +46,25 @@ install:
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-systemctl daemon-reload
+endif
+
+ifeq ($(shell which openrc), /sbin/openrc)
+	install -d $(DESTDIR)$(CONFDIR)/init.d
+	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/openrc/nohang.in > nohang/openrc/nohang
+	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+	install -m0775 nohang/openrc/nohang $(DESTDIR)$(CONFDIR)/init.d/nohang
+	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(CONFDIR)/init.d/nohang-desktop
+endif
 
 uninstall:
-	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
+	# 'make uninstall' must not fail with error if systemctl/openrc is unavailable or returns error
 	-systemctl stop nohang.service || true
 	-systemctl stop nohang-desktop.service || true
 	-systemctl disable nohang.service || true
 	-systemctl disable nohang-desktop.service || true
 	-systemctl daemon-reload
+	-openrc-run stop nohang || true
+	-openrc-run stop nohang-desktop || true
 	rm -fv $(DESTDIR)$(BINDIR)/nohang
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
 	rm -fv $(DESTDIR)$(BINDIR)/psi-top
@@ -61,8 +73,11 @@ uninstall:
 	rm -fv $(DESTDIR)$(MANDIR)/oom-sort.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/psi-top.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/psi2log.1.gz
-	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	# Similarly for removing service files
+	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service || true
+	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service || true
+	-rm -fv $(DESTDIR)$(CONFDIR)/init.d/nohang || true
+	-rm -fv $(DESTDIR)$(CONFDIR)/init.d/nohang-desktop || true
 	rm -fvr $(DESTDIR)$(CONFDIR)/nohang/
 	rm -fvr $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
 	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
