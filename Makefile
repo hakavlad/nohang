@@ -37,8 +37,8 @@ install:
 
 ifeq ($(shell which systemctl), /usr/sbin/systemctl)
 	-install -d $(DESTDIR)$(SYSTEMDUNIT# DIR)
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang.service.in > nohang.service
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang.service.in > nohang.service
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
@@ -50,8 +50,8 @@ endif
 
 ifeq ($(shell which openrc), /sbin/openrc)
 	install -d $(DESTDIR)$(CONFDIR)/init.d
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/openrc/nohang.in > nohang/openrc/nohang
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/openrc/nohang.in > nohang/openrc/nohang
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
 	install -m0775 nohang/openrc/nohang $(DESTDIR)$(CONFDIR)/init.d/nohang
 	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(CONFDIR)/init.d/nohang-desktop
 endif
