@@ -36,8 +36,8 @@ install:
 	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/psi2log.1.gz
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang.service.in > nohang.service
-	-sed "s|:TARGET_BIN:|$(BINDIR)|g;s|:TARGET_CONF:|$(CONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang.service.in > nohang.service
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
