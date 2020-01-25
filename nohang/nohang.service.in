@@ -29,15 +29,16 @@ InaccessiblePaths=/home /root
 # Capabilities whitelist:
 #  CAP_KILL is required to send signals (SIGTERM and SIGKILL)
 #  CAP_IPC_LOCK  is required to mlockall()
-#  CAP_SYS_PTRACE are required to check /proc/[pid]/exe realpathes
+#  CAP_SYS_PTRACE is required to check /proc/[pid]/exe realpathes
 #  CAP_DAC_READ_SEARCH is required to read /proc/[pid]/environ files
 #  CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE are required to send GUI notifications
 
 CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
 AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
 
-# It breaks GUI notifications on oldstable distros (Debian 8, CentOS 7)
-PrivateNetwork=true
+# `PrivateNetwork=true` breaks GUI notifications on oldstable distros (Debian 8, CentOS 7, Linux Mint 18)
+# On modern distros you can set PrivateNetwork=true for security reasons
+PrivateNetwork=false
 
 LockPersonality=yes
 RestrictNamespaces=yes
