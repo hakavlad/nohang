@@ -183,7 +183,7 @@ def send_notification(title, body):
     """
     """
     if self_uid != 0:
-        cmd = ['notify-send', '--icon=dialog-warning', title, body]
+        cmd = ['notify-send', '--icon=dialog-warning', '--urgency=critical', title, body]
         username = '(UID={})'.format(self_uid)
         pop(cmd, username)
         return None
@@ -238,6 +238,7 @@ def send_notification(title, body):
                 'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
                 'notify-send',
                 '--icon=dialog-warning',
+                '--urgency=critical',
                 title,
                 body
             ]
