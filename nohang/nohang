@@ -260,7 +260,7 @@ def send_notify_warn():
     else:
 
         title = 'Low memory'
-        body = 'Save your unsaved data!'
+        body = 'Save your unsaved data!\nClose unused apps!'
 
         """"
         body = 'MemAvail: {}%\nSwapFree: {}%'.format(
