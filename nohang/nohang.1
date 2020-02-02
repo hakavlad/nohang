@@ -2,7 +2,7 @@
 
 .SH NAME
 
-nohang \- A highly configurable OOM preventer
+nohang \- A sophisticated low memory handler
 
 .SH SYNOPSIS
 .B nohang
@@ -30,13 +30,16 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 
 .B To use PSI:
 
-    - Linux 4.20+
+    - It needs Linux 4.20+ with CONFIG_PSI=y.
 
 .SH OPTIONS
 
   -h, --help            show this help message and exit
 
   -v, --version         print version
+
+  -m, --memload         consume memory until 20 MiB remain free, and terminate
+                        the process
 
   -p, --print-proc-table
                         print table of processes with their badness values

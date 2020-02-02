@@ -8,7 +8,94 @@ from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from re import search
 from sre_constants import error as invalid_re
-from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP
+from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
+
+
+def memload():
+    """
+    """
+    with open('/proc/meminfo') as f:
+        mem_list = f.readlines()
+    mem_list_names = []
+    for s in mem_list:
+        mem_list_names.append(s.split(':')[0])
+    if mem_list_names[2] != 'MemAvailable':
+        errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied')
+        exit(1)
+    swap_total_index = mem_list_names.index('SwapTotal')
+    swap_free_index = swap_total_index + 1
+
+    def check_mem_and_swap():
+        """find mem_available, swap_total, swap_free"""
+        with open('/proc/meminfo') as f:
+            for n, line in enumerate(f):
+                if n == 2:
+                    mem_available = int(line.split(':')[1][:-4])
+                    continue
+                if n == swap_total_index:
+                    swap_total = int(line.split(':')[1][:-4])
+                    continue
+                if n == swap_free_index:
+                    swap_free = int(line.split(':')[1][:-4])
+                    break
+        return mem_available, swap_total, swap_free
+
+    def print_mem(mem_available, swap_free):
+        print('\033MMemAvailable: {} MiB, SwapFree: {} MiB     '
+              '     '.format(
+                  round(mem_available / 1024),
+                  round(swap_free / 1024)))
+
+    luid_init = rline1('/proc/1/loginuid')
+    luid_self = rline1('/proc/self/loginuid')
+    if luid_init == luid_self:
+        print('Self login UID = init login UID, exit')
+        exit()
+
+    try:
+        hi = 'Warning! The process will consume memory until 20 MiB of mem' \
+             'ory\n(MemAvailable + SwapFree) remain free, and it will be t' \
+             'erminated via SIGUSR1\nat the end. This may cause the system' \
+             ' to freeze and processes to terminate.\nDo you want to conti' \
+             'nue? [No/Yes] '
+        inp = input(hi)
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt, exit')
+        exit(1)
+    if inp != 'Yes':
+        print('Exit')
+        exit()
+    else:
+        mem_available, swap_total, swap_free = check_mem_and_swap()
+        print('Memory consumption has started!\n')
+
+    ex = []
+    z = monotonic()
+    self_pid = os.getpid()
+
+    while True:
+        try:
+            mem_available, swap_total, swap_free = check_mem_and_swap()
+            x = mem_available + swap_free
+            if x <= 1024 * 20:  # 20 MiB
+                print_mem(mem_available, swap_free)
+                print('Self terminating by SIGUSR1')
+                os.kill(self_pid, SIGUSR1)
+            else:
+                ex.append(bytearray(1024 * 50))  # step size is 50 KiB
+                u = monotonic() - z
+                if u <= 0.01:
+                    continue
+                z = monotonic()
+                print_mem(mem_available, swap_free)
+        except KeyboardInterrupt:
+            print('KeyboardInterrupt')
+            print('Self terminating by the SIGUSR1 signal')
+            os.kill(self_pid, SIGUSR1)
+        except MemoryError:
+            print('MemoryError')
+            print('Self terminating by the SIGUSR1 signal')
+            os.kill(self_pid, SIGUSR1)
 
 
 def exe(cmd):
@@ -1331,7 +1418,7 @@ def rline1(path):
     try:
         with open(path) as f:
             for line in f:
-                return line[:-1]
+                return line.rstrip()
     except UnicodeDecodeError:
         with open(path, 'rb') as f:
             return f.read(999).decode(
@@ -2515,6 +2602,8 @@ help_mess = """usage: nohang [-h] [-v] [-p] [-c CONFIG] [-cc CONFIG]
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         print version
+  -m, --memload         consume memory until 20 MiB remain free, and terminate
+                        the process
   -p, --print-proc-table
                         print table of processes with their badness values
   -c CONFIG, --config CONFIG
@@ -2590,6 +2679,9 @@ if len(argv) == 1:
 elif len(argv) == 2:
     if argv[1] == '--help' or argv[1] == '-h':
         print(help_mess)
+        exit()
+    if argv[1] == '--memload' or argv[1] == '-m':
+        memload()
         exit()
     elif argv[1] == '--check-config' or argv[1] == '-cc':
         check_config_flag = True
