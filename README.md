@@ -94,6 +94,11 @@ To use `PSI`:
 
 - Awful documentation.
 
+
+## nohang vs nohang-desktop
+
+`nohang` comes with two configs: `nohang.conf` and `nohang-desktop.conf`. `nohang` comes with two systemd service unit files: `nohang.service` and `nohang-desktop.service`. Choose one.
+
 ## How to install
 
 #### To install on Fedora 30+:
@@ -153,11 +158,13 @@ $ sudo make uninstall
 
 ```
 ./nohang -h
-usage: nohang [-h] [-v] [-p] [-c CONFIG] [-cc CONFIG]
+usage: nohang [-h] [-v] [-m] [-p] [-c CONFIG] [-cc CONFIG]
 
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         print version
+  -m, --memload         consume memory until 20 MiB remain free, and terminate
+                        the process
   -p, --print-proc-table
                         print table of processes with their badness values
   -c CONFIG, --config CONFIG
@@ -183,6 +190,13 @@ The program can be configured by editing the [config file](https://github.com/ha
 10. Verbosity, debug, logging
 
 Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
+
+## How to test nohang
+
+- The safest way is to run `nohang --memload`. This causes memory consumption, and the process will exits before OOM occurs.
+- Another way is to run `tail /dev/zero`. This causes fast memory comsumption and causes OOM at the end.
+
+If testing occurs while `nohang` is running, these processes should be terminated before OOM occurs.
 
 ## Print table of processes with their badness values
 

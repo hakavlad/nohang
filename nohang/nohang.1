@@ -83,6 +83,13 @@ Please restart nohang to apply the changes.
 
 Default path to the config after installing is /etc/nohang/nohang.conf.
 
+.SH HOW TO TEST
+
+- The safest way is to run `nohang --memload`. This causes memory consumption, and the process will exits before OOM occurs.
+- Another way is to run `tail /dev/zero`. This causes fast memory comsumption and causes OOM at the end.
+
+If testing occurs while nohang is running, these processes should be terminated before OOM occurs.
+
 .SH LOGGING
 
 To view the latest entries in the log (for systemd users):
