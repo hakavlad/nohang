@@ -20,7 +20,7 @@ def memload():
     for s in mem_list:
         mem_list_names.append(s.split(':')[0])
     if mem_list_names[2] != 'MemAvailable':
-        errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied')
+        errprint('Your Linux kernel is too old, Linux 3.14+ requied\nExit')
         exit(1)
     swap_total_index = mem_list_names.index('SwapTotal')
     swap_free_index = swap_total_index + 1
@@ -49,7 +49,7 @@ def memload():
     luid_init = rline1('/proc/1/loginuid')
     luid_self = rline1('/proc/self/loginuid')
     if luid_init == luid_self:
-        print('Self login UID = init login UID, exit')
+        print('Self login UID = init login UID\nExit')
         exit()
 
     try:
@@ -60,13 +60,12 @@ def memload():
              'nue? [No/Yes] '
         inp = input(hi)
     except KeyboardInterrupt:
-        print('KeyboardInterrupt, exit')
+        print('KeyboardInterrupt\nExit')
         exit(1)
     if inp != 'Yes':
         print('Exit')
         exit()
     else:
-        mem_available, swap_total, swap_free = check_mem_and_swap()
         print('Memory consumption has started!\n')
 
     ex = []
