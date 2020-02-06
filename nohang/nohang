@@ -48,9 +48,14 @@ def memload():
 
     luid_init = rline1('/proc/1/loginuid')
     luid_self = rline1('/proc/self/loginuid')
-    if luid_init == luid_self:
-        print('Self login UID = init login UID\nExit')
-        exit()
+    if luid_init != luid_self:
+        print('The option is available only for logged in users.')
+        print('Self loginuid: {}'.format(luid_self))
+        print('Init loginuid: {}'.format(luid_init))
+        print('Self login UID must not be equal to init login UID to continue.'
+            )
+        print('Exit')
+        exit(1)
 
     try:
         hi = 'Warning! The process will consume memory until 20 MiB of mem' \
