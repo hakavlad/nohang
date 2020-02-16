@@ -7,9 +7,7 @@ After=system.slice
 [Service]
 ExecStart=${BINDIR}/nohang --config ${CONFDIR}/nohang/nohang-desktop.conf
 SyslogIdentifier=nohang-desktop
-
 KillMode=mixed
-
 Restart=always
 RestartSec=0
 
@@ -20,31 +18,29 @@ RestrictRealtime=yes
 TasksMax=20
 MemoryMax=200M
 
-# Restrict access to the file system
 UMask=0027
-ReadOnlyPaths=/
+ProtectSystem=strict
 ReadWritePaths=/var/log
 InaccessiblePaths=/home /root
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+PrivateDevices=true
+MemoryDenyWriteExecute=yes
+RestrictNamespaces=yes
+LockPersonality=yes
 
 # Capabilities whitelist:
-#  CAP_KILL is required to send signals (SIGTERM and SIGKILL)
-#  CAP_IPC_LOCK  is required to mlockall()
-#  CAP_SYS_PTRACE is required to check /proc/[pid]/exe realpathes
-#  CAP_DAC_READ_SEARCH is required to read /proc/[pid]/environ files
-#  CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE are required to send GUI notifications
-
+# CAP_KILL is required to send signals
+# CAP_IPC_LOCK  is required to mlockall()
+# CAP_SYS_PTRACE is required to check /proc/[pid]/exe realpathes
+# CAP_DAC_READ_SEARCH is required to read /proc/[pid]/environ files
+# CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE are required to send GUI notifications
 CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
-AmbientCapabilities=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
 
 # `PrivateNetwork=true` breaks GUI notifications on oldstable distros (Debian 8, CentOS 7, Linux Mint 18)
 # On modern distros you can set PrivateNetwork=true for security reasons
 PrivateNetwork=false
-
-LockPersonality=yes
-RestrictNamespaces=yes
-ProtectKernelModules=true
-MemoryDenyWriteExecute=yes
-SystemCallArchitectures=native
 
 [Install]
 WantedBy=multi-user.target
