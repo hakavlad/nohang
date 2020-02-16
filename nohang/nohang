@@ -176,13 +176,11 @@ def re_pid_environ(pid):
     returns None if these vars is not in /proc/[pid]/environ
     """
     try:
-        with open('/proc/' + pid + '/environ') as f:
-            env = f.read()
+        with open('/proc/' + pid + '/environ', 'rb') as f:
+            env = f.read().decode('utf-8', 'ignore')
     except FileNotFoundError:
-        log('notify helper: FileNotFoundError')
         return None
     except ProcessLookupError:
-        log('notify helper: ProcessLookupError')
         return None
 
     if display_env in env and dbus_env in env and user_env in env:
@@ -929,9 +927,12 @@ def pid_to_cmdline(pid):
     returns string cmdline
     """
     try:
-        with open('/proc/' + pid + '/cmdline') as f:
-            return f.read().replace('\x00', ' ').rstrip()
+        with open('/proc/' + pid + '/cmdline', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore').replace(
+                '\x00', ' ').rstrip()
     except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
         return ''
 
 
@@ -943,9 +944,12 @@ def pid_to_environ(pid):
     returns string environ
     """
     try:
-        with open('/proc/' + pid + '/environ') as f:
-            return f.read().replace('\x00', ' ').rstrip()
+        with open('/proc/' + pid + '/environ', 'rb') as f:
+            return f.read().decode('utf-8', 'ignore').replace(
+                '\x00', ' ').rstrip()
     except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
         return ''
 
 
@@ -956,6 +960,8 @@ def pid_to_realpath(pid):
         return os.path.realpath('/proc/' + pid + '/exe')
     except FileNotFoundError:
         return ''
+    except ProcessLookupError:
+        return ''
 
 
 def pid_to_cwd(pid):
@@ -964,6 +970,8 @@ def pid_to_cwd(pid):
     try:
         return os.path.realpath('/proc/' + pid + '/cwd')
     except FileNotFoundError:
+        return ''
+    except ProcessLookupError:
         return ''
 
 
