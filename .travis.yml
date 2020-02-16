@@ -9,7 +9,7 @@ script:
   - sudo systemctl enable --now nohang.service
   - sudo systemctl stop nohang.service
   - sudo systemctl enable --now nohang-desktop.service
-  - sudo systemctl stop nohang-service.service
+  - sudo systemctl stop nohang-desktop.service
 
   - oom-sort -h
   - oom-sort
