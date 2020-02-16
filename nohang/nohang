@@ -11,6 +11,16 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
 
 
+def check_permissions():
+    """
+    """
+    try:
+        os.path.realpath('/proc/1/exe')
+    except Exception as e:
+        print('ERROR: missing CAP_SYS_PTRACE: {}'.format(e))
+        exit(1)
+
+
 def memload():
     """
     """
@@ -53,7 +63,7 @@ def memload():
         print('Self loginuid: {}'.format(luid_self))
         print('Init loginuid: {}'.format(luid_init))
         print('Self login UID must not be equal to init login UID to continue.'
-            )
+              )
         print('Exit')
         exit(1)
 
@@ -1228,16 +1238,16 @@ def mlockall():
     MCL_ONFAULT = 4
 
     libc = CDLL('libc.so.6', use_errno=True)
-
     result = libc.mlockall(
         MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
     )
+
     if result != 0:
         result = libc.mlockall(
             MCL_CURRENT | MCL_FUTURE
         )
         if result != 0:
-            log('WARNING: cannot lock all memory')
+            log('WARNING: cannot lock all memory: [Errno {}]'.format(result))
         else:
             pass
             # log('All memory locked with MCL_CURRENT | MCL_FUTURE')
@@ -3489,11 +3499,7 @@ else:
 
 
 if print_proc_table_flag:
-
-    if not root:
-        log('WARNING: effective UID != 0; euid={}; processes with other e'
-            'uids will be invisible for nohang'.format(self_uid))
-
+    check_permissions()
     func_print_proc_table()
 
 
@@ -3570,12 +3576,9 @@ warn_time_delta = 1000  # ?
 warn_timer = 0
 
 
-if not root:
-    log('WARNING: effective UID != 0; euid={}; processes with other e'
-        'uids will be invisible for nohang'.format(self_uid))
-
-
 mlockall()
+
+check_permissions()
 
 
 psi_avg_string = ''  # will be overwritten if PSI monitoring enabled

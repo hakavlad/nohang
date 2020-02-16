@@ -6,8 +6,10 @@ sudo: required
 
 script:
   - sudo make install
-  - sudo systemctl enable --now nohang
+  - sudo systemctl enable --now nohang.service
   - sudo systemctl stop nohang.service
+  - sudo systemctl enable --now nohang-desktop.service
+  - sudo systemctl stop nohang-service.service
 
   - oom-sort -h
   - oom-sort
@@ -19,7 +21,6 @@ script:
   - nohang -cc /etc/nohang/nohang-desktop.conf
   - nohang -cc nohang/test.conf
 
-  - nohang -p
   - sudo nohang -p
 
   - /bin/sleep 60 &
