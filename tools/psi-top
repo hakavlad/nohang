@@ -66,9 +66,10 @@ cgroup2_mountpoint = cgroup2_root()
 
 
 if cgroup2_mountpoint is None:
-    print('cgroup2 is not mounted')
+    print('ERROR: cgroup_v2 hierarchy is not mounted')
+    exit(1)
 else:
-    print('cgroup2 mountpoint:', cgroup2_mountpoint)
+    print('cgroup_v2 mountpoint:', cgroup2_mountpoint)
 
 
 psi_support = os.path.exists(psi_path)
