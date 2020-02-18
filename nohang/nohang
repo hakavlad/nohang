@@ -3738,8 +3738,8 @@ while True:
                     )
                     )
 
-    if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or
-            psi_threshold is SIGKILL):
+    if (masf_threshold == SIGKILL or zram_threshold == SIGKILL or
+            psi_threshold == SIGKILL):
 
         threshold = SIGKILL
         mem_info_list = []
@@ -3762,8 +3762,8 @@ while True:
             x0, psi_threshold, zram_threshold, zram_info, psi_info)
         continue
 
-    if (masf_threshold is SIGTERM or zram_threshold is SIGTERM or
-            psi_threshold is SIGTERM):
+    if (masf_threshold == SIGTERM or zram_threshold == SIGTERM or
+            psi_threshold == SIGTERM):
 
         threshold = SIGTERM
         mem_info_list = []
