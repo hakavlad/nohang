@@ -134,16 +134,16 @@ parser = ArgumentParser()
 parser.add_argument(
     '-t',
     '--target',
-    help="""target (cgroup2 or SYTSTEM_WIDE)""",
+    help="""target (cgroup_v2 or SYTSTEM_WIDE)""",
     default='SYSTEM_WIDE',
     type=str
 )
 
 
 parser.add_argument(
-    '-p',
-    '--period',
-    help="""period in sec""",
+    '-i',
+    '--interval',
+    help="""interval in sec""",
     default=2,
     type=float
 )
@@ -162,7 +162,7 @@ args = parser.parse_args()
 
 target = args.target
 
-period = args.period
+interval = args.interval
 
 log_file = args.log
 
@@ -188,7 +188,7 @@ if separate_log:
 
 log('Starting psi2log')
 log('target: {}'.format(target))
-log('period: {}'.format(period))
+log('interval: {} sec'.format(interval))
 if log_file is not None:
     log('log file: {}'.format(log_file))
 
@@ -220,7 +220,7 @@ else:
 
     else:
 
-        log('cgroup2 mountpoint: {}'.format(cgroup2_mountpoint))
+        log('cgroup_v2 mountpoint: {}'.format(cgroup2_mountpoint))
 
     cpu_file = cgroup2_mountpoint + target + "/cpu.pressure"
     memory_file = cgroup2_mountpoint + target + "/memory.pressure"
@@ -230,8 +230,8 @@ else:
 mlockall()
 
 
-log('----------------------------------------------------------------------'
-    '--------------------------------------------')
+log('======================================================================'
+    '============================================')
 log(' some cpu pressure   || some memory pressure | full memory pressure ||'
     '  some io pressure    |  full io pressure')
 log('---------------------||----------------------|----------------------||'
@@ -249,18 +249,18 @@ while True:
 
     if not os.path.exists(cpu_file):
         log('ERROR: cpu pressure file does not exist:    {}'.format(cpu_file))
-        sleep(period)
+        sleep(interval)
         continue
 
     if not os.path.exists(memory_file):
         log('ERROR: memory pressure file does not exist: {}'.format(
             memory_file))
-        sleep(period)
+        sleep(interval)
         continue
 
     if not os.path.exists(io_file):
         log('ERROR: io pressure file does not exist:     {}'.format(cpu_file))
-        sleep(period)
+        sleep(interval)
         continue
 
     (c_some_avg10, c_some_avg60, c_some_avg300
@@ -367,4 +367,4 @@ while True:
         peaks_dict['i_full_avg300'] = i_full_avg300
 
     stdout.flush()
-    sleep(period)
+    sleep(interval)
