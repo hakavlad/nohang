@@ -1118,9 +1118,8 @@ def pid_to_badness(pid):
                         if oom_score_adj >= 0:
                             badness += badness_adj
 
-        if forbid_negative_badness:
-            if badness < 0:
-                badness = 0
+        if badness < 0:
+            badness = 0
 
         return badness, oom_score
 
