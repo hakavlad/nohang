@@ -995,6 +995,10 @@ def pid_to_badness(pid):
     oom_score_adj = None
     try:
         oom_score = int(rline1('/proc/' + pid + '/oom_score'))
+
+        if oom_score == 0:
+            return oom_score, oom_score
+
         badness = oom_score
 
         if ignore_positive_oom_score_adj:
