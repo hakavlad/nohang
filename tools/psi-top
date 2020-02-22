@@ -130,21 +130,21 @@ path_list = get_psi_mem_files(cgroup2_mountpoint, met)
 
 head_mem_io = '''PSI metrics: {}
 cgroup_v2 mountpoint: {}
----------------------------------------------
+---------------------------------------------------------
          some        |          full        |
----------------------|--------------------- | ---------
+-------------------- | -------------------- | -----------
  avg10  avg60 avg300 |  avg10  avg60 avg300 | cgroup_v2
- -----  ----- ------ |  -----  ----- ------ | ---------'''.format(
+------ ------ ------ | ------ ------ ------ | -----------'''.format(
     met, cgroup2_mountpoint)
 
 
 head_cpu = '''PSI metrics: {}
 cgroup_v2 mountpoint: {}
-----------------------
+----------------------------------
          some        |
----------------------|
+-------------------- | -----------
  avg10  avg60 avg300 | cgroup_v2
- -----  ----- ------ | ---------'''.format(
+------ ------ ------ | -----------'''.format(
     met, cgroup2_mountpoint)
 
 
@@ -162,7 +162,7 @@ if met == 'cpu':
         some_avg10.rjust(6),
         some_avg60.rjust(6),
         some_avg300.rjust(6),
-        '[SYSTEM_WIDE]'))
+        'SYSTEM_WIDE'))
 
 else:
 
@@ -175,7 +175,7 @@ else:
         some_avg300.rjust(6),
         full_avg10.rjust(6),
         full_avg60.rjust(6),
-        full_avg300.rjust(6), '[SYSTEM_WIDE]'))
+        full_avg300.rjust(6), 'SYSTEM_WIDE'))
 
 
 for psi_path in path_list:
