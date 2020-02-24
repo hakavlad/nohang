@@ -2,7 +2,7 @@
 """psi2log"""
 
 import os
-from time import sleep
+from time import sleep, monotonic
 from ctypes import CDLL
 from sys import stdout, exit
 from argparse import ArgumentParser
@@ -122,6 +122,52 @@ def psi_file_cpu_to_metrics(psi_path):
     return (some_avg10, some_avg60, some_avg300)
 
 
+def psi_file_mem_to_total(psi_path):
+    """
+    """
+
+    with open(psi_path) as f:
+        psi_list = f.readlines()
+    some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
+    some_total = some_list[4].split('=')[1]
+    full_total = full_list[4].split('=')[1]
+
+    return int(some_total), int(full_total)
+
+
+def psi_file_cpu_to_total(psi_path):
+    """
+    """
+
+    with open(psi_path) as f:
+        psi_list = f.readlines()
+    some_list = psi_list[0].split(' ')
+    some_total = some_list[4].split('=')[1]
+
+    return int(some_total)
+
+
+def print_head_1():
+    log('=================================================================='
+        '================================================')
+    log(' some cpu pressure   || some memory pressure | full memory pressur'
+        'e ||   some io pressure   |   full io pressure')
+    log('-------------------- || -------------------- | -------------------'
+        '- || -------------------- | --------------------')
+    log(' avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg30'
+        '0 ||  avg10  avg60 avg300 |  avg10  avg60 avg300')
+    log('------ ------ ------ || ------ ------ ------ | ------ ------ -----'
+        '- || ------ ------ ------ | ------ ------ ------')
+
+
+def print_head_2():
+    log('============================================')
+    log(' cpu  |    memory   |     io      |')
+    log('----- | ----------- | ----------- |')
+    log(' some |  some  full |  some  full | interval')
+    log('----- | ----- ----- | ----- ----- | --------')
+
+
 def log(*msg):
     """
     """
@@ -159,13 +205,20 @@ parser.add_argument(
 )
 
 
+parser.add_argument(
+    '-m',
+    '--mode',
+    help="""mode (1 or 2)""",
+    default='1',
+    type=str
+)
+
+
 args = parser.parse_args()
-
 target = args.target
-
 interval = args.interval
-
 log_file = args.log
+mode = args.mode
 
 
 if log_file is None:
@@ -192,6 +245,7 @@ log('target: {}'.format(target))
 log('interval: {} sec'.format(interval))
 if log_file is not None:
     log('log file: {}'.format(log_file))
+log('mode: {}'.format(mode))
 
 
 try:
@@ -217,7 +271,7 @@ else:
     if cgroup2_mountpoint is None:
 
         log('ERROR: unified cgroup hierarchy is not mounted, exit')
-        exit()
+        exit(1)
 
     else:
 
@@ -228,22 +282,75 @@ else:
     io_file = cgroup2_mountpoint + target + "/io.pressure"
 
 
+peaks_dict = dict()
+
+
 mlockall()
 
 
-log('======================================================================'
-    '============================================')
-log(' some cpu pressure   || some memory pressure | full memory pressure ||'
-    '   some io pressure   |   full io pressure')
-log('-------------------- || -------------------- | -------------------- ||'
-    ' -------------------- | --------------------')
-log(' avg10  avg60 avg300 ||  avg10  avg60 avg300 |  avg10  avg60 avg300 ||'
-    '  avg10  avg60 avg300 |  avg10  avg60 avg300')
-log('------ ------ ------ || ------ ------ ------ | ------ ------ ------ ||'
-    ' ------ ------ ------ | ------ ------ ------')
+if mode == '2':
+
+    print_head_2()
+
+    total_cs0 = psi_file_cpu_to_total(cpu_file)
+    total_ms0, total_mf0 = psi_file_mem_to_total(memory_file)
+    total_is0, total_if0 = psi_file_mem_to_total(io_file)
+    monotonic0 = monotonic()
+    sleep(interval)
+
+    while True:
+
+        total_cs1 = psi_file_cpu_to_total(cpu_file)
+        total_ms1, total_mf1 = psi_file_mem_to_total(memory_file)
+        total_is1, total_if1 = psi_file_mem_to_total(io_file)
+        monotonic1 = monotonic()
+        dm = monotonic1 - monotonic0
+        monotonic0 = monotonic1
+
+        dtotal_cs = total_cs1 - total_cs0
+        avg_cs = dtotal_cs / dm / 10000
+        total_cs0 = total_cs1
+
+        dtotal_ms = total_ms1 - total_ms0
+        avg_ms = dtotal_ms / dm / 10000
+        total_ms0 = total_ms1
+
+        dtotal_mf = total_mf1 - total_mf0
+        avg_mf = dtotal_mf / dm / 10000
+        total_mf0 = total_mf1
+
+        dtotal_is = total_is1 - total_is0
+        avg_is = dtotal_is / dm / 10000
+        total_is0 = total_is1
+
+        dtotal_if = total_if1 - total_if0
+        avg_if = dtotal_if / dm / 10000
+        total_if0 = total_if1
+
+        log('{:>5} | {:>5} {:>5} | {:>5} {:>5} | {}'.format(
+
+            round(avg_cs, 1),
+
+            round(avg_ms, 1),
+            round(avg_mf, 1),
+
+            round(avg_is, 1),
+            round(avg_if, 1),
+
+            round(dm, 3)
+
+        ))
+
+        stdout.flush()
+        sleep(interval)
 
 
-peaks_dict = dict()
+if mode != '1':
+    log('ERROR: invalid mode. Exit.')
+    exit(1)
+
+
+print_head_1()
 
 
 while True:
