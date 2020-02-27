@@ -22,9 +22,11 @@ install:
 	-rm -fv version
 
 	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf.default
 	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf.default
+
+	install -d $(DESTDIR)$(CONFDIR)/nohang/defaults
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
 
 	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
