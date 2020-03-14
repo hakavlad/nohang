@@ -698,18 +698,6 @@ def pid_to_vm_size(pid):
     return vm_size
 
 
-def signal_handler_0000000000(signum, frame):
-    """
-    """
-    for i in sig_list:
-        signal(i, signal_handler_inner)
-    log('Signal handler called with the {} signal '.format(
-        sig_dict[signum]))
-    update_stat_dict_and_print(None)
-    log('Exit')
-    exit()
-
-
 def signal_handler(signum, frame):
     """
     """
