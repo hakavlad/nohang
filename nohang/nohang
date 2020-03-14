@@ -1339,18 +1339,11 @@ def find_psi_metrics_value(psi_path, psi_metrics):
 def check_mem_and_swap():
     """
     """
-    with open('/proc/meminfo') as f:
-        for n, line in enumerate(f):
-            if n == 2:
-                mem_available = int(line.split(':')[1][:-4])
-                continue
-            if n is swap_total_index:
-                swap_total = int(line.split(':')[1][:-4])
-                continue
-            if n is swap_free_index:
-                swap_free = int(line.split(':')[1][:-4])
-                break
-    return mem_available, swap_total, swap_free
+    with open('/proc/meminfo', 'rb') as f:
+        m_list = f.read().decode().split(' kB\n')
+    return (int(m_list[2].split(':')[1]),
+            int(m_list[swap_total_index].split(':')[1]),
+            int(m_list[swap_free_index].split(':')[1]))
 
 
 def check_zram():
