@@ -3,7 +3,7 @@
 
 import os
 from ctypes import CDLL
-from time import sleep, monotonic
+from time import sleep, monotonic, process_time
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from re import search
@@ -698,7 +698,7 @@ def pid_to_vm_size(pid):
     return vm_size
 
 
-def signal_handler(signum, frame):
+def signal_handler_0000000000(signum, frame):
     """
     """
     for i in sig_list:
@@ -707,6 +707,26 @@ def signal_handler(signum, frame):
         sig_dict[signum]))
     update_stat_dict_and_print(None)
     log('Exit')
+    exit()
+
+
+def signal_handler(signum, frame):
+    """
+    """
+    for i in sig_list:
+        signal(i, signal_handler_inner)
+
+    log('Got the {} signal '.format(
+        sig_dict[signum]))
+
+    update_stat_dict_and_print(None)
+
+    m1 = monotonic()
+    pt1 = process_time()
+    ab = pt1 - pt0
+    perc = (pt1 - pt0) / (m1 - m0) * 100
+    log('CPU time since monitoring has started: {} ({}%); exit.'.format(
+        format_time(ab), round(perc, 3)))
     exit()
 
 
@@ -1283,13 +1303,23 @@ def update_stat_dict_and_print(key):
 
     if print_statistics:
 
-        stats_msg = 'Total stat (what happened in the last {}):'.format(
-            format_time(monotonic() - start_time))
+        lsd = len(stat_dict)
 
-        for i in stat_dict:
-            stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
+        if lsd == 0:
 
-        log(stats_msg)
+            log('No corrective actions applied in the last {}'.format(
+                format_time(monotonic() - start_time)))
+
+        else:
+
+            stats_msg = 'What happened in the last {}:'.format(
+                format_time(monotonic() - start_time))
+
+            for i in stat_dict:
+
+                stats_msg += '\n  {}: {}'.format(i, stat_dict[i])
+
+            log(stats_msg)
 
 
 def find_psi_metrics_value(psi_path, psi_metrics):
@@ -1369,18 +1399,18 @@ def format_time(t):
     t = int(t)
 
     if t < 60:
-        return '{} sec'.format(t)
+        return '{}s'.format(t)
 
     if t > 3600:
         h = t // 3600
         s0 = t - h * 3600
         m = s0 // 60
         s = s0 % 60
-        return '{} h {} min {} sec'.format(h, m, s)
+        return '{}h {}min {}s'.format(h, m, s)
 
     m = t // 60
     s = t % 60
-    return '{} min {} sec'.format(m, s)
+    return '{}min {}s'.format(m, s)
 
 
 def string_to_float_convert_test(string):
@@ -2362,8 +2392,8 @@ def implement_corrective_action(
                 send_result = 'total response time: {} ms'.format(
                     round(response_time * 1000))
 
-                preventing_oom_message = 'Implement a corrective action:' \
-                    '\n  Send {} to the victim; {}'.format(
+                preventing_oom_message = 'Implementing a corrective action:' \
+                    '\n  Sending {} to the victim; {}'.format(
                         sig_dict[threshold], send_result)
 
                 if threshold is SIGKILL:
@@ -2372,11 +2402,11 @@ def implement_corrective_action(
             except FileNotFoundError:
                 vwd = True
                 key = 'The victim died in the search process: ' \
-                      'FileNotFoundError'
+                    'FileNotFoundError'
             except ProcessLookupError:
                 vwd = True
                 key = 'The victim died in the search process: ' \
-                      'ProcessLookupError'
+                    'ProcessLookupError'
 
         try:
             log(preventing_oom_message)
@@ -2439,7 +2469,7 @@ def implement_corrective_action(
                 round(ma_mib, 1), round(sf_mib, 1)))
 
         if soft_match is False:
-            key = 'Send {} to {}'.format(sig_dict[threshold], name)
+            key = 'Sending {} to {}'.format(sig_dict[threshold], name)
             update_stat_dict_and_print(key)
         else:
             key = "Run the command '{}'".format(command)
@@ -3647,6 +3677,10 @@ envd['list_with_envs'] = envd['t'] = None
 
 cmd_num_dict = dict()
 cmd_num_dict['cmd_num'] = 0
+
+
+m0 = monotonic()
+pt0 = process_time()
 
 
 while True:
