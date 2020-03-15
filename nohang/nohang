@@ -25,7 +25,8 @@ def check_permissions():
     try:
         rline1('/proc/1/oom_score')
     except Exception as e:
-        print('WARNING: {}'.format(e))
+        print('ERROR: {}'.format(e))
+        exit(1)
 
 
 def memload():
@@ -1534,6 +1535,8 @@ def is_alive(pid):
     except ProcessLookupError:
         return False
     except NotADirectoryError:
+        return False
+    except PermissionError:
         return False
 
 
