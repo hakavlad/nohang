@@ -178,6 +178,10 @@ for pid in listdir('/proc'):
     except ProcessLookupError:
         continue
 
+    except Exception as e:
+        print(e)
+        exit(1)
+
     oom_list.append((
         int(pid), int(oom_score), int(oom_score_adj), cmdline,
         name, int(uid), int(vm_rss), int(vm_swap)))
