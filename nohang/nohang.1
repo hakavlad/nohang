@@ -36,20 +36,24 @@ Nohang is a highly configurable daemon for Linux which is able to correctly prev
 
   -h, --help            show this help message and exit
 
-  -v, --version         print version
+  -v, --version         show version of installed package and exit
 
-  -m, --memload         consume memory until 20 MiB remain free, and terminate
-                        the process
-
-  -p, --print-proc-table
-                        print table of processes with their badness values
+  -m, --memload         consume memory until 20 MiB (MemAvailable + SwapFree)
+                        remain free, and terminate the process
 
   -c CONFIG, --config CONFIG
-                        path to the config file, default values:
-                        ./nohang.conf, /etc/nohang/nohang.conf
+                        path to the config file. This should only be used
+                        with one of the following options:
+                        --monitor, --tasks, --check
 
-  -cc CONFIG, --check-config CONFIG
-                        check and print config
+  --check               check and show the configuration and exit. This should
+                        only be used with -c/--config CONFIG option
+
+  --monitor             start monitoring. This should only be used with
+                        -c/--config CONFIG option
+
+  --tasks               show tasks state and exit. This should only be used
+                        with -c/--config CONFIG option
 
 .SH HOW TO CONFIGURE
 

@@ -17,14 +17,15 @@ script:
   - nohang -h
   - nohang -v
 
-  - nohang -cc /etc/nohang/nohang.conf
-  - nohang -cc /etc/nohang/nohang-desktop.conf
-  - nohang -cc nohang/test.conf
+  - nohang --check --config /etc/nohang/nohang.conf
+  - nohang --check --config /etc/nohang/nohang-desktop.conf
+  - nohang --check --config nohang/test.conf
 
-  - sudo nohang -p
+  - sudo nohang --config /etc/nohang/nohang.conf --tasks
+  - sudo nohang --config /etc/nohang/nohang-desktop.conf --tasks
 
   - /bin/sleep 60 &
-  - sudo bash -c "nohang -c nohang/test.conf & tail /dev/zero & sleep 30 && pkill python3"
+  - sudo bash -c "nohang -c nohang/test.conf --monitor & tail /dev/zero & sleep 30 && pkill python3"
   - sudo cat /var/log/nohang/nohang.log
 
   - sudo make uninstall

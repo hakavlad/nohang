@@ -133,8 +133,6 @@ $ cd nohang
 $ sudo make install
 ```
 
-`nohang`  package comes with two systemd units that run with different config files: `nohang.conf` and `nohang-desktop.conf`.
-
 To enable and start unit without GUI notifications:
 ```
 $ sudo systemctl enable nohang
@@ -158,20 +156,24 @@ $ sudo make uninstall
 
 ```
 ./nohang -h
-usage: nohang [-h] [-v] [-m] [-p] [-c CONFIG] [-cc CONFIG]
+usage: nohang [-h|--help] [-v|--version] [-m|--memload]
+              [-c|--config CONFIG] [--check] [--monitor] [--tasks]
 
 optional arguments:
   -h, --help            show this help message and exit
-  -v, --version         print version
-  -m, --memload         consume memory until 20 MiB remain free, and terminate
-                        the process
-  -p, --print-proc-table
-                        print table of processes with their badness values
+  -v, --version         show version of installed package and exit
+  -m, --memload         consume memory until 20 MiB (MemAvailable + SwapFree)
+                        remain free, and terminate the process
   -c CONFIG, --config CONFIG
-                        path to the config file, default values:
-                        ./nohang.conf, /etc/nohang/nohang.conf
-  -cc CONFIG, --check-config CONFIG
-                        check and print config
+                        path to the config file. This should only be used
+                        with one of the following options:
+                        --monitor, --tasks, --check
+  --check               check and show the configuration and exit. This should
+                        only be used with -c/--config CONFIG option
+  --monitor             start monitoring. This should only be used with
+                        -c/--config CONFIG option
+  --tasks               show tasks state and exit. This should only be used
+                        with -c/--config CONFIG option
 ```
 
 ## How to configure
@@ -200,7 +202,7 @@ If testing occurs while `nohang` is running, these processes should be terminate
 
 ## Print table of processes with their badness values
 
-Run `sudo nohang -p` to see the table of prosesses with their badness values, oom_scores, names, UIDs etc.
+Run `sudo nohang -c/--config CONFIG --tasks` to see the table of prosesses with their badness values, oom_scores, names, UIDs etc.
 
 <details>
  <summary>Output example</summary>
