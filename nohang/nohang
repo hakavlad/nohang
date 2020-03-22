@@ -14,7 +14,14 @@ from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
 def missing_config_key(key):
     """
     """
-    errprint('ERROR: missing config key "{}"'.format(key))
+    errprint('ERROR: invalid config: missing key "{}"'.format(key))
+    exit(1)
+
+
+def invalid_config_key_value(key):
+    """
+    """
+    errprint('ERROR: invalid config: invalid "{}" value'.format(key))
     exit(1)
 
 
@@ -439,8 +446,6 @@ def send_notify_etc(pid, name, command):
 def check_config():
     """
     """
-    # log('#' * 79)
-
     log('\n1. Common zram settings')
 
     log('    zram_checking_enabled:   {}'.format(zram_checking_enabled))
@@ -626,47 +631,30 @@ def check_config():
     log('    debug_threading:            {}'.format(debug_threading))
     log('    separate_log:               {}'.format(separate_log))
 
-    log('#' * 79)
-
     if check_config_flag:
-        log('config is OK')
+        log('\nconfig is OK')
         exit()
 
 
-def get_swap_threshold_tuple(string):
+def get_swap_threshold_tuple(string, key):
     # re (Num %, True) or (Num KiB, False)
     """Returns KiB value if abs val was set in config, or tuple with %"""
+
     # return tuple with abs and bool: (abs %, True) or (abs MiB, False)
     if string.endswith('%'):
-        valid = string_to_float_convert_test(string[:-1])
-        if valid is None:
-            errprint('somewhere swap unit is not float_%')
-            exit(1)
-
-        value = float(string[:-1].strip())
-        if value < 0 or value > 100:
-            errprint('invalid value, must be from the range[0; 100] %')
-            exit(1)
-
+        value = string_to_float_convert_test(string[:-1])
+        if value is None or value < 0 or value > 100:
+            invalid_config_key_value(key)
         return value, True
 
     elif string.endswith('M'):
-        valid = string_to_float_convert_test(string[:-1])
-        if valid is None:
-            errprint('somewhere swap unit is not float_M')
-            exit(1)
-
-        value = float(string[:-1].strip()) * 1024
-        if value < 0:
-            errprint('invalid unit in config (negative value)')
-            exit(1)
-
+        value = string_to_float_convert_test(string[:-1])
+        if value is None or value < 0:
+            invalid_config_key_value(key)
         return value, False
 
     else:
-        errprint(
-            'Invalid config file. There are invalid units somewhere\nExit')
-        exit(1)
+        invalid_config_key_value(key)
 
 
 def find_cgroup_indexes():
@@ -1439,7 +1427,7 @@ def conf_parse_bool(param):
     """
     Get bool parameters from the config_dict.
 
-    param: config_dicst key
+    param: config_dict key
     returns bool
     """
     if param in config_dict:
@@ -1449,10 +1437,7 @@ def conf_parse_bool(param):
         elif param_str == 'False':
             return False
         else:
-            errprint('Invalid value of the "{}" parameter.'.format(param))
-            errprint('Valid values are True and False.')
-            errprint('Exit')
-            exit(1)
+            invalid_config_key_value(param)
     else:
         missing_config_key(param)
 
@@ -2014,7 +1999,23 @@ def check_zram_ex():
     """
     mem_used_zram = check_zram()
 
-    if mem_used_zram >= hard_threshold_max_zram_kb:
+    if mem_available <= hard_threshold_min_mem_kb:
+        ma_hard_threshold_exceded = True
+    else:
+        ma_hard_threshold_exceded = False
+
+    if mem_available <= soft_threshold_min_mem_kb:
+        ma_soft_threshold_exceded = True
+    else:
+        ma_soft_threshold_exceded = False
+
+    if mem_available <= warning_threshold_min_mem_kb:
+        ma_warning_threshold_exceded = True
+    else:
+        ma_warning_threshold_exceded = False
+
+    if (mem_used_zram >= hard_threshold_max_zram_kb and
+            ma_hard_threshold_exceded):
 
         mem_info = 'Memory status that requires corrective actions:\n  Mem' \
             'UsedZram [{} MiB, {} %] >= hard_threshold_max_zram [{} MiB' \
@@ -2027,7 +2028,8 @@ def check_zram_ex():
 
         return SIGKILL, mem_info, mem_used_zram
 
-    if mem_used_zram >= soft_threshold_max_zram_kb:
+    if (mem_used_zram >= soft_threshold_max_zram_kb and
+            ma_soft_threshold_exceded):
 
         mem_info = 'Memory status that requires corrective actions:\n  ' \
             'MemUsedZram [{} MiB, {} %] >= soft_threshold_max_zram [{}' \
@@ -2040,7 +2042,8 @@ def check_zram_ex():
         return SIGTERM, mem_info, mem_used_zram
 
     if low_memory_warnings_enabled:
-        if mem_used_zram >= warning_threshold_max_zram_kb:
+        if (mem_used_zram >= warning_threshold_max_zram_kb and
+                ma_warning_threshold_exceded):
             return 'WARN', None, mem_used_zram
 
     return None, None, mem_used_zram
@@ -2103,10 +2106,11 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
                 ma_hard_threshold_exceded, ma_soft_threshold_exceded,
                 ma_warning_threshold_exceded))
 
-    if (psi_kill_exceeded_timer >= psi_excess_duration and
-            psi_post_action_delay_exceeded and ma_hard_threshold_exceded):
+    if (sigkill_psi_exceeded and psi_kill_exceeded_timer >=
+            psi_excess_duration and psi_post_action_delay_exceeded and
+            ma_hard_threshold_exceded):
 
-        mem_info = 'PSI avg ({}) > hard_threshold_max_psi ({})\n' \
+        mem_info = 'PSI avg ({}) >= hard_threshold_max_psi ({})\n' \
             'PSI avg exceeded psi_excess_duration (value' \
             ' = {} sec) for {} seconds'.format(
                 psi_avg_value,
@@ -2134,10 +2138,11 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             )
             )
 
-    if (psi_term_exceeded_timer >= psi_excess_duration and
-            psi_post_action_delay_exceeded and ma_soft_threshold_exceded):
+    if (sigterm_psi_exceeded and psi_term_exceeded_timer >=
+            psi_excess_duration and psi_post_action_delay_exceeded and
+            ma_soft_threshold_exceded):
 
-        mem_info = 'PSI avg ({}) > soft_threshold_max_psi ({})\n' \
+        mem_info = 'PSI avg ({}) >= soft_threshold_max_psi ({})\n' \
             'PSI avg exceeded psi_excess_duration (value' \
             ' = {} sec) for {} seconds'.format(
                 psi_avg_value,
@@ -2614,11 +2619,9 @@ def calculate_percent(arg_key):
     parse conf dict
     Calculate mem_min_KEY_percent.
 
-    Try use this one)
     arg_key: str key for config_dict
     returns int mem_min_percent or NoneType if got some error
     """
-
     if arg_key in config_dict:
         mem_min = config_dict[arg_key]
 
@@ -2628,15 +2631,7 @@ def calculate_percent(arg_key):
             # then 'float test'
             mem_min_percent = string_to_float_convert_test(mem_min_percent)
             if mem_min_percent is None:
-                errprint('Invalid {} value, not float\nExit'.format(arg_key))
-                exit(1)
-            # Final validations...
-            if mem_min_percent < 0 or mem_min_percent > 100:
-                errprint(
-                    '{}, as percents value, out of ran'
-                    'ge [0; 100]\nExit'.format(arg_key))
-                exit(1)
-
+                invalid_config_key_value(arg_key)
             # soft_threshold_min_mem_percent is clean and valid float
             # percentage. Can translate into Kb
             mem_min_kb = mem_min_percent / 100 * mem_total
@@ -2645,27 +2640,28 @@ def calculate_percent(arg_key):
         elif mem_min.endswith('M'):
             mem_min_mb = string_to_float_convert_test(mem_min[:-1].strip())
             if mem_min_mb is None:
-                errprint('Invalid {} value, not float\nExit'.format(arg_key))
-                exit(1)
+                invalid_config_key_value(arg_key)
             mem_min_kb = mem_min_mb * 1024
-            if mem_min_kb > mem_total:
-                errprint(
-                    '{} value can not be greater then MemT'
-                    'otal ({} MiB)\nExit'.format(
-                        arg_key, round(
-                            mem_total / 1024)))
-                exit(1)
             mem_min_percent = mem_min_kb / mem_total * 100
-
         else:
-            log('Invalid {} units in config.\n Exit'.format(arg_key))
-            exit(1)
-            mem_min_percent = None
-
+            invalid_config_key_value(arg_key)
     else:
-        log('{} not in config\nExit'.format(arg_key))
-        exit(1)
-        mem_min_percent = None
+        missing_config_key(arg_key)
+
+    if (arg_key == 'soft_threshold_min_mem' or
+            arg_key == 'hard_threshold_min_mem'):
+        if mem_min_kb > mem_total * 0.5 or mem_min_kb < 0:
+            invalid_config_key_value(arg_key)
+
+    if (arg_key == 'soft_threshold_max_zram' or
+            arg_key == 'hard_threshold_max_zram'):
+        if mem_min_kb > mem_total * 0.9 or mem_min_kb < mem_total * 0.1:
+            invalid_config_key_value(arg_key)
+
+    if (arg_key == 'warning_threshold_min_mem' or
+            arg_key == 'warning_threshold_max_zram'):
+        if mem_min_kb > mem_total or mem_min_kb < 0:
+            invalid_config_key_value(arg_key)
 
     return mem_min_kb, mem_min_mb, mem_min_percent
 
@@ -3094,25 +3090,17 @@ print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
 print_config_at_startup = conf_parse_bool('print_config_at_startup')
 print_mem_check_results = conf_parse_bool('print_mem_check_results')
 debug_sleep = conf_parse_bool('debug_sleep')
-
 hide_corrective_action_type = conf_parse_bool('hide_corrective_action_type')
-
-
 low_memory_warnings_enabled = conf_parse_bool('low_memory_warnings_enabled')
-
 
 post_action_gui_notifications = conf_parse_bool(
     'post_action_gui_notifications')
 
-
 debug_threading = conf_parse_bool('debug_threading')
-
 
 psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
 
-
 ignore_psi = not psi_checking_enabled
-
 
 if psi_checking_enabled:
 
@@ -3127,11 +3115,9 @@ if psi_checking_enabled:
 zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
 ignore_zram = not zram_checking_enabled
 
-
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
 ignore_positive_oom_score_adj = conf_parse_bool(
     'ignore_positive_oom_score_adj')
-
 
 (soft_threshold_min_mem_kb, soft_threshold_min_mem_mb,
  soft_threshold_min_mem_percent) = calculate_percent('soft_threshold_min_mem')
@@ -3155,29 +3141,19 @@ ignore_positive_oom_score_adj = conf_parse_bool(
  warning_threshold_max_zram_percent) = calculate_percent(
      'warning_threshold_max_zram')
 
-
 if 'post_zombie_delay' in config_dict:
     post_zombie_delay = string_to_float_convert_test(
         config_dict['post_zombie_delay'])
-    if post_zombie_delay is None:
-        errprint('Invalid post_zombie_delay, not float\nExit')
-        exit(1)
-    if post_zombie_delay < 0:
-        errprint('post_zombie_delay MUST be >= 0\nExit')
-        exit(1)
+    if post_zombie_delay is None or post_zombie_delay < 0:
+        invalid_config_key_value('post_zombie_delay')
 else:
     missing_config_key('post_zombie_delay')
-
 
 if 'victim_cache_time' in config_dict:
     victim_cache_time = string_to_float_convert_test(
         config_dict['victim_cache_time'])
-    if victim_cache_time is None:
-        errprint('Invalid victim_cache_time, not float\nExit')
-        exit(1)
-    if victim_cache_time < 0:
-        errprint('victim_cache_time MUST be >= 0\nExit')
-        exit(1)
+    if victim_cache_time is None or victim_cache_time < 0:
+        invalid_config_key_value('victim_cache_time')
 else:
     missing_config_key('victim_cache_time')
 
@@ -3185,37 +3161,24 @@ else:
 if 'env_cache_time' in config_dict:
     env_cache_time = string_to_float_convert_test(
         config_dict['env_cache_time'])
-    if env_cache_time is None:
-        errprint('Invalid env_cache_time value, not float\nExit')
-        exit(1)
-    if env_cache_time < 0:
-        errprint('env_cache_time MUST be >= 0\nExit')
-        exit(1)
+    if env_cache_time is None or env_cache_time < 0:
+        invalid_config_key_value('env_cache_time')
 else:
     missing_config_key('env_cache_time')
 
 
 if 'exe_timeout' in config_dict:
-    exe_timeout = string_to_float_convert_test(
-        config_dict['exe_timeout'])
-    if exe_timeout is None:
-        errprint('Invalid exe_timeout value, not float\nExit')
-        exit(1)
-    if exe_timeout <= 0:
-        errprint('exe_timeout MUST be > 0\nExit')
-        exit(1)
+    exe_timeout = string_to_float_convert_test(config_dict['exe_timeout'])
+    if exe_timeout is None or exe_timeout < 0.1:
+        invalid_config_key_value('exe_timeout')
 else:
     missing_config_key('exe_timeout')
 
 
 if 'fill_rate_mem' in config_dict:
     fill_rate_mem = string_to_float_convert_test(config_dict['fill_rate_mem'])
-    if fill_rate_mem is None:
-        errprint('Invalid fill_rate_mem value, not float\nExit')
-        exit(1)
-    if fill_rate_mem <= 0:
-        errprint('fill_rate_mem MUST be > 0\nExit')
-        exit(1)
+    if fill_rate_mem is None or fill_rate_mem < 100:
+        invalid_config_key_value('fill_rate_mem')
 else:
     missing_config_key('fill_rate_mem')
 
@@ -3223,12 +3186,8 @@ else:
 if 'fill_rate_swap' in config_dict:
     fill_rate_swap = string_to_float_convert_test(
         config_dict['fill_rate_swap'])
-    if fill_rate_swap is None:
-        errprint('Invalid fill_rate_swap value, not float\nExit')
-        exit(1)
-    if fill_rate_swap <= 0:
-        errprint('fill_rate_swap MUST be > 0\nExit')
-        exit(1)
+    if fill_rate_swap is None or fill_rate_swap < 100:
+        invalid_config_key_value('fill_rate_swap')
 else:
     missing_config_key('fill_rate_swap')
 
@@ -3236,12 +3195,8 @@ else:
 if 'fill_rate_zram' in config_dict:
     fill_rate_zram = string_to_float_convert_test(
         config_dict['fill_rate_zram'])
-    if fill_rate_zram is None:
-        errprint('Invalid fill_rate_zram value, not float\nExit')
-        exit(1)
-    if fill_rate_zram <= 0:
-        errprint('fill_rate_zram MUST be > 0\nExit')
-        exit(1)
+    if fill_rate_zram is None or fill_rate_zram < 100:
+        invalid_config_key_value('fill_rate_zram')
 else:
     missing_config_key('fill_rate_zram')
 
@@ -3262,12 +3217,8 @@ else:
 if 'post_soft_action_delay' in config_dict:
     post_soft_action_delay = string_to_float_convert_test(
         config_dict['post_soft_action_delay'])
-    if post_soft_action_delay is None:
-        errprint('Invalid post_soft_action_delay value, not float\nExit')
-        exit(1)
-    if post_soft_action_delay < 0:
-        errprint('post_soft_action_delay must be positiv\nExit')
-        exit(1)
+    if post_soft_action_delay is None or post_soft_action_delay < 0.1:
+        invalid_config_key_value('post_soft_action_delay')
 else:
     missing_config_key('post_soft_action_delay')
 
@@ -3275,12 +3226,8 @@ else:
 if 'psi_post_action_delay' in config_dict:
     psi_post_action_delay = string_to_float_convert_test(
         config_dict['psi_post_action_delay'])
-    if psi_post_action_delay is None:
-        errprint('Invalid psi_post_action_delay value, not float\nExit')
-        exit(1)
-    if psi_post_action_delay < 0:
-        errprint('psi_post_action_delay must be positive\nExit')
-        exit(1)
+    if psi_post_action_delay is None or psi_post_action_delay < 10:
+        invalid_config_key_value('psi_post_action_delay')
 else:
     missing_config_key('psi_post_action_delay')
 
@@ -3288,12 +3235,9 @@ else:
 if 'hard_threshold_max_psi' in config_dict:
     hard_threshold_max_psi = string_to_float_convert_test(
         config_dict['hard_threshold_max_psi'])
-    if hard_threshold_max_psi is None:
-        errprint('Invalid hard_threshold_max_psi value, not float\nExit')
-        exit(1)
-    if hard_threshold_max_psi < 0 or hard_threshold_max_psi > 100:
-        errprint('hard_threshold_max_psi must be in the range [0; 100]\nExit')
-        exit(1)
+    if (hard_threshold_max_psi is None or hard_threshold_max_psi < 1 or
+            hard_threshold_max_psi > 100):
+        invalid_config_key_value('hard_threshold_max_psi')
 else:
     missing_config_key('hard_threshold_max_psi')
 
@@ -3301,12 +3245,9 @@ else:
 if 'soft_threshold_max_psi' in config_dict:
     soft_threshold_max_psi = string_to_float_convert_test(
         config_dict['soft_threshold_max_psi'])
-    if soft_threshold_max_psi is None:
-        errprint('Invalid soft_threshold_max_psi value, not float\nExit')
-        exit(1)
-    if soft_threshold_max_psi < 0 or soft_threshold_max_psi > 100:
-        errprint('soft_threshold_max_psi must be in the range [0; 100]\nExit')
-        exit(1)
+    if (soft_threshold_max_psi is None or soft_threshold_max_psi < 1 or
+            soft_threshold_max_psi > 100):
+        invalid_config_key_value('soft_threshold_max_psi')
 else:
     missing_config_key('soft_threshold_max_psi')
 
@@ -3314,26 +3255,17 @@ else:
 if 'warning_threshold_max_psi' in config_dict:
     warning_threshold_max_psi = string_to_float_convert_test(
         config_dict['warning_threshold_max_psi'])
-    if warning_threshold_max_psi is None:
-        errprint('Invalid warning_threshold_max_psi value, not float\nExit')
-        exit(1)
-    if warning_threshold_max_psi < 0 or warning_threshold_max_psi > 100:
-        errprint(
-            'warning_threshold_max_psi must be in the range [0; 100]\nExit')
-        exit(1)
+    if (warning_threshold_max_psi is None or warning_threshold_max_psi < 1 or
+            warning_threshold_max_psi > 100):
+        invalid_config_key_value('warning_threshold_max_psi')
 else:
     missing_config_key('warning_threshold_max_psi')
 
 
 if 'min_badness' in config_dict:
-    min_badness = string_to_int_convert_test(
-        config_dict['min_badness'])
-    if min_badness is None:
-        errprint('Invalid min_badness value, not integer\nExit')
-        exit(1)
-    if min_badness < 0 or min_badness > 1000:
-        errprint('Invalud min_badness value\nExit')
-        exit(1)
+    min_badness = string_to_int_convert_test(config_dict['min_badness'])
+    if min_badness is None or min_badness < 1:
+        invalid_config_key_value('min_badness')
 else:
     missing_config_key('min_badness')
 
@@ -3341,12 +3273,8 @@ else:
 if 'min_post_warning_delay' in config_dict:
     min_post_warning_delay = string_to_float_convert_test(
         config_dict['min_post_warning_delay'])
-    if min_post_warning_delay is None:
-        errprint('Invalid min_post_warning_delay value, not float\nExit')
-        exit(1)
-    if min_post_warning_delay < 1 or min_post_warning_delay > 300:
-        errprint('min_post_warning_delay value out of range [1; 300]\nExit')
-        exit(1)
+    if min_post_warning_delay is None or min_post_warning_delay < 1:
+        invalid_config_key_value('min_post_warning_delay')
 else:
     missing_config_key('min_post_warning_delay')
 
@@ -3373,14 +3301,8 @@ else:
 if 'max_soft_exit_time' in config_dict:
     max_soft_exit_time = string_to_float_convert_test(
         config_dict['max_soft_exit_time'])
-    if max_soft_exit_time is None:
-        errprint('Invalid max_soft_exit_time val'
-                 'ue, not float\nExit')
-        exit(1)
-    if max_soft_exit_time < 0:
-        errprint('max_soft_exit_time must be non-n'
-                 'egative number\nExit')
-        exit(1)
+    if max_soft_exit_time is None or max_soft_exit_time < 0.1:
+        invalid_config_key_value('max_soft_exit_time')
 else:
     missing_config_key('max_soft_exit_time')
 
@@ -3397,19 +3319,19 @@ if 'psi_path' in config_dict:
         try:
             psi_file_mem_to_metrics(psi_path)
         except Exception as e:
-            # log()?
-            print('WARNING: invalid psi_path "{}": {}'.format(
+            errprint('WARNING: invalid psi_path "{}": {}'.format(
                 psi_path, e))
-            ignore_psi = True
-
-
 else:
-    errprint('psi_path is not in config\nExit')
-    exit(1)
+    missing_config_key('psi_path')
 
 
 if 'psi_metrics' in config_dict:
     psi_metrics = config_dict['psi_metrics']
+    valid_metrics = {
+        'some_avg10', 'some_avg60', 'some_avg300',
+        'full_avg10', 'full_avg60', 'full_avg300'}
+    if psi_metrics not in valid_metrics:
+        invalid_config_key_value('psi_metrics')
 else:
     missing_config_key('psi_metrics')
 
@@ -3426,15 +3348,10 @@ else:
 
 if 'extra_table_info' in config_dict:
     extra_table_info = config_dict['extra_table_info']
-    if (extra_table_info != 'None' and
-        extra_table_info != 'cgroup_v1' and
-        extra_table_info != 'cgroup_v2' and
-        extra_table_info != 'cmdline' and
-        extra_table_info != 'environ' and
-            extra_table_info != 'realpath' and extra_table_info != 'cwd'):
-
-        errprint('Invalid config: invalid extra_table_info value\nExit')
-        exit(1)
+    valid_eti = {'None', 'cwd', 'realpath',
+                 'cgroup_v1', 'cgroup_v2', 'cmdline', 'environ'}
+    if extra_table_info not in valid_eti:
+        invalid_config_key_value('extra_table_info')
 else:
     missing_config_key('extra_table_info')
 
@@ -3476,12 +3393,8 @@ if separate_log:
 if 'min_mem_report_interval' in config_dict:
     min_mem_report_interval = string_to_float_convert_test(
         config_dict['min_mem_report_interval'])
-    if min_mem_report_interval is None:
-        errprint('Invalid min_mem_report_interval value, not float\nExit')
-        exit(1)
-    if min_mem_report_interval < 0:
-        errprint('min_mem_report_interval must be non-negative number\nExit')
-        exit(1)
+    if min_mem_report_interval is None or min_mem_report_interval < 0:
+        invalid_config_key_value('min_mem_report_interval')
 else:
     missing_config_key('min_mem_report_interval')
 
@@ -3489,12 +3402,8 @@ else:
 if 'psi_excess_duration' in config_dict:
     psi_excess_duration = string_to_float_convert_test(
         config_dict['psi_excess_duration'])
-    if psi_excess_duration is None:
-        errprint('Invalid psi_excess_duration value, not float\nExit')
-        exit(1)
-    if psi_excess_duration < 0:
-        errprint('psi_excess_duration must be non-negative number\nExit')
-        exit(1)
+    if psi_excess_duration is None or psi_excess_duration < 0:
+        invalid_config_key_value('psi_excess_duration')
 else:
     missing_config_key('psi_excess_duration')
 
@@ -3502,12 +3411,8 @@ else:
 if 'max_sleep' in config_dict:
     max_sleep = string_to_float_convert_test(
         config_dict['max_sleep'])
-    if max_sleep is None:
-        errprint('Invalid max_sleep value, not float\nExit')
-        exit(1)
-    if max_sleep <= 0:
-        errprint('max_sleep must be positive number\nExit')
-        exit(1)
+    if max_sleep is None or max_sleep < 0.01:
+        invalid_config_key_value('max_sleep')
 else:
     missing_config_key('max_sleep')
 
@@ -3515,40 +3420,14 @@ else:
 if 'min_sleep' in config_dict:
     min_sleep = string_to_float_convert_test(
         config_dict['min_sleep'])
-    if min_sleep is None:
-        errprint('Invalid min_sleep value, not float\nExit')
-        exit(1)
-    if min_sleep <= 0:
-        errprint('min_sleep must be positive number\nExit')
-        exit(1)
+    if min_sleep is None or min_sleep < 0.01 or min_sleep > max_sleep:
+        invalid_config_key_value('min_sleep')
 else:
     missing_config_key('min_sleep')
 
 
-if 'over_sleep' in config_dict:
-    over_sleep = string_to_float_convert_test(
-        config_dict['over_sleep'])
-    if over_sleep is None:
-        errprint('Invalid over_sleep value, not float\nExit')
-        exit(1)
-    if over_sleep <= 0:
-        errprint('over_sleep must be positive number\nExit')
-        exit(1)
-else:
-    missing_config_key('over_sleep')
-
-
-sensitivity_test_time = over_sleep / 2
-
-
-if max_sleep < min_sleep:
-    errprint('min_sleep value must not exceed max_sleep value.\nExit')
-    exit(1)
-
-
-if min_sleep < over_sleep:
-    errprint('over_sleep value must not exceed min_sleep value.\nExit')
-    exit(1)
+over_sleep = min_sleep
+sensitivity_test_time = over_sleep / 4
 
 
 if max_sleep == min_sleep:
@@ -3579,11 +3458,11 @@ psi_support = os.path.exists(psi_path)
 # Get KiB levels if it's possible.
 
 soft_threshold_min_swap_tuple = get_swap_threshold_tuple(
-    soft_threshold_min_swap)
+    soft_threshold_min_swap, 'soft_threshold_min_swap')
 hard_threshold_min_swap_tuple = get_swap_threshold_tuple(
-    hard_threshold_min_swap)
+    hard_threshold_min_swap, 'hard_threshold_min_swap')
 warning_threshold_min_swap_tuple = get_swap_threshold_tuple(
-    warning_threshold_min_swap)
+    warning_threshold_min_swap, 'warning_threshold_min_swap')
 
 
 swap_kb_dict = dict()
@@ -3719,6 +3598,7 @@ while True:
 
         if CHECK_PSI:
             psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
+            # print(psi_avg_value)
             if monotonic() - psi_t0 >= psi_post_action_delay:
                 psi_post_action_delay_exceeded = True
             else:
