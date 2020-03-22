@@ -11,6 +11,13 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
 
 
+def missing_config_key(key):
+    """
+    """
+    errprint('ERROR: missing config key "{}"'.format(key))
+    exit(1)
+
+
 def check_permissions():
     """
     """
@@ -432,7 +439,7 @@ def send_notify_etc(pid, name, command):
 def check_config():
     """
     """
-    log('#' * 79)
+    # log('#' * 79)
 
     log('\n1. Common zram settings')
 
@@ -459,7 +466,8 @@ def check_config():
 
     log('    post_action_gui_notifications:  {}'.format(
         post_action_gui_notifications))
-
+    log('    hide_corrective_action_type:    {}'.format(
+        hide_corrective_action_type))
     log('    low_memory_warnings_enabled:    {}'.format(
         low_memory_warnings_enabled))
     log('    warning_exe:                    {}'.format(warning_exe))
@@ -475,7 +483,6 @@ def check_config():
         warning_threshold_max_psi))
     log('    min_post_warning_delay:         {} sec'.format(
         min_post_warning_delay))
-
     log('    env_cache_time:                 {}'.format(env_cache_time))
 
     log('\n5. Soft threshold')
@@ -503,78 +510,73 @@ def check_config():
     log('\n7. Customize victim selection: adjusting badness of processes')
 
     log('\n7.1. Ignore positive oom_score_adj')
-
     log('    ignore_positive_oom_score_adj:  {}'.format(
         ignore_positive_oom_score_adj))
 
-    log('\n7.2. Forbid negative badness')
+    log('\n7.2. Adjusting badness of processes by matching with '
+        'regular expressions')
 
-    log('    forbid_negative_badness:        {}'.format(
-        forbid_negative_badness))
-
-    log('\n7.3. ')
-
-    log('7.3.1. Matching process names with RE patterns')
+    log('7.2.1. Matching process names with RE patterns')
     if len(badness_adj_re_name_list) > 0:
-        log('    regexp:         badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_name_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.2. Matching CGroup_v1-line with RE patterns')
+    log('7.2.2. Matching CGroup_v1-line with RE patterns')
     if len(badness_adj_re_cgroup_v1_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_cgroup_v1_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.3. Matching CGroup_v2-line with RE patterns')
+    log('7.2.3. Matching CGroup_v2-line with RE patterns')
     if len(badness_adj_re_cgroup_v2_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_cgroup_v2_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.4. Matching eUIDs with RE patterns')
+    log('7.2.4. Matching eUIDs with RE patterns')
     if len(badness_adj_re_uid_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_uid_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.5. Matching realpath with RE patterns')
+    log('7.2.5. Matching realpath with RE patterns')
     if len(badness_adj_re_realpath_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_realpath_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.5.1. Matching cwd with RE patterns')
+    log('7.2.6. Matching cwd with RE patterns')
     if len(badness_adj_re_cwd_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_cwd_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.6. Matching cmdlines with RE patterns')
+    log('7.2.7. Matching cmdlines with RE patterns')
     if len(badness_adj_re_cmdline_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_cmdline_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
-    log('7.3.7. Matching environ with RE patterns')
+    log('7.2.8. Matching environ with RE patterns')
     if len(badness_adj_re_environ_list) > 0:
-        log('    regexp:              badness_adj:')
+        log('    badness_adj:  regexp:')
         for i in badness_adj_re_environ_list:
-            log('    {}         {}'.format(i[1], i[0]))
+            log('    {:>12}  {}'.format(i[0], i[1]))
     else:
         log('    (not set)')
 
@@ -1430,9 +1432,7 @@ def conf_parse_string(param):
     if param in config_dict:
         return config_dict[param].strip()
     else:
-        errprint('All the necessary parameters must be in the config')
-        errprint('There is no "{}" parameter in the config'.format(param))
-        exit(1)
+        missing_config_key(param)
 
 
 def conf_parse_bool(param):
@@ -1454,9 +1454,7 @@ def conf_parse_bool(param):
             errprint('Exit')
             exit(1)
     else:
-        errprint('All the necessary parameters must be in the config')
-        errprint('There is no "{}" parameter in the config'.format(param))
-        exit(1)
+        missing_config_key(param)
 
 
 def rline1(path):
@@ -3091,7 +3089,6 @@ else:
 debug_psi = conf_parse_bool('debug_psi')
 print_statistics = conf_parse_bool('print_statistics')
 print_proc_table = conf_parse_bool('print_proc_table')
-forbid_negative_badness = conf_parse_bool('forbid_negative_badness')
 print_victim_status = conf_parse_bool('print_victim_status')
 print_victim_cmdline = conf_parse_bool('print_victim_cmdline')
 print_config_at_startup = conf_parse_bool('print_config_at_startup')
@@ -3169,8 +3166,7 @@ if 'post_zombie_delay' in config_dict:
         errprint('post_zombie_delay MUST be >= 0\nExit')
         exit(1)
 else:
-    errprint('post_zombie_delay not in config\nExit')
-    exit(1)
+    missing_config_key('post_zombie_delay')
 
 
 if 'victim_cache_time' in config_dict:
@@ -3183,8 +3179,7 @@ if 'victim_cache_time' in config_dict:
         errprint('victim_cache_time MUST be >= 0\nExit')
         exit(1)
 else:
-    errprint('victim_cache_time not in config\nExit')
-    exit(1)
+    missing_config_key('victim_cache_time')
 
 
 if 'env_cache_time' in config_dict:
@@ -3197,8 +3192,7 @@ if 'env_cache_time' in config_dict:
         errprint('env_cache_time MUST be >= 0\nExit')
         exit(1)
 else:
-    errprint('env_cache_time not in config\nExit')
-    exit(1)
+    missing_config_key('env_cache_time')
 
 
 if 'exe_timeout' in config_dict:
@@ -3211,8 +3205,7 @@ if 'exe_timeout' in config_dict:
         errprint('exe_timeout MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('exe_timeout not in config\nExit')
-    exit(1)
+    missing_config_key('exe_timeout')
 
 
 if 'fill_rate_mem' in config_dict:
@@ -3224,8 +3217,7 @@ if 'fill_rate_mem' in config_dict:
         errprint('fill_rate_mem MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('fill_rate_mem not in config\nExit')
-    exit(1)
+    missing_config_key('fill_rate_mem')
 
 
 if 'fill_rate_swap' in config_dict:
@@ -3238,8 +3230,7 @@ if 'fill_rate_swap' in config_dict:
         errprint('fill_rate_swap MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('fill_rate_swap not in config\nExit')
-    exit(1)
+    missing_config_key('fill_rate_swap')
 
 
 if 'fill_rate_zram' in config_dict:
@@ -3252,8 +3243,7 @@ if 'fill_rate_zram' in config_dict:
         errprint('fill_rate_zram MUST be > 0\nExit')
         exit(1)
 else:
-    errprint('fill_rate_zram not in config\nExit')
-    exit(1)
+    missing_config_key('fill_rate_zram')
 
 
 if 'soft_threshold_min_swap' in config_dict:
@@ -3266,8 +3256,7 @@ else:
 if 'hard_threshold_min_swap' in config_dict:
     hard_threshold_min_swap = config_dict['hard_threshold_min_swap']
 else:
-    errprint('hard_threshold_min_swap not in config\nExit')
-    exit(1)
+    missing_config_key('hard_threshold_min_swap')
 
 
 if 'post_soft_action_delay' in config_dict:
@@ -3280,8 +3269,7 @@ if 'post_soft_action_delay' in config_dict:
         errprint('post_soft_action_delay must be positiv\nExit')
         exit(1)
 else:
-    errprint('post_soft_action_delay not in config\nExit')
-    exit(1)
+    missing_config_key('post_soft_action_delay')
 
 
 if 'psi_post_action_delay' in config_dict:
@@ -3294,8 +3282,7 @@ if 'psi_post_action_delay' in config_dict:
         errprint('psi_post_action_delay must be positive\nExit')
         exit(1)
 else:
-    errprint('psi_post_action_delay not in config\nExit')
-    exit(1)
+    missing_config_key('psi_post_action_delay')
 
 
 if 'hard_threshold_max_psi' in config_dict:
@@ -3308,8 +3295,7 @@ if 'hard_threshold_max_psi' in config_dict:
         errprint('hard_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('hard_threshold_max_psi not in config\nExit')
-    exit(1)
+    missing_config_key('hard_threshold_max_psi')
 
 
 if 'soft_threshold_max_psi' in config_dict:
@@ -3322,8 +3308,7 @@ if 'soft_threshold_max_psi' in config_dict:
         errprint('soft_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('soft_threshold_max_psi not in config\nExit')
-    exit(1)
+    missing_config_key('soft_threshold_max_psi')
 
 
 if 'warning_threshold_max_psi' in config_dict:
@@ -3337,8 +3322,7 @@ if 'warning_threshold_max_psi' in config_dict:
             'warning_threshold_max_psi must be in the range [0; 100]\nExit')
         exit(1)
 else:
-    errprint('warning_threshold_max_psi not in config\nExit')
-    exit(1)
+    missing_config_key('warning_threshold_max_psi')
 
 
 if 'min_badness' in config_dict:
@@ -3351,8 +3335,7 @@ if 'min_badness' in config_dict:
         errprint('Invalud min_badness value\nExit')
         exit(1)
 else:
-    errprint('min_badness not in config\nExit')
-    exit(1)
+    missing_config_key('min_badness')
 
 
 if 'min_post_warning_delay' in config_dict:
@@ -3365,15 +3348,13 @@ if 'min_post_warning_delay' in config_dict:
         errprint('min_post_warning_delay value out of range [1; 300]\nExit')
         exit(1)
 else:
-    errprint('min_post_warning_delay not in config\nExit')
-    exit(1)
+    missing_config_key('min_post_warning_delay')
 
 
 if 'warning_threshold_min_swap' in config_dict:
     warning_threshold_min_swap = config_dict['warning_threshold_min_swap']
 else:
-    errprint('warning_threshold_min_swap not in config\nExit')
-    exit(1)
+    missing_config_key('warning_threshold_min_swap')
 
 
 if 'max_victim_ancestry_depth' in config_dict:
@@ -3386,8 +3367,7 @@ if 'max_victim_ancestry_depth' in config_dict:
         errprint('Invalud max_victim_ancestry_depth value\nExit')
         exit(1)
 else:
-    errprint('max_victim_ancestry_depth is not in config\nExit')
-    exit(1)
+    missing_config_key('max_victim_ancestry_depth')
 
 
 if 'max_soft_exit_time' in config_dict:
@@ -3402,15 +3382,13 @@ if 'max_soft_exit_time' in config_dict:
                  'egative number\nExit')
         exit(1)
 else:
-    errprint('max_soft_exit_time is not in config\nExit')
-    exit(1)
+    missing_config_key('max_soft_exit_time')
 
 
 if 'post_kill_exe' in config_dict:
     post_kill_exe = config_dict['post_kill_exe']
 else:
-    errprint('post_kill_exe is not in config\nExit')
-    exit(1)
+    missing_config_key('post_kill_exe')
 
 
 if 'psi_path' in config_dict:
@@ -3419,6 +3397,7 @@ if 'psi_path' in config_dict:
         try:
             psi_file_mem_to_metrics(psi_path)
         except Exception as e:
+            # log()?
             print('WARNING: invalid psi_path "{}": {}'.format(
                 psi_path, e))
             ignore_psi = True
@@ -3432,8 +3411,7 @@ else:
 if 'psi_metrics' in config_dict:
     psi_metrics = config_dict['psi_metrics']
 else:
-    errprint('psi_metrics is not in config\nExit')
-    exit(1)
+    missing_config_key('psi_metrics')
 
 
 if 'warning_exe' in config_dict:
@@ -3443,8 +3421,7 @@ if 'warning_exe' in config_dict:
     else:
         check_warning_exe = False
 else:
-    errprint('warning_exe is not in config\nExit')
-    exit(1)
+    missing_config_key('warning_exe')
 
 
 if 'extra_table_info' in config_dict:
@@ -3459,8 +3436,7 @@ if 'extra_table_info' in config_dict:
         errprint('Invalid config: invalid extra_table_info value\nExit')
         exit(1)
 else:
-    errprint('Invalid config: extra_table_info is not in config\nExit')
-    exit(1)
+    missing_config_key('extra_table_info')
 
 
 separate_log = conf_parse_bool('separate_log')
@@ -3507,8 +3483,7 @@ if 'min_mem_report_interval' in config_dict:
         errprint('min_mem_report_interval must be non-negative number\nExit')
         exit(1)
 else:
-    errprint('min_mem_report_interval is not in config\nExit')
-    exit(1)
+    missing_config_key('min_mem_report_interval')
 
 
 if 'psi_excess_duration' in config_dict:
@@ -3521,8 +3496,7 @@ if 'psi_excess_duration' in config_dict:
         errprint('psi_excess_duration must be non-negative number\nExit')
         exit(1)
 else:
-    errprint('psi_excess_duration is not in config\nExit')
-    exit(1)
+    missing_config_key('psi_excess_duration')
 
 
 if 'max_sleep' in config_dict:
@@ -3535,8 +3509,7 @@ if 'max_sleep' in config_dict:
         errprint('max_sleep must be positive number\nExit')
         exit(1)
 else:
-    errprint('max_sleep is not in config\nExit')
-    exit(1)
+    missing_config_key('max_sleep')
 
 
 if 'min_sleep' in config_dict:
@@ -3549,8 +3522,7 @@ if 'min_sleep' in config_dict:
         errprint('min_sleep must be positive number\nExit')
         exit(1)
 else:
-    errprint('min_sleep is not in config\nExit')
-    exit(1)
+    missing_config_key('min_sleep')
 
 
 if 'over_sleep' in config_dict:
@@ -3563,8 +3535,7 @@ if 'over_sleep' in config_dict:
         errprint('over_sleep must be positive number\nExit')
         exit(1)
 else:
-    errprint('over_sleep is not in config\nExit')
-    exit(1)
+    missing_config_key('over_sleep')
 
 
 sensitivity_test_time = over_sleep / 2
