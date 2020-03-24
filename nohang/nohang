@@ -1347,31 +1347,18 @@ def check_mem_and_swap():
 
 
 def check_zram():
-    """Find MemUsedZram."""
-    disksize_sum = 0
-    mem_used_total_sum = 0
-
-    for dev in os.listdir('/sys/block'):
-        if dev.startswith('zram'):
-            stat = zram_stat(dev)
-            disksize_sum += int(stat[0])
-            mem_used_total_sum += int(stat[1])
-
-    # Means that when setting zram disksize = 1 GiB available memory
-    # decrease by 0.0042 GiB.
-    # Found experimentally, requires clarification with different kernaels and
-    # architectures.
-    # On small disk drives (up to gigabyte) it can be more, up to 0.0045.
-    # The creator of the zram module claims that ZRAM_DISKSIZE_FACTOR should
-    # be 0.001:
-    # ("zram uses about 0.1% of the size of the disk"
-    # - https://www.kernel.org/doc/Documentation/blockdev/zram.txt),
-    # but this statement contradicts the experimental data.
-    # ZRAM_DISKSIZE_FACTOR = deltaMemAvailavle / disksize
-    # Found experimentally.
-    ZRAM_DISKSIZE_FACTOR = 0.0042
-
-    return (mem_used_total_sum + disksize_sum * ZRAM_DISKSIZE_FACTOR) / 1024.0
+    """Find MemUsedZram (mem_used_total)."""
+    if os.path.exists('/sys/block/zram0/mem_used_total'):
+        summa = 0
+        for dev in os.listdir('/sys/block'):
+            try:
+                with open('/sys/block/{}/mem_used_total'.format(
+                        dev), 'rb', buffering=0) as f:
+                    summa += int(f.read())
+            except FileNotFoundError:
+                continue
+        return summa / 1024
+    return 0
 
 
 def format_time(t):
@@ -1478,31 +1465,6 @@ def just_percent_swap(num):
 def human(num, lenth):
     """Convert KiB values to MiB values with right alignment."""
     return str(round(num / 1024)).rjust(lenth, ' ')
-
-
-def zram_stat(zram_id):
-    """
-    Get zram state.
-
-    zram_id: str zram block-device id
-    returns bytes disksize, str mem_used_total
-    """
-    try:
-        disksize = rline1('/sys/block/' + zram_id + '/disksize')
-    except FileNotFoundError:
-        return '0', '0'
-    if disksize == ['0\n']:
-        return '0', '0'
-    try:
-        mm_stat = rline1('/sys/block/' + zram_id + '/mm_stat').split(' ')
-        mm_stat_list = []
-        for i in mm_stat:
-            if i != '':
-                mm_stat_list.append(i)
-        mem_used_total = mm_stat_list[2]
-    except FileNotFoundError:
-        mem_used_total = rline1('/sys/block/' + zram_id + '/mem_used_total')
-    return disksize, mem_used_total  # BYTES, str
 
 
 def is_alive(pid):
