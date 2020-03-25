@@ -229,7 +229,14 @@ def re_pid_environ(pid):
                 continue
 
             if i.startswith(display_env):
-                display = i[:10]
+                if i[-2] == '.':
+                    # DISPLAY=:0.0 -> DISPLAY=:0
+                    display = i[:-2]
+                else:
+                    display = i
+                if len(display) > 10:
+                    # skip DISPLAY >= :10
+                    return None
                 continue
 
             if i.startswith(dbus_env):
