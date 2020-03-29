@@ -597,12 +597,12 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('\n8. Customize corrective actions')
+    log('\n8. Customize soft corrective actions')
 
     if len(soft_actions_list) > 0:
-        log('    Match by:   regexp:     command: ')
+        log('    Match by:  regexp:       command: ')
         for i in soft_actions_list:
-            log('    {}         {}        {}'.format(i[0], i[1], i[2]))
+            log('    {} {}  {}'.format(i[0].ljust(10), i[1].ljust(12), i[2]))
     else:
         log('    (not set)')
 
@@ -2295,19 +2295,25 @@ def implement_corrective_action(
         if soft_actions and threshold is SIGTERM:
             name = pid_to_name(pid)
             cgroup_v1 = pid_to_cgroup_v1(pid)
-            service = ''
-            cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
-            if cgroup_v1_tail.endswith('.service'):
-                service = cgroup_v1_tail
+            cgroup_v2 = pid_to_cgroup_v2(pid)
             for i in soft_actions_list:
                 unit = i[0]
                 if unit == 'name':
                     u = name
-                else:
+                elif unit == 'cgroup_v1':
                     u = cgroup_v1
+                    service = ''
+                    cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
+                    if cgroup_v1_tail.endswith('.service'):
+                        service = cgroup_v1_tail
+                else:
+                    u = cgroup_v2
+                    service = ''
+                    cgroup_v2_tail = cgroup_v2.rpartition('/')[2]
+                    if cgroup_v2_tail.endswith('.service'):
+                        service = cgroup_v2_tail
                 regexp = i[1]
                 command = i[2]
-
                 if search(regexp, u) is not None:
                     log("Regexp '{}' matches with {} '{}'".format(
                         regexp, unit, u))
@@ -2824,10 +2830,7 @@ badness_adj_re_uid_list = []
 badness_adj_re_cgroup_v1_list = []
 badness_adj_re_cgroup_v2_list = []
 badness_adj_re_realpath_list = []
-
 badness_adj_re_cwd_list = []
-
-
 soft_actions_list = []
 
 # separator for optional parameters (that starts with @)
@@ -2846,8 +2849,10 @@ try:
 
             etc = line.startswith('@SOFT_ACTION_RE_NAME')
             etc2 = line.startswith('@SOFT_ACTION_RE_CGROUP_V1')
+            etc2_2 = line.startswith('@SOFT_ACTION_RE_CGROUP_V2')
 
-            if not a and not b and not c and not d and not etc and not etc2:
+            if (not a and not b and not c and not d and not etc and
+                    not etc2 and not etc2_2):
                 a = line.partition('=')
 
                 key = a[0].strip()
@@ -2881,6 +2886,22 @@ try:
                     2].partition(opt_separator)
 
                 a1 = 'cgroup_v1'
+
+                a2 = a[0].strip()
+                valid_re(a2)
+
+                a3 = a[2].strip()
+
+                zzz = (a1, a2, a3)
+
+                soft_actions_list.append(zzz)
+
+            if etc2_2:
+
+                a = line.partition('@SOFT_ACTION_RE_CGROUP_V2')[
+                    2].partition(opt_separator)
+
+                a1 = 'cgroup_v2'
 
                 a2 = a[0].strip()
                 valid_re(a2)
