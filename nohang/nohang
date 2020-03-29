@@ -146,10 +146,12 @@ def exe(cmd):
     cmd_num = cmd_num_dict['cmd_num']
     th_name = threading.current_thread().getName()
 
-    log('Executing the command ({}) in {}: {}'.format(
+    log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
+        cmd_list,
+        exe_timeout,
         th_name,
-        cmd_list))
+    ))
     t3 = monotonic()
     try:
         with Popen(cmd_list) as proc:
@@ -157,13 +159,12 @@ def exe(cmd):
                 proc.wait(timeout=exe_timeout)
                 exit_status = proc.poll()
                 t4 = monotonic()
-                log('Command ({}) execution completed in {} sec; exit status'
+                log('Command-{} execution completed in {} sec; exit status'
                     ': {}'.format(cmd_num, round(t4 - t3, 3), exit_status))
             except TimeoutExpired:
                 proc.kill()
                 t4 = monotonic()
-                log('TimeoutExpired for the command ({}) in {} sec'.format(
-                    cmd_num, round(t4 - t3, 3)))
+                log('Timeout expired for Command-{}'.format(cmd_num))
     except Exception as e:
         log('Exception in {}: {}'.format(th_name, e))
 
@@ -246,7 +247,6 @@ def re_pid_environ(pid):
         try:
             return user.partition('USER=')[2], display, dbus
         except UnboundLocalError:
-            log('notify helper: UnboundLocalError')
             return None
 
 
@@ -277,22 +277,25 @@ def root_notify_env():
     return new_env
 
 
-def pop(cmd, username):
+def pop(cmd):
     """ run cmd in subprocess.Popen()
     """
     cmd_num_dict['cmd_num'] += 1
     cmd_num = cmd_num_dict['cmd_num']
 
-    log('Execute the Command-{} {} in {}'.format(
-        cmd_num,
-        cmd,
-        threading.current_thread().getName()
-    ))
-
     if swap_total == 0:
         wait_time = 10
     else:
         wait_time = 30
+
+    th_name = threading.current_thread().getName()
+
+    log('Executing Command-{} {} with timeout {}s in {}'.format(
+        cmd_num,
+        cmd,
+        wait_time,
+        th_name
+    ))
 
     t3 = monotonic()
 
@@ -302,19 +305,20 @@ def pop(cmd, username):
                 proc.wait(timeout=wait_time)
                 err = proc.poll()
                 t4 = monotonic()
+
+                if debug_gui_notifications:
+                    log('Command-{} execution completed in {} sec; exit status'
+                        ': {}'.format(cmd_num, round(t4 - t3, 3), err))
+
             except TimeoutExpired:
                 proc.kill()
                 t4 = monotonic()
 
                 if debug_gui_notifications:
-                    log('TimeoutExpired: notify user: {}'.format(username))
-    except Exception as e:
-        th_name = threading.current_thread().getName()
-        log('Exception in {}: {}'.format(th_name, e))
+                    log('Timeout expired for Command-{}'.format(cmd_num))
 
-    if debug_gui_notifications:
-        log('Popen time: {} sec; exit status: {}; cmd: {}'.format(
-            round(t4 - t3, 3), err, cmd))
+    except Exception as e:
+        log('Exception in {}: {}'.format(th_name, e))
 
 
 def send_notification(title, body):
@@ -322,8 +326,7 @@ def send_notification(title, body):
     """
     if self_uid != 0:
         cmd = ['notify-send', '--icon=dialog-warning', title, body]
-        username = '(UID={})'.format(self_uid)
-        pop(cmd, username)
+        pop(cmd)
         return None
 
     t1 = monotonic()
@@ -350,11 +353,10 @@ def send_notification(title, body):
     t2 = monotonic()
 
     if debug_gui_notifications:
-
         log('Found env in {} ms{}'.format(round((t2 - t1) * 1000), cached_env))
-        log('Title:     {}'.format([title]))
-        log('Body:      {}'.format([body]))
-        log('Env list:  {}'.format(list_with_envs))
+        log('  Title:    {}'.format([title]))
+        log('  Body:     {}'.format([body]))
+        log('  Env list: {}'.format(list_with_envs))
 
     list_len = len(list_with_envs)
 
@@ -380,7 +382,7 @@ def send_notification(title, body):
                 body
             ]
 
-            start_thread(pop, cmd, username)
+            start_thread(pop, cmd)
 
     else:
         if debug_gui_notifications:
