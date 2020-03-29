@@ -163,7 +163,6 @@ def exe(cmd):
                     ': {}'.format(cmd_num, round(t4 - t3, 3), exit_status))
             except TimeoutExpired:
                 proc.kill()
-                t4 = monotonic()
                 log('Timeout expired for Command-{}'.format(cmd_num))
     except Exception as e:
         log('Exception in {}: {}'.format(th_name, e))
@@ -312,8 +311,6 @@ def pop(cmd):
 
             except TimeoutExpired:
                 proc.kill()
-                t4 = monotonic()
-
                 if debug_gui_notifications:
                     log('Timeout expired for Command-{}'.format(cmd_num))
 
