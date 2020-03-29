@@ -2293,25 +2293,36 @@ def implement_corrective_action(
 
         soft_match = False
         if soft_actions and threshold is SIGTERM:
+
             name = pid_to_name(pid)
             cgroup_v1 = pid_to_cgroup_v1(pid)
             cgroup_v2 = pid_to_cgroup_v2(pid)
+
+            if cgroup_v1 != '':
+                cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
+                if cgroup_v1_tail.endswith('.service'):
+                    service = cgroup_v1_tail
+                else:
+                    service = ''
+            elif cgroup_v2 != '':
+                cgroup_v2_tail = cgroup_v2.rpartition('/')[2]
+                if cgroup_v2_tail.endswith('.service'):
+                    service = cgroup_v2_tail
+                else:
+                    service = ''
+            else:
+                service = ''
+
             for i in soft_actions_list:
                 unit = i[0]
                 if unit == 'name':
                     u = name
                 elif unit == 'cgroup_v1':
                     u = cgroup_v1
-                    service = ''
-                    cgroup_v1_tail = cgroup_v1.rpartition('/')[2]
-                    if cgroup_v1_tail.endswith('.service'):
-                        service = cgroup_v1_tail
+
                 else:
                     u = cgroup_v2
-                    service = ''
-                    cgroup_v2_tail = cgroup_v2.rpartition('/')[2]
-                    if cgroup_v2_tail.endswith('.service'):
-                        service = cgroup_v2_tail
+
                 regexp = i[1]
                 command = i[2]
                 if search(regexp, u) is not None:
