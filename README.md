@@ -162,7 +162,7 @@ usage: nohang [-h|--help] [-v|--version] [-m|--memload]
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show version of installed package and exit
-  -m, --memload         consume memory until 20 MiB (MemAvailable + SwapFree)
+  -m, --memload         consume memory until 40 MiB (MemAvailable + SwapFree)
                         remain free, and terminate the process
   -c CONFIG, --config CONFIG
                         path to the config file. This should only be used

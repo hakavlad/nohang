@@ -33,7 +33,7 @@ def check_permissions():
     except Exception as e:
         print('WARNING: missing CAP_SYS_PTRACE: {}'.format(e))
     try:
-        os.kill(2, SIGTERM)
+        os.kill(1, 0)
     except Exception as e:
         print('WARNING: cannot send a signal: {}'.format(e))
     try:
@@ -93,7 +93,7 @@ def memload():
         exit(1)
 
     try:
-        hi = 'Warning! The process will consume memory until 20 MiB of mem' \
+        hi = 'Warning! The process will consume memory until 40 MiB of mem' \
              'ory\n(MemAvailable + SwapFree) remain free, and it will be t' \
              'erminated via SIGUSR1\nat the end. This may cause the system' \
              ' to freeze and processes to terminate.\nDo you want to conti' \
@@ -116,7 +116,7 @@ def memload():
         try:
             mem_available, swap_total, swap_free = check_mem_and_swap()
             x = mem_available + swap_free
-            if x <= 1024 * 20:  # 20 MiB
+            if x <= 1024 * 40:  # 40 MiB
                 print_mem(mem_available, swap_free)
                 print('Self terminating by SIGUSR1')
                 os.kill(self_pid, SIGUSR1)
@@ -2633,7 +2633,7 @@ help_mess = """usage: nohang [-h|--help] [-v|--version] [-m|--memload]
 optional arguments:
   -h, --help            show this help message and exit
   -v, --version         show version of installed package and exit
-  -m, --memload         consume memory until 20 MiB (MemAvailable + SwapFree)
+  -m, --memload         consume memory until 40 MiB (MemAvailable + SwapFree)
                         remain free, and terminate the process
   -c CONFIG, --config CONFIG
                         path to the config file. This should only be used
