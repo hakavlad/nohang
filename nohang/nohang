@@ -1300,17 +1300,28 @@ def check_mem_and_swap():
 
 def check_zram():
     """Find MemUsedZram (mem_used_total)."""
-    if os.path.exists('/sys/block/zram0/mem_used_total'):
+    if os.path.exists('/sys/block/zram0/mem_limit'):
         summa = 0
-        for dev in os.listdir('/sys/block'):
-            try:
-                with open('/sys/block/{}/mem_used_total'.format(
-                        dev), 'rb', buffering=0) as f:
-                    summa += int(f.read())
-            except FileNotFoundError:
-                continue
-        return summa / 1024
-    return 0
+        if os.path.exists('/sys/block/zram0/mm_stat'):
+            for dev in os.listdir('/sys/block'):
+                try:
+                    with open('/sys/block/{}/mm_stat'.format(
+                            dev), 'rb', buffering=0) as f:
+                        summa += int(f.read().decode().split()[2])
+                except FileNotFoundError:
+                    continue
+            return summa / 1024
+        else:
+            for dev in os.listdir('/sys/block'):
+                try:
+                    with open('/sys/block/{}/mem_used_total'.format(
+                            dev), 'rb', buffering=0) as f:
+                        summa += int(f.read())
+                except FileNotFoundError:
+                    continue
+            return summa / 1024
+    else:
+        return 0
 
 
 def format_time(t):
