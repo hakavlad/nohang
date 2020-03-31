@@ -1503,42 +1503,51 @@ def badness_pid_list():
 def fast_find_victim():
     """
     """
-
     ft1 = monotonic()
-
     pid_badness_list = badness_pid_list()
-
     real_proc_num = len(pid_badness_list)
 
     if real_proc_num == 0:
-        log('Found {} tasks with non-zero oom_score (except init and '
-            'self)'.format(real_proc_num))
+        log('Found {} tasks with non-zero oom_score (except init and self) '
+            'in {}ms'.format(real_proc_num, round((monotonic() - ft1) * 1000)))
         return None
 
-    # Make list of (pid, badness) tuples, sorted by 'badness' values
-    # print(pid_badness_list)
-    pid_tuple_list = sorted(
-        pid_badness_list, key=itemgetter(1), reverse=True)[0]
+    log('Found {} tasks with non-zero oom_score (except init and self) '
+        'in {}ms'.format(real_proc_num, round((monotonic() - ft1) * 1000)))
 
-    pid = pid_tuple_list[0]
+    # Make list of (pid, badness) tuples, sorted by 'badness' values
+    pid_badness_list_sorted = sorted(
+        pid_badness_list,
+        key=itemgetter(1),
+        reverse=True)
+
+    m0 = monotonic()
+    top_n = 15
+    if real_proc_num < top_n:
+        top_n = real_proc_num
+    log('TOP-{} tasks by badness:'.format(top_n))
+    log('  Name                PID badness')
+    log('  --------------- ------- -------')
+    for pid_badness in pid_badness_list_sorted[0:top_n]:
+        p = pid_badness[0]
+        b = str(pid_badness[1])
+        n = pid_to_name(p)
+        log('  {} {} {}'.format(n.ljust(15), p.rjust(7), b.rjust(7)))
+
+    pid = pid_badness_list_sorted[0][0]
     victim_id = get_victim_id(pid)
 
     # Get maximum 'badness' value
-    victim_badness = pid_tuple_list[1]
+    victim_badness = pid_badness_list_sorted[0][1]
     victim_name = pid_to_name(pid)
 
-    log('Found {} tasks with non-zero oom_score (except init and self)'.format(
-        real_proc_num))
-
-    log(
-        'Process with highest badness (found in {} ms):\n  PID: {}, Na'
+    log('TOP printed in {}ms; process with highest badness:\n  PID: {}, na'
         'me: {}, badness: {}'.format(
-            round((monotonic() - ft1) * 1000),
+            round((monotonic() - m0) * 1000),
             pid,
             victim_name,
             victim_badness
-        )
-    )
+        ))
 
     return pid, victim_badness, victim_name, victim_id
 
@@ -1681,7 +1690,7 @@ def find_victim(_print_proc_table):
         real_proc_num))
 
     log(
-        'Process with highest badness (found in {} ms):\n  PID: {}, Na'
+        'Process with highest badness (found in {}ms):\n  PID: {}, Na'
         'me: {}, badness: {}'.format(
             round((monotonic() - ft1) * 1000),
             pid,
@@ -1790,7 +1799,7 @@ def find_victim_info(pid, victim_badness, name):
     else:
         detailed_rss_info = ''
 
-    victim_info = 'Victim status (found in {} ms):' \
+    victim_info = 'Victim status (found in {}ms):' \
         '\n  Name:      {}' \
         '\n  State:     {}' \
         '\n  PID:       {}' \
@@ -2183,12 +2192,27 @@ def implement_corrective_action(
         log('New victim is cached victim {} ({})'.format(pid, name))
     else:
 
+        s1 = set(os.listdir('/proc'))
         fff = find_victim(print_proc_table)
+        # sleep(0.1)
+        s2 = set(os.listdir('/proc'))
+        dset = s1 - s2
+
+        if len(dset) > 0:
+            log('During the search for the victim, the processes were '
+                'completed: {}'.format(dset))
+
+            sleep(over_sleep)
+
+            log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+                '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
+            return psi_t0
 
         if fff is None:
 
             if debug_sleep:
-                log('Sleep {} sec'.format(over_sleep))
+                log('Sleep {}s'.format(over_sleep))
             sleep(over_sleep)
 
             log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
@@ -2274,7 +2298,7 @@ def implement_corrective_action(
                         dt, 1), max_soft_exit_time))
 
                 if debug_sleep:
-                    log('Sleep {} sec'.format(over_sleep))
+                    log('Sleep {}s'.format(over_sleep))
                 sleep(over_sleep)
 
                 log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
@@ -2286,7 +2310,15 @@ def implement_corrective_action(
 
         if print_victim_status:
             victim_info = find_victim_info(pid, victim_badness, name)
-            log(victim_info)
+            if victim_info is not None:
+                log(victim_info)
+            else:
+                sleep(over_sleep)
+
+                log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+                    '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
+
+                return psi_t0
 
         soft_match = False
         if soft_actions and threshold is SIGTERM:
@@ -2353,7 +2385,7 @@ def implement_corrective_action(
 
             response_time = monotonic() - time0
 
-            log('Total response time: {} ms'.format(round(
+            log('Total response time: {}ms'.format(round(
                 response_time * 1000)))
 
             print_stat_dict()
@@ -2376,7 +2408,7 @@ def implement_corrective_action(
 
                 response_time = monotonic() - time0
 
-                send_result = 'OK; total response time: {} ms'.format(
+                send_result = 'OK; total response time: {}ms'.format(
                     round(response_time * 1000))
 
                 log(send_result)
@@ -2441,12 +2473,12 @@ def implement_corrective_action(
 
                 if vwd and d > sensitivity_test_time + 10:
                     log('The victim doesn\'t respond on corrective action'
-                        ' in {} sec'.format(round(d, 3)))
+                        ' in {}s'.format(round(d, 3)))
                     break
 
                 if not vwd and d > sensitivity_test_time:
                     log('The victim doesn\'t respond on corrective action'
-                        ' in {} sec'.format(round(d, 3)))
+                        ' in {}s'.format(round(d, 3)))
                     break
 
             elif iva == 2:
@@ -2454,7 +2486,7 @@ def implement_corrective_action(
 
             else:
 
-                log('The victim became a zombie in {} sec'.format(round(d, 3)))
+                log('The victim became a zombie in {}s'.format(round(d, 3)))
 
                 if victim_id in v_dict:
                     v_dict.pop(victim_id)
@@ -2490,7 +2522,7 @@ def implement_corrective_action(
 
         victim_badness_is_too_small = 'victim (PID: {}, Name: {}) badness ' \
             '({}) < min_badness ({}); nothing to do; response tim' \
-            'e: {} ms'.format(
+            'e: {}ms'.format(
                 pid, name,
                 victim_badness,
                 min_badness,
@@ -2506,7 +2538,7 @@ def implement_corrective_action(
     if vwd is None:
 
         if debug_sleep:
-            log('Sleep {} sec'.format(over_sleep))
+            log('Sleep {}s'.format(over_sleep))
         sleep(over_sleep)
 
     log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
@@ -2520,7 +2552,7 @@ def sleep_after_check_mem():
     if stable_sleep:
 
         if debug_sleep:
-            log('Sleep {} sec'.format(min_sleep))
+            log('Sleep {}s'.format(min_sleep))
         stdout.flush()
         sleep(min_sleep)
         return None
@@ -2572,7 +2604,7 @@ def sleep_after_check_mem():
         pass
 
     if debug_sleep:
-        log('Sleep {} sec (t_mem={}, t_swap={}{})'.format(round(t, 2), round(
+        log('Sleep {}s (t_mem={}, t_swap={}{})'.format(round(t, 2), round(
             t_mem, 2), round(t_swap, 2), z))
 
     stdout.flush()
