@@ -1904,7 +1904,7 @@ def check_mem_swap_ex():
                 kib_to_mib(mem_available),
                 percent(mem_available / mem_total),
                 kib_to_mib(hard_threshold_min_mem_kb),
-                percent(hard_threshold_min_mem_kb / mem_total),
+                round(hard_threshold_min_mem_percent, 1),
                 kib_to_mib(swap_free),
                 percent(swap_free / (swap_total + 0.1)),
                 kib_to_mib(hard_threshold_min_swap_kb),
@@ -1967,27 +1967,36 @@ def check_zram_ex():
     if (mem_used_zram >= hard_threshold_max_zram_kb and
             ma_hard_threshold_exceded):
 
-        mem_info = 'Memory status that requires corrective actions:\n  Mem' \
-            'UsedZram [{} MiB, {} %] >= hard_threshold_max_zram [{} MiB' \
-            ', {} %]'.format(
-
-                kib_to_mib(mem_used_zram),
-                percent(mem_used_zram / mem_total),
-                kib_to_mib(hard_threshold_max_zram_kb),
-                percent(hard_threshold_max_zram_kb / mem_total))
+        mem_info = 'Memory status that requires corrective actions:\n  MemAv' \
+                   'ailable [{} MiB, {} %] <= hard_threshold_min_mem [{} MiB' \
+                   ', {} %]\n  MemUsedZram [{} MiB, {} %] >= hard_threshold_' \
+                   'max_zram [{} MiB, {} %]'.format(
+                       kib_to_mib(mem_available),
+                       percent(mem_available / mem_total),
+                       kib_to_mib(hard_threshold_min_mem_kb),
+                       round(hard_threshold_min_mem_percent, 1),
+                       kib_to_mib(mem_used_zram),
+                       percent(mem_used_zram / mem_total),
+                       kib_to_mib(hard_threshold_max_zram_kb),
+                       percent(hard_threshold_max_zram_kb / mem_total))
 
         return SIGKILL, mem_info, mem_used_zram
 
     if (mem_used_zram >= soft_threshold_max_zram_kb and
             ma_soft_threshold_exceded):
 
-        mem_info = 'Memory status that requires corrective actions:\n  ' \
-            'MemUsedZram [{} MiB, {} %] >= soft_threshold_max_zram [{}' \
-            ' M, {} %]'.format(
-                kib_to_mib(mem_used_zram),
-                percent(mem_used_zram / mem_total),
-                kib_to_mib(soft_threshold_max_zram_kb),
-                percent(soft_threshold_max_zram_kb / mem_total))
+        mem_info = 'Memory status that requires corrective actions:\n  MemA' \
+                   'vailable [{} MiB, {} %] <= soft_threshold_min_mem [{} M' \
+                   'iB, {} %]\n  MemUsedZram [{} MiB, {} %] >= soft_thresho' \
+                   'ld_max_zram [{} M, {} %]'.format(
+                       kib_to_mib(mem_available),
+                       percent(mem_available / mem_total),
+                       kib_to_mib(soft_threshold_min_mem_kb),
+                       round(soft_threshold_min_mem_percent, 1),
+                       kib_to_mib(mem_used_zram),
+                       percent(mem_used_zram / mem_total),
+                       kib_to_mib(soft_threshold_max_zram_kb),
+                       percent(soft_threshold_max_zram_kb / mem_total))
 
         return SIGTERM, mem_info, mem_used_zram
 
@@ -2060,14 +2069,20 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             psi_excess_duration and psi_post_action_delay_exceeded and
             ma_hard_threshold_exceded):
 
-        mem_info = 'PSI avg ({}) >= hard_threshold_max_psi ({})\n' \
-            'PSI avg exceeded psi_excess_duration (value' \
-            ' = {} sec) for {} seconds'.format(
-                psi_avg_value,
-                hard_threshold_max_psi,
-                psi_excess_duration,
-                round(psi_kill_exceeded_timer, 1)
-            )
+        mem_info = 'Memory status that requires corrective actions:\n  MemAv' \
+                   'ailable [{} MiB, {} %] <= hard_threshold_min_mem [{} MiB' \
+                   ', {} %]\n  PSI avg ({}) >= hard_threshold_max_psi ({})\n' \
+                   '  PSI avg exceeded psi_excess_duration (value = {} sec) ' \
+                   'for {} seconds'.format(
+                       kib_to_mib(mem_available),
+                       percent(mem_available / mem_total),
+                       kib_to_mib(hard_threshold_min_mem_kb),
+                       round(hard_threshold_min_mem_percent, 1),
+                       psi_avg_value,
+                       hard_threshold_max_psi,
+                       psi_excess_duration,
+                       round(psi_kill_exceeded_timer, 1)
+                   )
 
         return (SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
@@ -2092,14 +2107,20 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             psi_excess_duration and psi_post_action_delay_exceeded and
             ma_soft_threshold_exceded):
 
-        mem_info = 'PSI avg ({}) >= soft_threshold_max_psi ({})\n' \
-            'PSI avg exceeded psi_excess_duration (value' \
-            ' = {} sec) for {} seconds'.format(
-                psi_avg_value,
-                soft_threshold_max_psi,
-                psi_excess_duration,
-                round(psi_term_exceeded_timer, 1)
-            )
+        mem_info = 'Memory status that requires corrective actions:\n  MemA' \
+                   'vailable [{} MiB, {} %] <= soft_threshold_min_mem [{} M' \
+                   'iB, {} %]\n  PSI avg ({}) >= soft_threshold_max_psi ({})' \
+                   '\n  PSI avg exceeded psi_excess_duration (value = {} se' \
+                   'c) for {} seconds'.format(
+                       kib_to_mib(mem_available),
+                       percent(mem_available / mem_total),
+                       kib_to_mib(soft_threshold_min_mem_kb),
+                       round(soft_threshold_min_mem_percent, 1),
+                       psi_avg_value,
+                       soft_threshold_max_psi,
+                       psi_excess_duration,
+                       round(psi_term_exceeded_timer, 1)
+                   )
 
         return (SIGTERM, mem_info, psi_t0, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
@@ -2300,8 +2321,9 @@ def implement_corrective_action(
         if victim_id in v_dict:
             dt = monotonic() - v_dict[victim_id]['time']
             if dt > max_soft_exit_time:
-                log('max_soft_exit_time is exceeded: the '
-                    'victim will get SIGKILL')
+                log('max_soft_exit_time (value={}s) is exceeded the victim:'
+                    ' it will get SIGKILL'.format(
+                        max_soft_exit_time))
                 threshold = SIGKILL
             else:
                 log('max_soft_exit_time is not exceeded ('
