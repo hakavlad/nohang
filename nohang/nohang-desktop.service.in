@@ -11,12 +11,12 @@ KillMode=mixed
 Restart=always
 RestartSec=0
 
-Nice=-5
 CPUSchedulingResetOnFork=true
 RestrictRealtime=yes
 
 TasksMax=20
-MemoryMax=200M
+MemoryMax=100M
+MemorySwapMax=100M
 
 UMask=0027
 ProtectSystem=strict

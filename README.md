@@ -86,9 +86,8 @@ To use `PSI`:
 ## Warnings
 
 - the daemon runs with super-user privileges and has full access to all private memory of all processes and sensitive user data;
-- the daemon starts with increased priority;
-- the daemon does not forbid you to shoot yourself in the foot: with some settings, unwanted mass killings of processes can occur.
-- the daemon is not a panacea: there are no universal settings that reliably protect against all types of threats;
+- the daemon does not forbid you to shoot yourself in the foot: with some settings, unwanted mass killings of processes can occur;
+- the daemon is not a panacea: there are no universal settings that reliably protect against all types of threats.
 
 ## Known problems
 
