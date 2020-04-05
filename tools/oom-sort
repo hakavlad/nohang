@@ -8,62 +8,42 @@ from operator import itemgetter
 from os import listdir
 from argparse import ArgumentParser
 
-##########################################################################
-
-
-# define funtcions
-
 
 def pid_to_oom_score(pid):
-    with open('/proc/' + pid + '/oom_score') as f:
-        return f.readline()[:-1]
+    with open('/proc/{}/oom_score'.format(pid), 'rb', buffering=0) as f:
+        return int(f.read())
 
 
 def pid_to_oom_score_adj(pid):
-    with open('/proc/' + pid + '/oom_score_adj') as f:
-        return f.readline()[:-1]
+    with open('/proc/{}/oom_score_adj'.format(pid), 'rb', buffering=0) as f:
+        return int(f.read())
 
 
 def pid_to_cmdline(pid):
-    """
-    Get process cmdline by pid.
-
-    pid: str pid of required process
-    returns string cmdline
-    """
-    with open('/proc/' + pid + '/cmdline') as f:
-        return f.read().replace('\x00', ' ').rstrip()
+    with open('/proc/{}/cmdline'.format(pid), 'rb', buffering=0) as f:
+        return f.read().decode('utf-8', 'ignore').replace(
+            '\x00', ' ').rstrip()
 
 
 def pid_to_status_units(pid):
-
-    with open('/proc/' + pid + '/status', 'rb') as f:
+    with open('/proc/{}/status'.format(pid), 'rb', buffering=0) as f:
         f_list = f.read().decode('utf-8', 'ignore').split('\n')
-
         for i in range(len(f_list)):
-
             if i == 1:
                 name = f_list[0].split('\t')[1]
-
             if i == uid_index:
                 uid = f_list[i].split('\t')[2]
-
             if i == vm_rss_index:
                 vm_rss = f_list[i].split('\t')[1][:-3]
-
             if i == vm_swap_index:
                 vm_swap = f_list[i].split('\t')[1][:-3]
-
     return name, uid, vm_rss, vm_swap
 
 
 def get_max_pid_len():
-    with open('/proc/sys/kernel/pid_max') as file:
-        for line in file:
+    with open('/proc/sys/kernel/pid_max') as f:
+        for line in f:
             return len(line.strip())
-
-
-##########################################################################
 
 
 sort_dict = {
@@ -77,13 +57,6 @@ sort_dict = {
     'VmSwap': 7
 }
 
-
-##########################################################################
-
-
-# parse CLI args
-
-# @TODO: user input validation
 
 parser = ArgumentParser()
 
@@ -129,8 +102,6 @@ if sort_by not in sort_dict:
     exit()
 
 
-##########################################################################
-
 # find VmRSS, VmSwap and UID positions in /proc/*/status for further
 # searching positions of UID, VmRSS and VmSwap in each process
 
@@ -145,8 +116,6 @@ uid_index = status_names.index('Uid')
 vm_rss_index = status_names.index('VmRSS')
 vm_swap_index = status_names.index('VmSwap')
 
-
-##########################################################################
 
 # get sorted list with pid, oom_score, oom_score_adj, cmdline
 # get status units: name, uid, rss, swap
@@ -191,8 +160,6 @@ oom_list_sorted = sorted(
     oom_list, key=itemgetter(int(sort_dict[sort_by])), reverse=True)
 
 
-##########################################################################
-
 # find width of columns
 
 
@@ -204,13 +171,10 @@ max_uid_len = len(str(sorted(
 
 
 max_vm_rss_len = len(str(round(
-    sorted(oom_list, key=itemgetter(6), reverse=True)[0][6] / 1024.0)))
+    sorted(oom_list, key=itemgetter(6), reverse=True)[0][6] / 1024)))
 
 if max_vm_rss_len < 5:
     max_vm_rss_len = 5
-
-
-##########################################################################
 
 
 # print output
