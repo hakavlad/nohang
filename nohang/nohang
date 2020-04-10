@@ -2028,6 +2028,12 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
     else:
         ma_warning_threshold_exceded = False
 
+    if not (ma_warning_threshold_exceded or ma_soft_threshold_exceded or
+            ma_hard_threshold_exceded) or swap_total == 0:
+        return (None, None,
+                psi_t0, psi_kill_exceeded_timer,
+                psi_term_exceeded_timer, x0)
+
     delta0 = monotonic() - x0
     x0 = monotonic()
 
@@ -2042,28 +2048,33 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
     if psi_avg_value >= hard_threshold_max_psi:
         sigkill_psi_exceeded = True
-        psi_kill_exceeded_timer += delta0
+        if ma_hard_threshold_exceded:
+            if psi_kill_exceeded_timer < 0:
+                psi_kill_exceeded_timer = 0
+            else:
+                psi_kill_exceeded_timer += delta0
+        else:
+            psi_kill_exceeded_timer = -0.0001
     else:
         sigkill_psi_exceeded = False
-        psi_kill_exceeded_timer = 0
+        psi_kill_exceeded_timer = -0.0001
 
     if debug_psi:
 
-        log('psi_post_action_delay_timer: {}'.format(
-            round(psi_post_action_delay_timer, 3)))
+        log('-------------------------------------------------------------'
+            '-----------')
 
-        log('psi_post_action_delay_exceeded: {}\nsigkill_psi_exceeded'
-            ': {}\npsi_kill_exceeded_timer: {}'.format(
-                psi_post_action_delay_exceeded,
+        log('psi_post_action_delay_timer: {}, psi_post_action_delay_exceed'
+            'ed: {}'.format(
+                round(psi_post_action_delay_timer, 1),
+                psi_post_action_delay_exceeded))
+
+        log('mem_avail_hard_threshold_exceded: {}, hard_threshold_psi_exce'
+            'eded: {}, hard_psi_excess_duration: {}'.format(
+                ma_hard_threshold_exceded,
                 sigkill_psi_exceeded,
                 round(psi_kill_exceeded_timer, 1)
-            )
-            )
-
-        log('mem_avail_hard_threshold_exceded: {}\nmem_avail_soft_threshol'
-            'd_exceded: {}\nmem_avail_warning_threshold_exceeded {}'.format(
-                ma_hard_threshold_exceded, ma_soft_threshold_exceded,
-                ma_warning_threshold_exceded))
+            ))
 
     if (sigkill_psi_exceeded and psi_kill_exceeded_timer >=
             psi_excess_duration and psi_post_action_delay_exceeded and
@@ -2071,9 +2082,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
         mem_info = 'Memory status that requires corrective actions:\n  MemAv' \
                    'ailable [{} MiB, {} %] <= hard_threshold_min_mem [{} MiB' \
-                   ', {} %]\n  PSI avg ({}) >= hard_threshold_max_psi ({})\n' \
-                   '  PSI avg exceeded psi_excess_duration (value = {} sec) ' \
-                   'for {} seconds'.format(
+                   ', {} %]\n  PSI avg value ({}) >= hard_threshold_max_psi ' \
+                   '({})\n  PSI avg value exceeded psi_excess_duration (valu' \
+                   'e={}s) for {}s'.format(
                        kib_to_mib(mem_available),
                        percent(mem_available / mem_total),
                        kib_to_mib(hard_threshold_min_mem_kb),
@@ -2089,19 +2100,25 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
     if psi_avg_value >= soft_threshold_max_psi:
         sigterm_psi_exceeded = True
-        psi_term_exceeded_timer += delta0
+        if ma_soft_threshold_exceded:
+            if psi_term_exceeded_timer < 0:
+                psi_term_exceeded_timer = 0
+            else:
+                psi_term_exceeded_timer += delta0
+        else:
+            psi_term_exceeded_timer = -0.0001
     else:
         sigterm_psi_exceeded = False
-        psi_term_exceeded_timer = 0
+        psi_term_exceeded_timer = -0.0001
 
     if debug_psi:
 
-        log('sigterm_psi_exceeded: {}\n'
-            'psi_term_exceeded_timer: {}\n'.format(
+        log('mem_avail_soft_threshold_exceded: {}, soft_threshold_psi_exce'
+            'eded: {}, soft_psi_excess_duration: {}'.format(
+                ma_soft_threshold_exceded,
                 sigterm_psi_exceeded,
                 round(psi_term_exceeded_timer, 1)
-            )
-            )
+            ))
 
     if (sigterm_psi_exceeded and psi_term_exceeded_timer >=
             psi_excess_duration and psi_post_action_delay_exceeded and
@@ -2109,9 +2126,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
         mem_info = 'Memory status that requires corrective actions:\n  MemA' \
                    'vailable [{} MiB, {} %] <= soft_threshold_min_mem [{} M' \
-                   'iB, {} %]\n  PSI avg ({}) >= soft_threshold_max_psi ({})' \
-                   '\n  PSI avg exceeded psi_excess_duration (value = {} se' \
-                   'c) for {} seconds'.format(
+                   'iB, {} %]\n  PSI avg value ({}) >= soft_threshold_max_p' \
+                   'si ({})\n  PSI avg value exceeded psi_excess_duration (' \
+                   'value={}s) for {}s'.format(
                        kib_to_mib(mem_available),
                        percent(mem_available / mem_total),
                        kib_to_mib(soft_threshold_min_mem_kb),
@@ -3596,8 +3613,7 @@ CHECK_PSI = False
 if psi_support and not ignore_psi:
     CHECK_PSI = True
 
-psi_kill_exceeded_timer = 0
-psi_term_exceeded_timer = 0
+psi_kill_exceeded_timer = psi_term_exceeded_timer = -0.0001
 psi_t0 = monotonic()
 psi_threshold = zram_threshold = zram_info = psi_info = None
 
@@ -3650,7 +3666,7 @@ while True:
                 psi_post_action_delay_exceeded = False
 
             if print_mem_check_results:
-                psi_avg_string = 'PSI avg: {} | '.format(
+                psi_avg_string = 'PSI: {} | '.format(
                     str(psi_avg_value).rjust(6))
 
         wt1 = monotonic()
