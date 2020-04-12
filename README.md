@@ -133,7 +133,7 @@ $ cd deb && fakeroot dpkg-deb --build package
 $ sudo dpkg -i package.deb
 ```
 
-`make`, `fakeroot` and `gettext` requies to build a package. Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
+`make`, `fakeroot` and `gettext` required to build a package. Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
 ```
 $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
