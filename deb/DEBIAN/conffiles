@@ -1,0 +1,3 @@
+/etc/nohang/nohang.conf
+/etc/nohang/nohang-desktop.conf
+/etc/logrotate.d/nohang

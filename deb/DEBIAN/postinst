@@ -1,0 +1,2 @@
+systemctl daemon-reload
+echo "nohang package installed; now you can edit config and enable/start the service"

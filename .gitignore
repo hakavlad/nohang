@@ -102,7 +102,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-
 # Kate
 .kate-swp
 
+# deb
+/deb/package/
+/deb/package.deb
