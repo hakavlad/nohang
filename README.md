@@ -93,7 +93,6 @@ To use `PSI`:
 
 - Awful documentation.
 
-
 ## nohang vs nohang-desktop
 
 `nohang` comes with two configs: `nohang.conf` and `nohang-desktop.conf`. `nohang` comes with two systemd service unit files: `nohang.service` and `nohang-desktop.service`. Choose one.
@@ -128,10 +127,9 @@ $ sudo systemctl enable --now nohang
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git
 $ cd nohang
-$ cp -r deb/DEBIAN deb/package/
+$ mkdir deb/package && cp -r deb/DEBIAN deb/package/
 $ make install DESTDIR=deb/package BINDIR=/usr/bin SYSTEMDUNITDIR=/lib/systemd/system
-$ cd deb
-$ fakeroot dpkg-deb --build package
+$ cd deb && fakeroot dpkg-deb --build package
 $ sudo dpkg -i package.deb
 ```
 
