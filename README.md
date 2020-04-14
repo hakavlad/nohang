@@ -124,15 +124,23 @@ $ sudo systemctl enable --now nohang
 
 #### To install on Debian and Ubuntu-based systems please make a deb package with latest git snapshot and install it:
 
-```bash
-$ git clone https://github.com/hakavlad/nohang.git && cd nohang && mkdir deb/package
-$ make install DESTDIR=deb/package BINDIR=/usr/bin SYSTEMDUNITDIR=/lib/systemd/system
-$ cd deb && cp -r DEBIAN package/
-$ fakeroot dpkg-deb --build package
-$ sudo dpkg -i package.deb
+1. Install build dependencies:
+```
+$ sudo apt install make buildroot gettext
 ```
 
-`make`, `fakeroot` and `gettext` are required to build a package. Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
+2. Clone latest git snapshot and run build script to build deb package:
+```
+$ git clone https://github.com/hakavlad/nohang.git && cd nohang
+$ deb/build.sh
+```
+
+3. Install package:
+```
+sudo dpkg -i deb/package.deb
+```
+
+4. Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
 ```
 $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
