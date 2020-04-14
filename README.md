@@ -101,8 +101,8 @@ To use `PSI`:
 
 #### To install on Fedora 30+:
 ```bash
-$ sudo dnf install nohang
-$ sudo systemctl enable --now nohang
+$ sudo dnf install nohang-desktop
+$ sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on CentOS 7 and RHEL 8:
@@ -119,7 +119,7 @@ Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr
 #### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
 $ yay -S nohang-git
-$ sudo systemctl enable --now nohang
+$ sudo systemctl enable --now nohang-desktop
 ```
 
 #### To install on Debian and Ubuntu-based systems please make a deb package with latest git snapshot and install it:
@@ -135,9 +135,9 @@ $ git clone https://github.com/hakavlad/nohang.git && cd nohang
 $ deb/build.sh
 ```
 
-Install package:
+Install the package:
 ```bash
-sudo dpkg -i deb/package.deb
+$ sudo dpkg -i deb/package.deb
 ```
 
 Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
