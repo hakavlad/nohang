@@ -6,7 +6,7 @@ LOGDIR ?= /var/log
 SYSTEMDUNITDIR ?= /etc/systemd/system
 
 all:
-	@ echo "Use: make install, make uninstall"
+	@ echo "Use: make install, build_deb, make uninstall"
 
 install:
 	install -d $(DESTDIR)$(BINDIR)
@@ -47,6 +47,43 @@ install:
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-systemctl daemon-reload
+
+build_deb:
+	install -d $(DESTDIR)$(BINDIR)
+
+	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
+	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
+	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
+	install -m0755 tools/psi2log $(DESTDIR)$(BINDIR)/psi2log
+
+	install -d $(DESTDIR)$(CONFDIR)/nohang
+	-git describe --tags --long --dirty > version
+	-install -m0644 version $(DESTDIR)$(CONFDIR)/nohang/version
+	-rm -fv version
+
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
+
+	install -d $(DESTDIR)$(CONFDIR)/nohang/defaults
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
+
+	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
+	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+
+	install -d $(DESTDIR)$(MANDIR)
+	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
+	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
+	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
+	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/psi2log.1.gz
+
+	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang.service.in > nohang.service
+	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
+	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
+	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	-rm -fv nohang.service
+	-rm -fv nohang-desktop.service
 
 uninstall:
 	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
