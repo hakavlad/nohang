@@ -164,12 +164,12 @@ $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
 ```
 
-#### To enable and start on systems without systemd please make a PR to fix Makefile.
-
 #### To uninstall:
 ```bash
 $ sudo make uninstall
 ```
+
+#### To enable and start on systems without systemd please make a PR to fix Makefile.
 
 ## Command line options
 
