@@ -937,7 +937,7 @@ def pid_to_ancestry(pid, max_victim_ancestry_depth=1):
     a = ''
     for i in anc_list:
         a = a + ' <= PID {} ({})'.format(i[0], i[1])
-    return '\n  Ancestry:  ' + a[4:]
+    return '\n  ancestry:  ' + a[4:]
 
 
 def pid_to_cmdline(pid):
@@ -1293,9 +1293,56 @@ def check_mem_and_swap():
     """
     with open('/proc/meminfo', 'rb') as f:
         m_list = f.read().decode().split(' kB\n')
-    return (int(m_list[2].split(':')[1]),
+    return (int(m_list[mem_available_index].split(':')[1]),
             int(m_list[swap_total_index].split(':')[1]),
             int(m_list[swap_free_index].split(':')[1]))
+
+
+def meminfo():
+    """
+    """
+    with open('/proc/meminfo', 'rb') as f:
+        m_list = f.read().decode().split(' kB\n')
+
+    mem_available = int(m_list[mem_available_index].split(':')[1])
+    mem_free = int(m_list[mem_free_index].split(':')[1])
+    swap_total = int(m_list[swap_total_index].split(':')[1])
+    swap_free = int(m_list[swap_free_index].split(':')[1])
+    buffers = int(m_list[buffers_index].split(':')[1])
+    cached = int(m_list[cached_index].split(':')[1])
+    sreclaimable = int(m_list[sreclaimable_index].split(':')[1])
+    shmem = int(m_list[shmem_index].split(':')[1])
+
+    md = dict()
+
+    md['total'] = mem_total
+    md['used'] = mem_total - mem_free - buffers - cached - sreclaimable
+    md['free'] = mem_free
+    md['available'] = mem_available
+    md['shared'] = shmem
+    md['buffers'] = buffers
+    md['cache'] = cached + sreclaimable
+    md['swap_total'] = swap_total
+    md['swap_used'] = swap_total - swap_free
+    md['swap_free'] = swap_free
+
+    return md
+
+
+def memory_pressure():
+    """
+    """
+    with open('/proc/pressure/memory') as f:
+        psi_list = f.readlines()
+    some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
+    some_avg10 = some_list[1].split('=')[1]
+    some_avg60 = some_list[2].split('=')[1]
+    some_avg300 = some_list[3].split('=')[1]
+    full_avg10 = full_list[1].split('=')[1]
+    full_avg60 = full_list[2].split('=')[1]
+    full_avg300 = full_list[3].split('=')[1]
+    return (some_avg10, some_avg60, some_avg300,
+            full_avg10, full_avg60, full_avg300)
 
 
 def check_zram():
@@ -1774,8 +1821,6 @@ def find_victim_info(pid, victim_badness, name):
         print_stat_dict()
         return None
 
-    len_vm = len(str(vm_size))
-
     try:
         realpath = pid_to_realpath(pid)
         cwd = pid_to_cwd(pid)
@@ -1797,18 +1842,55 @@ def find_victim_info(pid, victim_badness, name):
         cmdline = ''
         c1 = ''
     else:
-        c1 = '\n  Cmdline:   '
+        c1 = '\n  cmdline:   '
 
     if detailed_rss:
-        detailed_rss_info = ' (' \
-            'Anon: {} MiB, ' \
-            'File: {} MiB, ' \
-            'Shmem: {} MiB)'.format(
-                anon_rss,
-                file_rss,
-                shmem_rss)
+        detailed_rss_info = ' (Anon: {}, File: {}, Shmem: {})'.format(
+            anon_rss,
+            file_rss,
+            shmem_rss)
     else:
         detailed_rss_info = ''
+
+    victim_info = 'Victim status (found in {}ms):' \
+        '\n  PID:       {}, name: {}, state: {}, EUID: {}, ' \
+        'SID: {} ({}), lifetime: {}' \
+        '\n  badness:   {}, oom_score:  {}, oom_score_adj:  {}' \
+        '\n  Vm, MiB:   Size: {}, RSS: {}{}, Swap: {}' \
+        '\n  cgroup_v1: {}' \
+        '\n  cgroup_v2: {}' \
+        '{}{}{}' \
+        '\n  exe realpath: {}' \
+        '\n  cwd realpath: {}'.format(
+
+            round((monotonic() - status0) * 1000),
+            pid,
+            name,
+            state,
+            uid,
+            nssid, pid_to_name(nssid),
+            victim_lifetime,
+
+            victim_badness,
+            oom_score,
+            oom_score_adj,
+
+            vm_size,
+            vm_rss,
+            detailed_rss_info,
+            vm_swap,
+
+            victim_cgroup_v1,
+            victim_cgroup_v2,
+
+            ancestry,
+            c1, cmdline,
+            realpath,
+            cwd
+
+        )
+
+    """
 
     victim_info = 'Victim status (found in {}ms):' \
         '\n  Name:      {}' \
@@ -1847,8 +1929,12 @@ def find_victim_info(pid, victim_badness, name):
             nssid, pid_to_name(nssid),
             realpath,
             cwd,
-            c1, cmdline,
+            c1,
+            cmdline,
             victim_lifetime)
+
+
+    """
 
     return victim_info
 
@@ -2370,6 +2456,33 @@ def implement_corrective_action(
 
                 return psi_t0
 
+        mid = meminfo()
+        log('Memory info, MiB:')
+        log('  total={}, used={}, free={}, available={}, shared={}, buffers'
+            '={}, cache={},'.format(
+                round(mem_total / 1024),
+                round(mid['used'] / 1024),
+                round(mid['free'] / 1024),
+                round(mid['available'] / 1024),
+                round(mid['shared'] / 1024),
+                round(mid['buffers'] / 1024),
+                round(mid['cache'] / 1024)
+            ))
+        log('  swap_total={}, swap_used={}, swap_free={}'.format(
+            round(mid['swap_total'] / 1024),
+            round(mid['swap_used'] / 1024),
+            round(mid['swap_free'] / 1024)
+        ))
+        if psi_support:
+            mp = memory_pressure()
+            log('Memory pressure (system-wide):')
+            log('  some avg10={} avg60={} avg300={}'.format(
+                mp[0], mp[1], mp[2]
+            ))
+            log('  full avg10={} avg60={} avg300={}'.format(
+                mp[3], mp[4], mp[5]
+            ))
+
         soft_match = False
         if soft_actions and threshold is SIGTERM:
 
@@ -2513,7 +2626,7 @@ def implement_corrective_action(
 
             if iva == 0:
 
-                log('The victim died in {} sec'.format(round(d, 3)))
+                log('The victim died in {}s'.format(round(d, 3)))
 
                 if victim_id in v_dict:
                     v_dict.pop(victim_id)
@@ -2860,17 +2973,25 @@ with open('/proc/meminfo') as f:
     mem_list = f.readlines()
 
 mem_list_names = []
+
 for s in mem_list:
     mem_list_names.append(s.split(':')[0])
 
-if mem_list_names[2] != 'MemAvailable':
-    errprint('WARNING: Your Linux kernel is too old, Linux 3.14+ requied')
-    exit(1)
+try:
+    mem_available_index = mem_list_names.index('MemAvailable')
+except ValueError:
+    errprint('ERROR: your Linux kernel is too old, Linux 3.14+ required')
 
+mem_free_index = mem_list_names.index('MemFree')
 swap_total_index = mem_list_names.index('SwapTotal')
-swap_free_index = swap_total_index + 1
+swap_free_index = mem_list_names.index('SwapFree')
+buffers_index = mem_list_names.index('Buffers')
+cached_index = mem_list_names.index('Cached')
+sreclaimable_index = mem_list_names.index('SReclaimable')
+shmem_index = mem_list_names.index('Shmem')
 
 mem_total = int(mem_list[0].split(':')[1][:-4])
+
 
 # Get names from /proc/*/status to be able to get VmRSS and VmSwap values
 
