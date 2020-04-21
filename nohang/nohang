@@ -375,6 +375,7 @@ def send_notification(title, body):
                 'DBUS_SESSION_BUS_ADDRESS=' + dbus_value,
                 'notify-send',
                 '--icon=dialog-warning',
+                '--app-name=nohang',
                 title,
                 body
             ]
