@@ -2,6 +2,8 @@ Package: nohang
 Version: 0.1
 Section: admin
 Architecture: all
+Depends: python3
+Recommends: libnotify-bin, sudo, logrotate
 Maintainer: Alexey Avramov <hakavlad@gmail.com>
 Priority: optional
 Homepage: https://github.com/hakavlad/nohang

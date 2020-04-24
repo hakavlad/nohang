@@ -47,7 +47,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 - Sending the SIGTERM signal is default corrective action. If the victim does not respond to SIGTERM, with a further drop in the level of memory it gets SIGKILL;
 - Customizing victim selection: impact on the badness of processes via matching their names, cgroups, exe realpathes, environs, cmdlines and euids with specified regular expressions;
 - Customizing corrective actions: if the name or control group of the victim matches a certain regex pattern, you can run any command instead of sending the SIGTERM signal (the default corrective action) to the victim. For example:
-    - `sysmemctl restart foo`;
+    - `systemctl restart foo`;
     - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID).
 - GUI notifications:
     - Notification of corrective actions taken and displaying the name and PID of the victim;
@@ -137,7 +137,7 @@ $ deb/build.sh
 
 Install the package:
 ```bash
-$ sudo dpkg -i deb/package.deb
+$ sudo apt install ./deb/package.deb
 ```
 
 Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
