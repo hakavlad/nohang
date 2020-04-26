@@ -86,7 +86,7 @@ To use `PSI`:
 ## Warnings
 
 - the daemon runs with super-user privileges and has full access to all private memory of all processes and sensitive user data;
-- the daemon does not forbid you to shoot yourself in the foot: with some settings, unwanted mass killings of processes can occur;
+- the daemon does not forbid you to shoot yourself in the foot: with some settings, unwanted killings of processes can occur;
 - the daemon is not a panacea: there are no universal settings that reliably protect against all types of threats.
 
 ## Known problems
@@ -137,7 +137,7 @@ $ deb/build.sh
 
 Install the package:
 ```bash
-$ sudo apt install ./deb/package.deb
+$ sudo apt install --reinstall ./deb/package.deb
 ```
 
 Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
