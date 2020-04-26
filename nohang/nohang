@@ -721,8 +721,8 @@ def signal_handler(signum, frame):
     log('Got the {} signal '.format(
         sig_dict[signum]))
 
+    fd['mi'].close()
     print_stat_dict()
-
     m1 = monotonic()
     pt1 = process_time()
     ab = pt1 - pt0
@@ -1292,8 +1292,8 @@ def find_psi_metrics_value(psi_path, psi_metrics):
 def check_mem_and_swap():
     """
     """
-    with open('/proc/meminfo', 'rb') as f:
-        m_list = f.read().decode().split(' kB\n')
+    fd['mi'].seek(0)
+    m_list = fd['mi'].read().decode().split(' kB\n')
     return (int(m_list[mem_available_index].split(':')[1]),
             int(m_list[swap_total_index].split(':')[1]),
             int(m_list[swap_free_index].split(':')[1]))
@@ -1302,8 +1302,8 @@ def check_mem_and_swap():
 def meminfo():
     """
     """
-    with open('/proc/meminfo', 'rb') as f:
-        m_list = f.read().decode().split(' kB\n')
+    fd['mi'].seek(0)
+    m_list = fd['mi'].read().decode().split(' kB\n')
 
     mem_available = int(m_list[mem_available_index].split(':')[1])
     mem_free = int(m_list[mem_free_index].split(':')[1])
@@ -1890,52 +1890,6 @@ def find_victim_info(pid, victim_badness, name):
             cwd
 
         )
-
-    """
-
-    victim_info = 'Victim status (found in {}ms):' \
-        '\n  Name:      {}' \
-        '\n  State:     {}' \
-        '\n  PID:       {}' \
-        '{}' \
-        '\n  EUID:      {}' \
-        '\n  badness:   {}, ' \
-        'oom_score:  {}, ' \
-        'oom_score_adj:  {}' \
-        '\n  VmSize:    {} MiB' \
-        '\n  VmRSS:     {} MiB {}' \
-        '\n  VmSwap:    {} MiB' \
-        '\n  CGroup_v1: {}' \
-        '\n  CGroup_v2: {}' \
-        '\n  NSsid:     {} ({})' \
-        '\n  Realpath:  {}' \
-        '\n  Cwd:       {}' \
-        '{}{}' \
-        '\n  Lifetime:  {}'.format(
-            round((monotonic() - status0) * 1000),
-            name,
-            state,
-            pid,
-            ancestry,
-            uid,
-            victim_badness,
-            oom_score,
-            oom_score_adj,
-            vm_size,
-            str(vm_rss).rjust(len_vm),
-            detailed_rss_info,
-            str(vm_swap).rjust(len_vm),
-            victim_cgroup_v1,
-            victim_cgroup_v2,
-            nssid, pid_to_name(nssid),
-            realpath,
-            cwd,
-            c1,
-            cmdline,
-            victim_lifetime)
-
-
-    """
 
     return victim_info
 
@@ -3757,6 +3711,11 @@ envd['list_with_envs'] = envd['t'] = None
 
 cmd_num_dict = dict()
 cmd_num_dict['cmd_num'] = 0
+
+
+fd = dict()
+
+fd['mi'] = open('/proc/meminfo', 'rb', buffering=0)
 
 
 m0 = monotonic()
