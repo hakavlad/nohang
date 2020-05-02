@@ -775,10 +775,13 @@ def log(*msg):
 def print_version():
     """
     """
-    try:
-        v = rline1('/etc/nohang/version')
-    except FileNotFoundError:
-        v = None
+    if os.path.exists('/usr/local/etc/nohang/version'):
+        v = rline1('/usr/local/etc/nohang/version')
+    else:
+        try:
+            v = rline1('/etc/nohang/version')
+        except FileNotFoundError:
+            v = None
     if v is None:
         print('nohang unknown version')
     else:

@@ -1,16 +1,16 @@
 DESTDIR ?=
-BINDIR ?= /usr/local/bin
-CONFDIR ?= /etc
-MANDIR ?= /usr/share/man/man1
-LOGDIR ?= /var/log
-SYSTEMDUNITDIR ?= /etc/systemd/system
+BINDIR ?=           /usr/local/bin
+CONFDIR ?=          /usr/local/etc
+SYSTEMDUNITDIR ?=   /usr/local/lib/systemd/system
+MANDIR ?=           /usr/local/share/man/man1
+LOGDIR ?=           /var/log
+LOGROTATECONFDIR ?= /etc/logrotate.d
 
 all:
 	@ echo "Use: make install, build_deb, make uninstall"
 
 install:
 	install -d $(DESTDIR)$(BINDIR)
-
 	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
 	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
@@ -28,8 +28,8 @@ install:
 	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
 	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
 
-	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
-	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+	install -d $(DESTDIR)$(LOGROTATECONFDIR)
+	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 	install -d $(DESTDIR)$(MANDIR)
 	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
@@ -50,7 +50,6 @@ install:
 
 build_deb:
 	install -d $(DESTDIR)$(BINDIR)
-
 	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
 	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
@@ -68,8 +67,8 @@ build_deb:
 	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
 	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
 
-	install -d $(DESTDIR)$(CONFDIR)/logrotate.d
-	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+	install -d $(DESTDIR)$(LOGROTATECONFDIR)
+	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 	install -d $(DESTDIR)$(MANDIR)
 	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
@@ -103,5 +102,5 @@ uninstall:
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	rm -fvr $(DESTDIR)$(CONFDIR)/nohang/
-	rm -fvr $(DESTDIR)$(CONFDIR)/logrotate.d/nohang
+	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
