@@ -17,12 +17,12 @@ script:
   - nohang -h
   - nohang -v
 
-  - nohang --check --config /etc/nohang/nohang.conf
-  - nohang --check --config /etc/nohang/nohang-desktop.conf
+  - nohang --check --config /usr/local/etc/nohang/nohang.conf
+  - nohang --check --config /usr/local/etc/nohang/nohang-desktop.conf
   - nohang --check --config nohang/test.conf
 
-  - sudo nohang --config /etc/nohang/nohang.conf --tasks
-  - sudo nohang --config /etc/nohang/nohang-desktop.conf --tasks
+  - sudo nohang --config /usr/local/etc/nohang/nohang.conf --tasks
+  - sudo nohang --config /usr/local/etc/nohang/nohang-desktop.conf --tasks
 
   - /bin/sleep 60 &
   - sudo bash -c "nohang -c nohang/test.conf --monitor & tail /dev/zero & sleep 30 && pkill python3"
