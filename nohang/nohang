@@ -137,6 +137,43 @@ def memload():
             os.kill(self_pid, SIGUSR1)
 
 
+def arcstats():
+    """
+    """
+    with open(arcstats_path, 'rb') as f:
+        a_list = f.read().decode().split('\n')
+
+    for n, line in enumerate(a_list):
+        if n == c_min_index:
+            c_min = int(line.rpartition(' ')[2]) / 1024
+        elif n == size_index:
+            size = int(line.rpartition(' ')[2]) / 1024
+
+        elif n == arc_meta_used_index:
+            arc_meta_used = int(line.rpartition(' ')[2]) / 1024
+
+        elif n == arc_meta_min_index:
+            arc_meta_min = int(line.rpartition(' ')[2]) / 1024
+
+        else:
+            continue
+
+    c_rec = size - c_min
+
+    if c_rec < 0:
+        c_rec = 0
+
+    meta_rec = arc_meta_used - arc_meta_min
+
+    if meta_rec < 0:
+        meta_rec = 0
+    zfs_available = c_rec + meta_rec
+
+    # return c_min, size, arc_meta_used, arc_meta_min, zfs_available
+
+    return zfs_available
+
+
 def exe(cmd):
     """ execute cmd in subprocess.Popen()
     """
@@ -1292,7 +1329,7 @@ def find_psi_metrics_value(psi_path, psi_metrics):
                 return float(psi_list[1].split(' ')[3].split('=')[1])
 
 
-def check_mem_and_swap():
+def check_mem_and_swap0():
     """
     """
     fd['mi'].seek(0)
@@ -1300,6 +1337,23 @@ def check_mem_and_swap():
     return (int(m_list[mem_available_index].split(':')[1]),
             int(m_list[swap_total_index].split(':')[1]),
             int(m_list[swap_free_index].split(':')[1]))
+
+
+def check_mem_and_swap():
+    """
+    """
+    fd['mi'].seek(0)
+
+    m_list = fd['mi'].read().decode().split(' kB\n')
+
+    ma = int(m_list[mem_available_index].split(':')[1])
+    st = int(m_list[swap_total_index].split(':')[1])
+    sf = int(m_list[swap_free_index].split(':')[1])
+
+    if ZFS:
+        ma += arcstats()
+
+    return ma, st, sf
 
 
 def meminfo():
@@ -1323,6 +1377,11 @@ def meminfo():
     md['used'] = mem_total - mem_free - buffers - cached - sreclaimable
     md['free'] = mem_free
     md['available'] = mem_available
+
+    if ZFS:
+        z = arcstats()
+        mem_available += z
+
     md['shared'] = shmem
     md['buffers'] = buffers
     md['cache'] = cached + sreclaimable
@@ -3719,6 +3778,36 @@ cmd_num_dict['cmd_num'] = 0
 fd = dict()
 
 fd['mi'] = open('/proc/meminfo', 'rb', buffering=0)
+
+
+arcstats_path = '/proc/spl/kstat/zfs/arcstats'
+# arcstats_path = './arcstats'
+
+ZFS = os.path.exists(arcstats_path)
+
+
+if ZFS:
+    try:
+        # find indexes
+        with open(arcstats_path, 'rb') as f:
+            a_list = f.read().decode().split('\n')
+        for n, line in enumerate(a_list):
+            if line.startswith('c_min '):
+                c_min_index = n
+
+            elif line.startswith('size '):
+                size_index = n
+
+            elif line.startswith('arc_meta_used '):
+                arc_meta_used_index = n
+
+            elif line.startswith('arc_meta_min '):
+                arc_meta_min_index = n
+
+            else:
+                continue
+    except Exception as e:
+        log(e)
 
 
 m0 = monotonic()
