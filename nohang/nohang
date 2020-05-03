@@ -1306,7 +1306,7 @@ def print_stat_dict():
 def find_psi_metrics_value(psi_path, psi_metrics):
     """
     """
-    if psi_support:
+    try:
 
         if psi_metrics == 'some_avg10':
             return float(rline1(psi_path).split(' ')[1].split('=')[1])
@@ -1328,7 +1328,13 @@ def find_psi_metrics_value(psi_path, psi_metrics):
                 psi_list = f.readlines()
                 return float(psi_list[1].split(' ')[3].split('=')[1])
 
+    except Exception as e:
+        if debug_psi:
+            log('Invalid psi_path: {}'.format(e))
+        return None
 
+
+''''
 def check_mem_and_swap0():
     """
     """
@@ -1337,6 +1343,7 @@ def check_mem_and_swap0():
     return (int(m_list[mem_available_index].split(':')[1]),
             int(m_list[swap_total_index].split(':')[1]),
             int(m_list[swap_free_index].split(':')[1]))
+'''
 
 
 def check_mem_and_swap():
@@ -2133,6 +2140,11 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
     if not (ma_warning_threshold_exceded or ma_soft_threshold_exceded or
             ma_hard_threshold_exceded) or swap_total == 0:
+
+        if debug_psi:
+            log('Do not measure the value of PSI, since none of the thresho'
+                'lds of available memory is exceeded')
+
         return (None, None,
                 psi_t0, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
@@ -2141,6 +2153,17 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
     x0 = monotonic()
 
     psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
+
+    if debug_psi:
+
+        log('-------------------------------------------------------------'
+            '-----------')
+
+        log('PSI {} value in {}: {}'.format(
+            psi_metrics, psi_path, psi_avg_value))
+
+    if psi_avg_value is None:
+        return (None, None, psi_t0, -0.0001, -0.0001, x0)
 
     psi_post_action_delay_timer = monotonic() - last_action_dict['t']  # psi_t0
 
@@ -2163,9 +2186,6 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
         psi_kill_exceeded_timer = -0.0001
 
     if debug_psi:
-
-        log('-------------------------------------------------------------'
-            '-----------')
 
         log('psi_post_action_delay_timer: {}, psi_post_action_delay_exceed'
             'ed: {}'.format(
@@ -2379,7 +2399,7 @@ def implement_corrective_action(
     (masf_threshold, masf_info, mem_available, hard_threshold_min_swap_kb,
      soft_threshold_min_swap_kb, swap_free, swap_total) = check_mem_swap_ex()
 
-    if CHECK_ZRAM:
+    if zram_checking_enabled:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
 
     if CHECK_PSI:
@@ -2490,7 +2510,7 @@ def implement_corrective_action(
             round(mid['swap_used'] / 1024),
             round(mid['swap_free'] / 1024)
         ))
-        if psi_support:
+        if PSI_KERNEL_OK:
             mp = memory_pressure()
             log('Memory pressure (system-wide):')
             log('  some avg10={} avg60={} avg300={}'.format(
@@ -2756,7 +2776,7 @@ def sleep_after_check_mem():
     t_mem = mem_point / fill_rate_mem
     t_swap = swap_point / fill_rate_swap
 
-    if CHECK_ZRAM:
+    if zram_checking_enabled:
         t_zram = (mem_total * 0.8 - mem_used_zram) / fill_rate_zram
         if t_zram < 0:
             t_zram = 0
@@ -2767,7 +2787,7 @@ def sleep_after_check_mem():
 
     t_mem_swap = t_mem + t_swap
 
-    if CHECK_ZRAM:
+    if zram_checking_enabled:
 
         if t_mem_swap <= t_mem_zram:
             t = t_mem_swap
@@ -3278,10 +3298,43 @@ else:
 
 ###############################################################################
 
-
 # extracting parameters from the dictionary
 # check for all necessary parameters
 # validation of all parameters
+
+separate_log = conf_parse_bool('separate_log')
+
+if separate_log:
+
+    import logging
+
+    log_dir = '/var/log/nohang'
+    logfile = log_dir + '/nohang.log'
+
+    try:
+        os.mkdir(log_dir)
+    except FileExistsError:
+        pass
+    except PermissionError:
+        errprint('ERROR: cannot create {}'.format(log_dir))
+
+    try:
+        os.chmod(log_dir, mode=0o750)
+    except FileNotFoundError:
+        errprint('ERROR: file not found: {}'.format(log_dir))
+    except PermissionError:
+        errprint('ERROR: permission denied: {}'.format(log_dir))
+
+    try:
+        logging.basicConfig(
+            filename=logfile,
+            level=logging.INFO,
+            format="%(asctime)s: %(message)s")
+    except FileNotFoundError:
+        errprint('ERROR: file not found: {}'.format(logfile))
+    except PermissionError:
+        errprint('ERROR: permission denied: {}'.format(logfile))
+
 debug_psi = conf_parse_bool('debug_psi')
 print_statistics = conf_parse_bool('print_statistics')
 print_proc_table = conf_parse_bool('print_proc_table')
@@ -3300,20 +3353,21 @@ debug_threading = conf_parse_bool('debug_threading')
 
 psi_checking_enabled = conf_parse_bool('psi_checking_enabled')
 
-ignore_psi = not psi_checking_enabled
-
-if psi_checking_enabled:
-
-    try:
-        psi_file_mem_to_metrics('/proc/pressure/memory')
-    except Exception as e:
-        print('WARNING: PSI metrics are not provided by the kernel: {}'.format(
+try:
+    psi_file_mem_to_metrics('/proc/pressure/memory')
+    PSI_KERNEL_OK = True
+except Exception as e:
+    PSI_KERNEL_OK = False
+    if psi_checking_enabled:
+        log('WARNING: PSI metrics are not provided by the kernel: {}'.format(
             e))
-        ignore_psi = True
 
+if PSI_KERNEL_OK and psi_checking_enabled:
+    CHECK_PSI = True
+else:
+    CHECK_PSI = False
 
 zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
-ignore_zram = not zram_checking_enabled
 
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
 ignore_positive_oom_score_adj = conf_parse_bool(
@@ -3515,7 +3569,7 @@ else:
 
 if 'psi_path' in config_dict:
     psi_path = config_dict['psi_path']
-    if not ignore_psi:
+    if CHECK_PSI:
         try:
             psi_file_mem_to_metrics(psi_path)
         except Exception as e:
@@ -3554,40 +3608,6 @@ if 'extra_table_info' in config_dict:
         invalid_config_key_value('extra_table_info')
 else:
     missing_config_key('extra_table_info')
-
-
-separate_log = conf_parse_bool('separate_log')
-
-if separate_log:
-
-    import logging
-
-    log_dir = '/var/log/nohang'
-    logfile = log_dir + '/nohang.log'
-
-    try:
-        os.mkdir(log_dir)
-    except FileExistsError:
-        pass
-    except PermissionError:
-        errprint('ERROR: cannot create {}'.format(log_dir))
-
-    try:
-        os.chmod(log_dir, mode=0o750)
-    except FileNotFoundError:
-        errprint('ERROR: file not found: {}'.format(log_dir))
-    except PermissionError:
-        errprint('ERROR: permission denied: {}'.format(log_dir))
-
-    try:
-        logging.basicConfig(
-            filename=logfile,
-            level=logging.INFO,
-            format="%(asctime)s: %(message)s")
-    except FileNotFoundError:
-        errprint('ERROR: file not found: {}'.format(logfile))
-    except PermissionError:
-        errprint('ERROR: permission denied: {}'.format(logfile))
 
 
 if 'min_mem_report_interval' in config_dict:
@@ -3650,9 +3670,6 @@ if (low_memory_warnings_enabled or
     import threading
     import shlex
     from subprocess import Popen, TimeoutExpired
-
-
-psi_support = os.path.exists(psi_path)
 
 
 # Get KiB levels if it's possible.
@@ -3747,16 +3764,10 @@ threshold = None
 mem_info = None
 
 
-CHECK_PSI = False
-if psi_support and not ignore_psi:
-    CHECK_PSI = True
-
 psi_kill_exceeded_timer = psi_term_exceeded_timer = -0.0001
 psi_t0 = monotonic()
 psi_threshold = zram_threshold = zram_info = psi_info = None
 
-
-CHECK_ZRAM = not ignore_zram
 
 log('Monitoring has started!')
 
@@ -3819,7 +3830,7 @@ while True:
     (masf_threshold, masf_info, mem_available, hard_threshold_min_swap_kb,
      soft_threshold_min_swap_kb, swap_free, swap_total) = check_mem_swap_ex()
 
-    if CHECK_ZRAM:
+    if zram_checking_enabled:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
 
     if CHECK_PSI:
@@ -3832,7 +3843,6 @@ while True:
 
         if CHECK_PSI:
             psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
-            # print(psi_avg_value)
             if monotonic() - psi_t0 >= psi_post_action_delay:
                 psi_post_action_delay_exceeded = True
             else:
