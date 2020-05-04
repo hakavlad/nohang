@@ -3574,7 +3574,8 @@ if 'psi_path' in config_dict:
     if CHECK_PSI:
         try:
             if psi_file_mem_to_metrics(psi_path) is None:
-                errprint('WARNING: psi_path "{}" not found'.format(psi_path))
+                errprint('WARNING: psi_path "{}" is not found or is incor'
+                         'rect'.format(psi_path))
         except Exception as e:
             errprint('WARNING: invalid psi_path "{}": {}'.format(psi_path, e))
 else:
