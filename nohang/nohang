@@ -3796,8 +3796,9 @@ arcstats_path = '/proc/spl/kstat/zfs/arcstats'
 
 ZFS = os.path.exists(arcstats_path)
 
-
 if ZFS:
+    log('WARNING: ZFS found. Available memory will not be calculated '
+        'correctly (issue#89)')
     try:
         # find indexes
         with open(arcstats_path, 'rb') as f:
@@ -3819,6 +3820,7 @@ if ZFS:
                 continue
     except Exception as e:
         log(e)
+        ZFS = False
 
 
 m0 = monotonic()
