@@ -11,6 +11,28 @@ from sre_constants import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
 
 
+def read_path(path):
+    """
+    """
+    try:
+        fd[path].seek(0)
+    except ValueError:
+        try:
+            fd[path] = open(path, 'rb', buffering=0)
+        except FileNotFoundError:
+            return None
+    except KeyError:
+        try:
+            fd[path] = open(path, 'rb', buffering=0)
+        except FileNotFoundError:
+            return None
+    try:
+        return fd[path].read(99999).decode()
+    except OSError:
+        fd[path].close()
+        return None
+
+
 def missing_config_key(key):
     """
     """
@@ -829,8 +851,13 @@ def print_version():
 def psi_file_mem_to_metrics(psi_path):
     """
     """
-    with open(psi_path) as f:
-        psi_list = f.readlines()
+    foo = read_path(psi_path)
+
+    if foo is None:
+        return None
+
+    psi_list = foo.split('\n')
+
     some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
@@ -838,6 +865,7 @@ def psi_file_mem_to_metrics(psi_path):
     full_avg10 = full_list[1].split('=')[1]
     full_avg60 = full_list[2].split('=')[1]
     full_avg300 = full_list[3].split('=')[1]
+
     return (some_avg10, some_avg60, some_avg300,
             full_avg10, full_avg60, full_avg300)
 
@@ -1306,44 +1334,30 @@ def print_stat_dict():
 def find_psi_metrics_value(psi_path, psi_metrics):
     """
     """
+    foo = read_path(psi_path)
+
+    if foo is None:
+        return None
+
     try:
 
         if psi_metrics == 'some_avg10':
-            return float(rline1(psi_path).split(' ')[1].split('=')[1])
+            return float(foo.split('\n')[0].split(' ')[1].split('=')[1])
         if psi_metrics == 'some_avg60':
-            return float(rline1(psi_path).split(' ')[2].split('=')[1])
+            return float(foo.split('\n')[0].split(' ')[2].split('=')[1])
         if psi_metrics == 'some_avg300':
-            return float(rline1(psi_path).split(' ')[3].split('=')[1])
-
+            return float(foo.split('\n')[0].split(' ')[3].split('=')[1])
         if psi_metrics == 'full_avg10':
-            with open(psi_path) as f:
-                psi_list = f.readlines()
-                return float(psi_list[1].split(' ')[1].split('=')[1])
+            return float(foo.split('\n')[1].split(' ')[1].split('=')[1])
         if psi_metrics == 'full_avg60':
-            with open(psi_path) as f:
-                psi_list = f.readlines()
-                return float(psi_list[1].split(' ')[2].split('=')[1])
+            return float(foo.split('\n')[1].split(' ')[2].split('=')[1])
         if psi_metrics == 'full_avg300':
-            with open(psi_path) as f:
-                psi_list = f.readlines()
-                return float(psi_list[1].split(' ')[3].split('=')[1])
+            return float(foo.split('\n')[1].split(' ')[3].split('=')[1])
 
     except Exception as e:
         if debug_psi:
             log('Invalid psi_path: {}'.format(e))
         return None
-
-
-''''
-def check_mem_and_swap0():
-    """
-    """
-    fd['mi'].seek(0)
-    m_list = fd['mi'].read().decode().split(' kB\n')
-    return (int(m_list[mem_available_index].split(':')[1]),
-            int(m_list[swap_total_index].split(':')[1]),
-            int(m_list[swap_free_index].split(':')[1]))
-'''
 
 
 def check_mem_and_swap():
@@ -1397,22 +1411,6 @@ def meminfo():
     md['swap_free'] = swap_free
 
     return md
-
-
-def memory_pressure():
-    """
-    """
-    with open('/proc/pressure/memory') as f:
-        psi_list = f.readlines()
-    some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
-    some_avg10 = some_list[1].split('=')[1]
-    some_avg60 = some_list[2].split('=')[1]
-    some_avg300 = some_list[3].split('=')[1]
-    full_avg10 = full_list[1].split('=')[1]
-    full_avg60 = full_list[2].split('=')[1]
-    full_avg300 = full_list[3].split('=')[1]
-    return (some_avg10, some_avg60, some_avg300,
-            full_avg10, full_avg60, full_avg300)
 
 
 def check_zram():
@@ -2511,7 +2509,7 @@ def implement_corrective_action(
             round(mid['swap_free'] / 1024)
         ))
         if PSI_KERNEL_OK:
-            mp = memory_pressure()
+            mp = psi_file_mem_to_metrics('/proc/pressure/memory')
             log('Memory pressure (system-wide):')
             log('  some avg10={} avg60={} avg300={}'.format(
                 mp[0], mp[1], mp[2]
@@ -3063,6 +3061,10 @@ log('config: ' + config)
 
 ###############################################################################
 
+
+fd = dict()
+
+
 # parsing the config with obtaining the parameters dictionary
 
 # conf_parameters_dict
@@ -3571,10 +3573,10 @@ if 'psi_path' in config_dict:
     psi_path = config_dict['psi_path']
     if CHECK_PSI:
         try:
-            psi_file_mem_to_metrics(psi_path)
+            if psi_file_mem_to_metrics(psi_path) is None:
+                errprint('WARNING: psi_path "{}" not found'.format(psi_path))
         except Exception as e:
-            errprint('WARNING: invalid psi_path "{}": {}'.format(
-                psi_path, e))
+            errprint('WARNING: invalid psi_path "{}": {}'.format(psi_path, e))
 else:
     missing_config_key('psi_path')
 
@@ -3786,8 +3788,6 @@ cmd_num_dict = dict()
 cmd_num_dict['cmd_num'] = 0
 
 
-fd = dict()
-
 fd['mi'] = open('/proc/meminfo', 'rb', buffering=0)
 
 
@@ -3954,6 +3954,7 @@ while True:
             mem_info_list.append(zram_info)
 
         if psi_info is not None:
+
             mem_info_list.append(psi_info)
 
         psi_t0 = implement_corrective_action(
