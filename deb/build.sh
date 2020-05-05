@@ -1,11 +1,10 @@
 #!/bin/sh -v
-mkdir deb/package
-make build_deb \
+make \
 	DESTDIR=deb/package \
-	BINDIR=/usr/bin \
-	CONFDIR=/etc \
+	PREFIX=/usr \
+	SYSCONFDIR=/etc \
 	SYSTEMDUNITDIR=/lib/systemd/system \
-	MANDIR=/usr/share/man/man1
+	build_deb
 cd deb
 cp -r DEBIAN package/
 fakeroot dpkg-deb --build package

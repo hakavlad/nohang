@@ -1,84 +1,103 @@
 DESTDIR ?=
-BINDIR ?=           /usr/local/bin
-CONFDIR ?=          /usr/local/etc
-SYSTEMDUNITDIR ?=   /usr/local/lib/systemd/system
-MANDIR ?=           /usr/local/share/man/man1
+PREFIX ?=          /usr/local
+SYSCONFDIR ?=      /usr/local/etc
+SYSTEMDUNITDIR ?=  /usr/local/lib/systemd/system
+
 LOGDIR ?=           /var/log
 LOGROTATECONFDIR ?= /etc/logrotate.d
+
+BINDIR ?=  $(PREFIX)/bin
+SBINDIR ?= $(PREFIX)/sbin
+DATADIR ?= $(PREFIX)/share
+DOCDIR ?=  $(DATADIR)/doc/nohang
+MANDIR ?=  $(DATADIR)/man
 
 all:
 	@ echo "Use: make install, build_deb, make uninstall"
 
 install:
+	install -d $(DESTDIR)$(SBINDIR)
+	install -m0755 nohang/nohang $(DESTDIR)$(SBINDIR)/nohang
+
 	install -d $(DESTDIR)$(BINDIR)
-	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
 	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
 	install -m0755 tools/psi2log $(DESTDIR)$(BINDIR)/psi2log
 
-	install -d $(DESTDIR)$(CONFDIR)/nohang
+	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
+
+	install -d $(DESTDIR)$(DATADIR)/nohang
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
+
 	-git describe --tags --long --dirty > version
-	-install -m0644 version $(DESTDIR)$(CONFDIR)/nohang/version
+	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 	-rm -fv version
 
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
+	install -d $(DESTDIR)$(MANDIR)/man1
+	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
+	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
+	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
+	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
-	install -d $(DESTDIR)$(CONFDIR)/nohang/defaults
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
+	install -d $(DESTDIR)$(DOCDIR)
+	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
+	install -m0644 CHANGELOG.md $(DESTDIR)$(DOCDIR)/CHANGELOG.md
 
 	install -d $(DESTDIR)$(LOGROTATECONFDIR)
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
-	install -d $(DESTDIR)$(MANDIR)
-	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
-	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
-	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
-	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/psi2log.1.gz
-
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang.service.in > nohang.service
-	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
+	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang.service.in > nohang.service
+	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
 	-rm -fv nohang-desktop.service
+
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-systemctl daemon-reload
 
 build_deb:
+	install -d $(DESTDIR)$(SBINDIR)
+	install -m0755 nohang/nohang $(DESTDIR)$(SBINDIR)/nohang
+
 	install -d $(DESTDIR)$(BINDIR)
-	install -m0755 nohang/nohang $(DESTDIR)$(BINDIR)/nohang
 	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
 	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
 	install -m0755 tools/psi2log $(DESTDIR)$(BINDIR)/psi2log
 
-	install -d $(DESTDIR)$(CONFDIR)/nohang
+	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
+
+	install -d $(DESTDIR)$(DATADIR)/nohang
+	install -m0644 nohang/nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
+	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
+
 	-git describe --tags --long --dirty > version
-	-install -m0644 version $(DESTDIR)$(CONFDIR)/nohang/version
+	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 	-rm -fv version
 
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/nohang-desktop.conf
+	install -d $(DESTDIR)$(MANDIR)/man1
+	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
+	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
+	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
+	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
-	install -d $(DESTDIR)$(CONFDIR)/nohang/defaults
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(CONFDIR)/nohang/defaults/nohang-desktop.conf
+	install -d $(DESTDIR)$(DOCDIR)
+	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
+	install -m0644 CHANGELOG.md $(DESTDIR)$(DOCDIR)/CHANGELOG.md
 
 	install -d $(DESTDIR)$(LOGROTATECONFDIR)
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
-	install -d $(DESTDIR)$(MANDIR)
-	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/nohang.1.gz
-	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/oom-sort.1.gz
-	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/psi-top.1.gz
-	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/psi2log.1.gz
-
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang.service.in > nohang.service
-	env BINDIR=$(BINDIR) CONFDIR=$(CONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
+	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang.service.in > nohang.service
+	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
@@ -91,16 +110,16 @@ uninstall:
 	-systemctl disable nohang.service || true
 	-systemctl disable nohang-desktop.service || true
 	-systemctl daemon-reload
-	rm -fv $(DESTDIR)$(BINDIR)/nohang
+	rm -fv $(DESTDIR)$(SBINDIR)/nohang
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
 	rm -fv $(DESTDIR)$(BINDIR)/psi-top
 	rm -fv $(DESTDIR)$(BINDIR)/psi2log
-	rm -fv $(DESTDIR)$(MANDIR)/nohang.1.gz
-	rm -fv $(DESTDIR)$(MANDIR)/oom-sort.1.gz
-	rm -fv $(DESTDIR)$(MANDIR)/psi-top.1.gz
-	rm -fv $(DESTDIR)$(MANDIR)/psi2log.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
+	rm -fv $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
-	rm -fvr $(DESTDIR)$(CONFDIR)/nohang/
+	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
 	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/

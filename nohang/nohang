@@ -834,11 +834,11 @@ def log(*msg):
 def print_version():
     """
     """
-    if os.path.exists('/usr/local/etc/nohang/version'):
-        v = rline1('/usr/local/etc/nohang/version')
+    if os.path.exists('/usr/local/share/nohang/version'):
+        v = rline1('/usr/local/share/nohang/version')
     else:
         try:
-            v = rline1('/etc/nohang/version')
+            v = rline1('/usr/share/nohang/version')
         except FileNotFoundError:
             v = None
     if v is None:
