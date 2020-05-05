@@ -5,7 +5,7 @@ Conflicts=nohang.service
 After=system.slice
 
 [Service]
-ExecStart=${BINDIR}/nohang --config ${CONFDIR}/nohang/nohang-desktop.conf --monitor
+ExecStart=:TARGET_SBINDIR:/nohang --monitor --config :TARGET_SYSCONFDIR:/nohang/nohang-desktop.conf
 SyslogIdentifier=nohang-desktop
 KillMode=mixed
 Restart=always

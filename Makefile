@@ -1,7 +1,7 @@
 DESTDIR ?=
-PREFIX ?=          /usr/local
-SYSCONFDIR ?=      /usr/local/etc
-SYSTEMDUNITDIR ?=  /usr/local/lib/systemd/system
+PREFIX ?=         /usr/local
+SYSCONFDIR ?=     /usr/local/etc
+SYSTEMDUNITDIR ?= /usr/local/lib/systemd/system
 
 LOGDIR ?=           /var/log
 LOGROTATECONFDIR ?= /etc/logrotate.d
@@ -31,7 +31,6 @@ install:
 	install -d $(DESTDIR)$(DATADIR)/nohang
 	install -m0644 nohang/nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
 	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
-
 	-git describe --tags --long --dirty > version
 	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 	-rm -fv version
@@ -50,8 +49,8 @@ install:
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang.service.in > nohang.service
-	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang.service.in > nohang.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
@@ -77,7 +76,6 @@ build_deb:
 	install -d $(DESTDIR)$(DATADIR)/nohang
 	install -m0644 nohang/nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
 	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
-
 	-git describe --tags --long --dirty > version
 	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 	-rm -fv version
@@ -96,8 +94,8 @@ build_deb:
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang.service.in > nohang.service
-	env BINDIR=$(BINDIR) SYSCONFDIR=$(SYSCONFDIR) envsubst < nohang/nohang-desktop.service.in > nohang-desktop.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang.service.in > nohang.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service

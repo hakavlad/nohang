@@ -126,7 +126,7 @@ $ sudo systemctl enable --now nohang-desktop
 
 Install build dependencies:
 ```bash
-$ sudo apt install make fakeroot gettext
+$ sudo apt install make fakeroot
 ```
 
 Clone latest git snapshot and run build script to build deb package:
