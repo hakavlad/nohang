@@ -851,13 +851,8 @@ def print_version():
 def psi_file_mem_to_metrics(psi_path):
     """
     """
-    foo = read_path(psi_path)
-
-    if foo is None:
-        return None
-
-    psi_list = foo.split('\n')
-
+    with open(psi_path) as f:
+        psi_list = f.readlines()
     some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
     some_avg10 = some_list[1].split('=')[1]
     some_avg60 = some_list[2].split('=')[1]
@@ -865,7 +860,6 @@ def psi_file_mem_to_metrics(psi_path):
     full_avg10 = full_list[1].split('=')[1]
     full_avg60 = full_list[2].split('=')[1]
     full_avg300 = full_list[3].split('=')[1]
-
     return (some_avg10, some_avg60, some_avg300,
             full_avg10, full_avg60, full_avg300)
 
@@ -3573,9 +3567,7 @@ if 'psi_path' in config_dict:
     psi_path = config_dict['psi_path']
     if CHECK_PSI:
         try:
-            if psi_file_mem_to_metrics(psi_path) is None:
-                errprint('WARNING: psi_path "{}" is not found or is incor'
-                         'rect'.format(psi_path))
+            psi_file_mem_to_metrics(psi_path)
         except Exception as e:
             errprint('WARNING: invalid psi_path "{}": {}'.format(psi_path, e))
 else:
