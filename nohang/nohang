@@ -68,22 +68,46 @@ def check_permissions():
 def memload():
     """
     """
+    from random import random
+    r = str(random())[2:8]
+    hi = 'Enter the numbers {} to confirm that you are not a robot: '.format(r)
+    try:
+        t0 = monotonic()
+        inp = input(hi)
+    except KeyboardInterrupt:
+        print('KeyboardInterrupt\nExit')
+        exit(1)
+    try:
+        os.setreuid(1, 1)
+    except Exception:
+        pass
+    if inp != r:
+        print('Captcha is not passed ("{}" != "{}")'.format(inp, r))
+        print('memload() is not for robots\nExit')
+        exit(1)
+    if monotonic() - t0 > 30:
+        print('Captcha is not passed (timeout expired)')
+        print('memload() is not for robots\nExit')
+        exit(1)
+    else:
+        print('-' * 68)
     with open('/proc/meminfo') as f:
         mem_list = f.readlines()
     mem_list_names = []
     for s in mem_list:
         mem_list_names.append(s.split(':')[0])
-    if mem_list_names[2] != 'MemAvailable':
-        errprint('Your Linux kernel is too old, Linux 3.14+ requied\nExit')
-        exit(1)
+    try:
+        mem_available_index = mem_list_names.index('MemAvailable')
+    except ValueError:
+        print('Your Linux kernel is too old, Linux 3.14+ required\nExit')
     swap_total_index = mem_list_names.index('SwapTotal')
-    swap_free_index = swap_total_index + 1
+    swap_free_index = mem_list_names.index('SwapFree')
 
     def check_mem_and_swap():
         """find mem_available, swap_total, swap_free"""
         with open('/proc/meminfo') as f:
             for n, line in enumerate(f):
-                if n == 2:
+                if n == mem_available_index:
                     mem_available = int(line.split(':')[1][:-4])
                     continue
                 if n == swap_total_index:
@@ -99,27 +123,13 @@ def memload():
               '     '.format(
                   round(mem_available / 1024),
                   round(swap_free / 1024)))
-    try:
-        luid_init = rline1('/proc/1/loginuid')
-    except Exception as e:
-        print(e)
-        exit(1)
-    luid_self = rline1('/proc/self/loginuid')
-    if luid_init == luid_self:
-        print('The option is available only for logged in users.')
-        print('Self loginuid: {}'.format(luid_self))
-        print('Init loginuid: {}'.format(luid_init))
-        print('Self login UID must not be equal to init login UID to continue.'
-              )
-        print('Exit')
-        exit(1)
 
+    hi = 'Warning! The process will consume memory until 40 MiB of mem' \
+         'ory\n(MemAvailable + SwapFree) remain free, and it will be t' \
+         'erminated via SIGUSR1\nat the end. This may cause the system' \
+         ' to freeze and processes to terminate.\nDo you want to conti' \
+         'nue? [No/Yes] '
     try:
-        hi = 'Warning! The process will consume memory until 40 MiB of mem' \
-             'ory\n(MemAvailable + SwapFree) remain free, and it will be t' \
-             'erminated via SIGUSR1\nat the end. This may cause the system' \
-             ' to freeze and processes to terminate.\nDo you want to conti' \
-             'nue? [No/Yes] '
         inp = input(hi)
     except KeyboardInterrupt:
         print('KeyboardInterrupt\nExit')
@@ -143,7 +153,7 @@ def memload():
                 print('Self terminating by SIGUSR1')
                 os.kill(self_pid, SIGUSR1)
             else:
-                ex.append(bytearray(1024 * 50))  # step size is 50 KiB
+                ex.append(bytearray(1024 * 40))  # step size is 40 KiB
                 u = monotonic() - z
                 if u <= 0.01:
                     continue
