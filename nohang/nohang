@@ -465,10 +465,19 @@ def send_notify_warn():
         start_thread(exe, warning_exe)
 
     else:
-
         title = 'Low memory'
-        body = 'Save your unsaved data!\nClose unused apps!'
 
+        shared = meminfo()['shared']
+        sh_percent = shared / mem_total
+
+        if sh_percent > 0.6:
+            body = 'Save your unsaved data!\nClear tmpfs! Shmem: {}%'.format(
+                round(sh_percent * 100))
+        elif sh_percent > 0.3:
+            body = 'Save your unsaved data!\nClose unused apps!\nClear ' \
+                   'tmpfs! Shmem: {}%'.format(round(sh_percent * 100))
+        else:
+            body = 'Save your unsaved data!\nClose unused apps!'
         """"
         body = 'MemAvail: {}%\nSwapFree: {}%'.format(
             round(mem_available / mem_total * 100),
@@ -1394,7 +1403,7 @@ def meminfo():
     buffers = int(m_list[buffers_index].split(':')[1])
     cached = int(m_list[cached_index].split(':')[1])
     sreclaimable = int(m_list[sreclaimable_index].split(':')[1])
-    shmem = int(m_list[shmem_index].split(':')[1])
+    shmem = int(m_list[shmem_info_index].split(':')[1])
 
     md = dict()
 
@@ -3027,7 +3036,7 @@ swap_free_index = mem_list_names.index('SwapFree')
 buffers_index = mem_list_names.index('Buffers')
 cached_index = mem_list_names.index('Cached')
 sreclaimable_index = mem_list_names.index('SReclaimable')
-shmem_index = mem_list_names.index('Shmem')
+shmem_info_index = mem_list_names.index('Shmem')
 
 mem_total = int(mem_list[0].split(':')[1][:-4])
 
