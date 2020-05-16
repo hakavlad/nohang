@@ -25,15 +25,24 @@ base:
 	install -m0755 tools/psi2log $(DESTDIR)$(BINDIR)/psi2log
 
 	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
+
+	sed "s|:TARGET_DATADIR:|$(DATADIR)|" nohang/nohang.conf.in > nohang.conf
+	sed "s|:TARGET_DATADIR:|$(DATADIR)|" nohang/nohang-desktop.conf.in > nohang-desktop.conf
+
+	install -m0644 nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
+	install -m0644 nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
 
 	install -d $(DESTDIR)$(DATADIR)/nohang
-	install -m0644 nohang/nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
-	install -m0644 nohang/nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
+
+	install -m0644 nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
+	install -m0644 nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
+
 	-git describe --tags --long --dirty > version
 	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
-	-rm -fv version
+
+	rm -fv nohang.conf
+	rm -fv nohang-desktop.conf
+	rm -fv version
 
 	install -d $(DESTDIR)$(MANDIR)/man1
 	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
@@ -50,8 +59,8 @@ base:
 
 units:
 	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang.service.in > nohang.service
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/nohang-desktop.service.in > nohang-desktop.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang.service.in > nohang.service
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang-desktop.service.in > nohang-desktop.service
 	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	-rm -fv nohang.service
@@ -85,8 +94,8 @@ uninstall:
 	rm -fv $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
-	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
 	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
-	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
 	rm -fvr $(DESTDIR)$(DOCDIR)/
+	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
 	rm -fvr $(DESTDIR)$(DATADIR)/nohang/
+	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/

@@ -1,8 +1,8 @@
-    This is nohang's config file.
+    This is nohang config file.
     Lines starting with #, tabs and spaces are comments.
     Lines starting with @ contain optional parameters.
     All values are case sensitive.
-    Be careful: nohang does not forbid you to shoot yourself in the foot.
+    Be careful: nohang doesn't forbid you to shoot yourself in the foot.
 
     The configuration includes the following sections:
 
@@ -21,6 +21,8 @@
     Please restart the program after editing the config.
 
     TODO: improve descriptions
+
+    You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang.conf
 
 ###############################################################################
 
@@ -42,9 +44,9 @@ zram_checking_enabled = False
     Description:
     Type: boolean
     Valid values: True | False
-    Default value: True
+    Default value: False
 
-psi_checking_enabled = True
+psi_checking_enabled = False
 
     Key: psi_path
     Description:
@@ -133,9 +135,9 @@ min_sleep = 0.1
     Description:
     Type: boolean
     Valid values: True | False
-    Default value: True
+    Default value: False
 
-post_action_gui_notifications = True
+post_action_gui_notifications = False
 
     Key: hide_corrective_action_type
     Description:
@@ -151,9 +153,9 @@ hide_corrective_action_type = False
     Description:
     Type: boolean
     Valid values: True | False
-    Default value: True
+    Default value: False
 
-low_memory_warnings_enabled = True
+low_memory_warnings_enabled = False
 
     Key: warning_exe
     Description:
@@ -310,15 +312,7 @@ ignore_positive_oom_score_adj = False
     with different badness_adj values.
 
     Example:
-    @BADNESS_ADJ_RE_NAME -500 /// ^sshd$
-
-    Prefer terminating Firefox tabs instead of terminating the entire browser.
-    (In Chromium and Electron-based apps child processes get oom_score_adj=300
-    by default.)
-@BADNESS_ADJ_RE_NAME   200  ///  ^Web Content$
-
-@BADNESS_ADJ_RE_NAME  -200  ///  ^(dnf|packagekitd)$
-
+    @BADNESS_ADJ_RE_NAME 200 /// ^Web Content$
 
     7.2.2. Matching CGroup_v1-line with RE patterns
 
@@ -339,52 +333,7 @@ ignore_positive_oom_score_adj = False
     7.2.5. Matching /proc/[pid]/exe realpath with RE patterns
 
     Example:
-    @BADNESS_ADJ_RE_REALPATH  20  ///  ^/usr/bin/foo$
-
-    Protect X.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/libexec/Xorg|/usr/lib/xorg/Xorg|/usr/lib/Xorg|/usr/bin/X|/usr/bin/Xorg|/usr/bin/Xwayland|/usr/bin/weston|/usr/bin/sway)$
-
-    Protect GNOME.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/gnome-shell|/usr/bin/metacity|/usr/bin/mutter|/usr/lib/gnome-session/gnome-session-binary|/usr/libexec/gnome-session-binary|/usr/libexec/gnome-session-ctl)$
-
-    Protect KDE Plasma.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/plasma-desktop|/usr/bin/plasmashell|/usr/bin/plasma_session|/usr/bin/kwin|/usr/bin/kwin_x11|/usr/bin/kwin_wayland)$
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/startplasma-wayland|/usr/lib/x86_64-linux-gnu/libexec/startplasma-waylandsession|/usr/bin/ksmserver)$
-
-    Protect Cinnamon.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/cinnamon|/usr/bin/muffin|/usr/bin/cinnamon-session|/usr/bin/cinnamon-launcher)$
-
-    Protect Xfce.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/xfwm4|/usr/bin/xfce4-session|/usr/bin/xfce4-panel|/usr/bin/xfdesktop)$
-
-    Protect Mate.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/marco|/usr/bin/mate-session|/usr/bin/caja|/usr/bin/mate-panel)$
-
-    Protect LXQt.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/lxqt-panel|/usr/bin/pcmanfm-qt|/usr/bin/lxqt-session)$
-
-    Protect Budgie Desktop.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/budgie-wm|/usr/bin/budgie-panel)$
-
-    Protect other.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/compiz|/usr/bin/openbox|/usr/bin/fluxbox|/usr/bin/awesome|/usr/bin/icewm|/usr/bin/enlightenment|/usr/bin/gala|/usr/bin/wingpanel)$
-
-    Protect display managers.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/sbin/gdm|/usr/sbin/gdm3|/usr/sbin/sddm|/usr/bin/sddm|/usr/lib/x86_64-linux-gnu/sddm/sddm-helper|/usr/bin/slim|/usr/sbin/lightdm|/usr/libexec/gdm-session-worker|/usr/libexec/gdm-wayland-session|/usr/lib/gdm3/gdm-wayland-session|/usr/lib/gdm3/gdm-session-worker)$
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^/usr/lib/gdm3/
-
-    Protect systemd-logind.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/lib/systemd/systemd-logind|/usr/lib/systemd/systemd-logind)$
-
-    Protect `systemd --user`.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/lib/systemd/systemd|/usr/lib/systemd/systemd)$
-
-    Protect dbus.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/dbus-daemon|/usr/bin/dbus-run-session|/usr/bin/dbus-broker-launcher|/usr/bin/dbus-broker)$
-
-    Prefer stress.
     @BADNESS_ADJ_RE_REALPATH  900  ///  ^(/usr/bin/stress|/usr/bin/stress-ng)$
-
 
     7.2.6. Matching cwd with RE patterns
 
@@ -404,7 +353,7 @@ ignore_positive_oom_score_adj = False
 
     7.2.8. Matching environ with RE patterns
     WARNING: using this option can greatly slow down the search for a victim
-    in conditions of heavily swapping.
+    in conditions of heavy swapping.
 
     @BADNESS_ADJ_RE_ENVIRON 100 /// USER=user
 
