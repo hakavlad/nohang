@@ -38,7 +38,7 @@ base:
 	install -m0644 nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
 
 	-git describe --tags --long --dirty > version
-	-install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
+	install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 
 	rm -fv nohang.conf
 	rm -fv nohang-desktop.conf
@@ -58,13 +58,13 @@ base:
 	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 units:
-	-install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang.service.in > nohang.service
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang-desktop.service.in > nohang-desktop.service
-	-install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	-install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
-	-rm -fv nohang.service
-	-rm -fv nohang-desktop.service
+	install -d $(DESTDIR)$(SYSTEMDUNITDIR)
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang.service.in > nohang.service
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang-desktop.service.in > nohang-desktop.service
+	install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
+	install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	rm -fv nohang.service
+	rm -fv nohang-desktop.service
 
 chcon:
 	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
@@ -77,13 +77,7 @@ build_deb: base units
 
 install: base units chcon daemon-reload
 
-uninstall:
-	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
-	-systemctl stop nohang.service || true
-	-systemctl stop nohang-desktop.service || true
-	-systemctl disable nohang.service || true
-	-systemctl disable nohang-desktop.service || true
-	-systemctl daemon-reload
+uninstall-base:
 	rm -fv $(DESTDIR)$(SBINDIR)/nohang
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
 	rm -fv $(DESTDIR)$(BINDIR)/psi-top
@@ -92,10 +86,19 @@ uninstall:
 	rm -fv $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
-	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 	rm -fvr $(DESTDIR)$(DOCDIR)/
 	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
 	rm -fvr $(DESTDIR)$(DATADIR)/nohang/
 	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
+
+uninstall-units:
+	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
+	-systemctl stop nohang.service || true
+	-systemctl stop nohang-desktop.service || true
+	-systemctl disable nohang.service || true
+	-systemctl disable nohang-desktop.service || true
+	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
+	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+
+uninstall: uninstall-base uninstall-units daemon-reload
