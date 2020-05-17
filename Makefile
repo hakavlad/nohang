@@ -77,6 +77,22 @@ build_deb: base units
 
 install: base units chcon daemon-reload
 
+openrc:
+	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/openrc/nohang.in > nohang/openrc/nohang
+	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
+	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
+
+install-openrc: base openrc
+
+uninstall-openrc: uninstall
+	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
+	-rc-service nohang-desktop stop || true
+	-rc-service nohang stop || true
+	-rm -fv /etc/init.d/nohang-desktop
+	-rm -fv /etc/init.d/nohang
+
 uninstall-base:
 	rm -fv $(DESTDIR)$(SBINDIR)/nohang
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
@@ -101,4 +117,4 @@ uninstall-units:
 	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 
-uninstall: uninstall-base uninstall-units daemon-reload
+uninstall: uninstall-base uninstall-units daemon-reload uninstall-openrc
