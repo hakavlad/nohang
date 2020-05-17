@@ -109,14 +109,14 @@ uninstall-units:
 	-systemctl stop nohang-desktop.service || true
 	-systemctl disable nohang.service || true
 	-systemctl disable nohang-desktop.service || true
-	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
+	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 
 uninstall-openrc:
 	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
 	-rc-service nohang-desktop stop || true
 	-rc-service nohang stop || true
-	-rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
-	-rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
+	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
+	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 
 uninstall: uninstall-base uninstall-units daemon-reload uninstall-openrc
