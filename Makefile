@@ -79,8 +79,8 @@ install: base units chcon daemon-reload
 
 openrc:
 	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/openrc/nohang.in > nohang/openrc/nohang
-	-sed "s|:TARGET_SBINDIR:|$(SBINDIR)|g;s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|g" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/openrc/nohang.in > nohang/openrc/nohang
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
 	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 
