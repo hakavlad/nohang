@@ -13,7 +13,7 @@ DOCDIR ?=  $(DATADIR)/doc/nohang
 MANDIR ?=  $(DATADIR)/man
 
 all:
-	@ echo "Use: make install, build_deb, make uninstall"
+	@ echo "Use: make install, install-openrc, make uninstall"
 
 base:
 	install -d $(DESTDIR)$(SBINDIR)
@@ -88,13 +88,6 @@ openrc:
 
 install-openrc: base openrc
 
-uninstall-openrc: uninstall
-	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
-	-rc-service nohang-desktop stop || true
-	-rc-service nohang stop || true
-	-rm -fv /etc/init.d/nohang-desktop
-	-rm -fv /etc/init.d/nohang
-
 uninstall-base:
 	rm -fv $(DESTDIR)$(SBINDIR)/nohang
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
@@ -111,12 +104,19 @@ uninstall-base:
 	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
 
 uninstall-units:
-	# 'make uninstall' must not fail with error if systemctl is unavailable or returns error
+	# 'make uninstall-units' must not fail with error if systemctl is unavailable or returns error
 	-systemctl stop nohang.service || true
 	-systemctl stop nohang-desktop.service || true
 	-systemctl disable nohang.service || true
 	-systemctl disable nohang-desktop.service || true
 	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	-rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+
+uninstall-openrc:
+	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
+	-rc-service nohang-desktop stop || true
+	-rc-service nohang stop || true
+	-rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
+	-rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 
 uninstall: uninstall-base uninstall-units daemon-reload uninstall-openrc
