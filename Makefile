@@ -83,6 +83,8 @@ openrc:
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
 	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
+	rm -fv nohang/openrc/nohang
+	rm -fv nohang/openrc/nohang-desktop
 
 install-openrc: base openrc
 
