@@ -26,8 +26,11 @@ base:
 
 	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
 
-	sed "s|:TARGET_DATADIR:|$(DATADIR)|" nohang/nohang.conf.in > nohang.conf
-	sed "s|:TARGET_DATADIR:|$(DATADIR)|" nohang/nohang-desktop.conf.in > nohang-desktop.conf
+	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
+		nohang/nohang.conf.in > nohang.conf
+
+	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
+		nohang/nohang-desktop.conf.in > nohang-desktop.conf
 
 	install -m0644 nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
 	install -m0644 nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
@@ -59,10 +62,16 @@ base:
 
 units:
 	install -d $(DESTDIR)$(SYSTEMDUNITDIR)
-	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang.service.in > nohang.service
-	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/nohang-desktop.service.in > nohang-desktop.service
+
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
+		nohang/nohang.service.in > nohang.service
+
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
+		nohang/nohang-desktop.service.in > nohang-desktop.service
+
 	install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+
 	rm -fv nohang.service
 	rm -fv nohang-desktop.service
 
@@ -79,10 +88,16 @@ install: base units chcon daemon-reload
 
 openrc:
 	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
-	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/openrc/nohang.in > nohang/openrc/nohang
-	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
+		nohang/openrc/nohang.in > nohang/openrc/nohang
+
+	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
+		nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+
 	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
+
 	rm -fv nohang/openrc/nohang
 	rm -fv nohang/openrc/nohang-desktop
 
@@ -109,6 +124,7 @@ uninstall-units:
 	-systemctl stop nohang-desktop.service || true
 	-systemctl disable nohang.service || true
 	-systemctl disable nohang-desktop.service || true
+
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 
@@ -116,6 +132,7 @@ uninstall-openrc:
 	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
 	-rc-service nohang-desktop stop || true
 	-rc-service nohang stop || true
+
 	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 
