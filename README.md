@@ -35,9 +35,10 @@ Also look at this discussions:
 ## Solution
 
 Use one of the userspace OOM killers.
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels.
+- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
+- [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor) is used by default on Endless OS.
 - Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
 
 Of course, you can also [download more RAM](https://downloadmoreram.com/), tune [virtual memory](https://www.kernel.org/doc/Documentation/sysctl/vm.txt), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
@@ -67,20 +68,20 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
 ## Requirements
 
 For basic usage:
-- `Linux` >= 3.14 (since `MemAvailable` appeared in `/proc/meminfo`)
-- `Python` >= 3.3
+- `Linux` (>= 3.14, since `MemAvailable` appeared in `/proc/meminfo`)
+- `Python` (>= 3.3)
 
-To show GUI notifications:
+To respond to `PSI` metrics (optional):
+- `Linux` (>= 4.20) with `CONFIG_PSI=y`
+
+To show GUI notifications (optional):
 - [notification server](https://wiki.archlinux.org/index.php/Desktop_notifications#Notification_servers) (most of desktop environments use their own implementations)
 - `libnotify` (Arch Linux, Fedora, openSUSE) or `libnotify-bin` (Debian GNU/Linux, Ubuntu)
-- `sudo` if nohang started with UID=0
-
-To use `PSI`:
-- `Linux` >= 4.20 with `CONFIG_PSI=y`.
+- `sudo` if nohang started with UID=0.
 
 ## Memory and CPU usage
 
-- VmRSS is about 10–14 MiB instead of the settings, about 10 MiB by default.
+- VmRSS is about 10–14 MiB instead of the settings, about 10–11 MiB by default.
 - CPU usage depends on the level of available memory and monitoring intensity.
 
 ## Warnings
@@ -122,14 +123,14 @@ $ yay -S nohang-git
 $ sudo systemctl enable --now nohang-desktop
 ```
 
-#### To install on Debian and Ubuntu-based systems please make a deb package with latest git snapshot and install it:
+#### To install on Debian and Ubuntu-based systems:
 
-Install build dependencies:
+It's easy to build a deb package with latest git snapshot. Install build dependencies:
 ```bash
 $ sudo apt install make fakeroot
 ```
 
-Clone latest git snapshot and run build script to build deb package:
+Clone latest git snapshot and run build script to build package:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git && cd nohang
 $ deb/build.sh
@@ -152,7 +153,7 @@ $ git clone https://github.com/hakavlad/nohang.git && cd nohang
 $ sudo make install
 ```
 
-To enable and start unit without GUI notifications:
+Config files will be located in `/usr/local/etc/nohang/`. To enable and start unit without GUI notifications:
 ```
 $ sudo systemctl enable nohang
 $ sudo systemctl start nohang
@@ -162,6 +163,11 @@ To enable and start unit with GUI notifications:
 ```
 $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
+```
+
+On systems with OpenRC:
+```
+$ sudo make install-openrc
 ```
 
 #### To uninstall:
@@ -197,7 +203,7 @@ optional arguments:
 
 ## How to configure
 
-The program can be configured by editing the [config file](https://github.com/hakavlad/nohang/blob/master/nohang/nohang.conf.in). The configuration includes the following sections:
+The program can be configured by editing the config file. The configuration includes the following sections:
 
 1. Common zram settings
 2. Common PSI settings
@@ -210,7 +216,7 @@ The program can be configured by editing the [config file](https://github.com/ha
 9. Misc settings
 10. Verbosity, debug, logging
 
-Just read the description of the parameters and edit the values. Please restart nohang to apply the changes. Default path to the config after installing is `/etc/nohang/nohang.conf`.
+Just read the description of the parameters and edit the values. Please restart nohang to apply the changes.
 
 ## How to test nohang
 
@@ -460,7 +466,7 @@ Kthreads, zombies and Pid 1 will not be displayed.
 
 ### psi-top
 
-It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
+It needs `Linux` (>= 4.20) with `CONFIG_PSI=y`.
 
 <details>
  <summary>Output example</summary>
