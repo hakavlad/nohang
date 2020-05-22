@@ -48,10 +48,12 @@ base:
 	rm -fv version
 
 	install -d $(DESTDIR)$(MANDIR)/man1
-	gzip -c nohang/nohang.1 > $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
 	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
 	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
 	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
+
+	install -d $(DESTDIR)$(MANDIR)/man8
+	gzip -c nohang/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
 
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
@@ -108,10 +110,13 @@ uninstall-base:
 	rm -fv $(DESTDIR)$(BINDIR)/oom-sort
 	rm -fv $(DESTDIR)$(BINDIR)/psi-top
 	rm -fv $(DESTDIR)$(BINDIR)/psi2log
-	rm -fv $(DESTDIR)$(MANDIR)/man1/nohang.1.gz
+
 	rm -fv $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
 	rm -fv $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
+
+	rm -fv $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
+
 	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 	rm -fvr $(DESTDIR)$(DOCDIR)/
 	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
