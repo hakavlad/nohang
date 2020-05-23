@@ -117,7 +117,9 @@ $ sudo systemctl start nohang
 
 Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
-#### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/). Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
+#### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/)
+
+Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
 $ yay -S nohang-git
 $ sudo systemctl enable --now nohang-desktop
@@ -125,12 +127,12 @@ $ sudo systemctl enable --now nohang-desktop
 
 #### To install on Debian and Ubuntu-based systems:
 
-It's easy to build a deb package with latest git snapshot. Install build dependencies:
+It's easy to build a deb package with the latest git snapshot. Install build dependencies:
 ```bash
 $ sudo apt install make fakeroot
 ```
 
-Clone latest git snapshot and run build script to build package:
+Clone the latest git snapshot and run the build script to build the package:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git && cd nohang
 $ deb/build.sh
