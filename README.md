@@ -172,12 +172,10 @@ On systems with OpenRC:
 $ sudo make install-openrc
 ```
 
-#### To uninstall:
+To uninstall:
 ```bash
 $ sudo make uninstall
 ```
-
-#### To enable and start on systems without systemd please make a PR to fix Makefile.
 
 ## Command line options
 
