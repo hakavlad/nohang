@@ -13,24 +13,24 @@ DOCDIR ?=  $(DATADIR)/doc/nohang
 MANDIR ?=  $(DATADIR)/man
 
 all:
-	@ echo "Use: make install, install-openrc, make uninstall"
+	@ echo "Use: make install, make install-openrc, make uninstall"
 
 base:
 	install -d $(DESTDIR)$(SBINDIR)
-	install -m0755 nohang/nohang $(DESTDIR)$(SBINDIR)/nohang
+	install -m0755 src/nohang $(DESTDIR)$(SBINDIR)/nohang
 
 	install -d $(DESTDIR)$(BINDIR)
-	install -m0755 tools/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
-	install -m0755 tools/psi-top $(DESTDIR)$(BINDIR)/psi-top
-	install -m0755 tools/psi2log $(DESTDIR)$(BINDIR)/psi2log
+	install -m0755 src/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
+	install -m0755 src/psi-top $(DESTDIR)$(BINDIR)/psi-top
+	install -m0755 src/psi2log $(DESTDIR)$(BINDIR)/psi2log
 
 	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
 
 	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
-		nohang/nohang.conf.in > nohang.conf
+		conf/nohang/nohang.conf.in > nohang.conf
 
 	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
-		nohang/nohang-desktop.conf.in > nohang-desktop.conf
+		conf/nohang/nohang-desktop.conf.in > nohang-desktop.conf
 
 	install -m0644 nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
 	install -m0644 nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
@@ -47,29 +47,29 @@ base:
 	rm -fv nohang-desktop.conf
 	rm -fv version
 
+	install -d $(DESTDIR)$(LOGROTATECONFDIR)
+	install -m0644 conf/logrotate.d/nohang $(DESTDIR)$(LOGROTATECONFDIR)/nohang
+
 	install -d $(DESTDIR)$(MANDIR)/man1
-	gzip -c tools/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
-	gzip -c tools/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
-	gzip -c tools/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
+	gzip -c man/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
+	gzip -c man/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
+	gzip -c man/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
 	install -d $(DESTDIR)$(MANDIR)/man8
-	gzip -c nohang/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
+	gzip -c man/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
 
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
 	install -m0644 CHANGELOG.md $(DESTDIR)$(DOCDIR)/CHANGELOG.md
 
-	install -d $(DESTDIR)$(LOGROTATECONFDIR)
-	install -m0644 nohang/nohang.logrotate $(DESTDIR)$(LOGROTATECONFDIR)/nohang
-
 units:
 	install -d $(DESTDIR)$(SYSTEMDUNITDIR)
 
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
-		nohang/nohang.service.in > nohang.service
+		systemd/nohang.service.in > nohang.service
 
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
-		nohang/nohang-desktop.service.in > nohang-desktop.service
+		systemd/nohang-desktop.service.in > nohang-desktop.service
 
 	install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
@@ -92,16 +92,16 @@ openrc:
 	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
 
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
-		nohang/openrc/nohang.in > nohang/openrc/nohang
+		openrc/nohang.in > openrc/nohang
 
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
-		nohang/openrc/nohang-desktop.in > nohang/openrc/nohang-desktop
+		openrc/nohang-desktop.in > openrc/nohang-desktop
 
 	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 
-	rm -fv nohang/openrc/nohang
-	rm -fv nohang/openrc/nohang-desktop
+	rm -fv openrc/nohang
+	rm -fv openrc/nohang-desktop
 
 install-openrc: base openrc
 

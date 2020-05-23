@@ -19,13 +19,13 @@ script:
 
   - nohang --check --config /usr/local/etc/nohang/nohang.conf
   - nohang --check --config /usr/local/etc/nohang/nohang-desktop.conf
-  - nohang --check --config nohang/test.conf
+  - nohang --check --config conf/nohang/test.conf
 
   - sudo nohang --config /usr/local/etc/nohang/nohang.conf --tasks
   - sudo nohang --config /usr/local/etc/nohang/nohang-desktop.conf --tasks
 
   - /bin/sleep 60 &
-  - sudo bash -c "nohang -c nohang/test.conf --monitor & tail /dev/zero & sleep 30 && pkill python3"
+  - sudo bash -c "nohang --monitor --config conf/nohang/test.conf & tail /dev/zero & sleep 30 && pkill python3"
   - sudo cat /var/log/nohang/nohang.log
 
   - sudo make uninstall
