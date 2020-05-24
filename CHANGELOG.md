@@ -1,13 +1,15 @@
 # Changelog
 
+This changelog is outdated. It will be updated later.
+
 ## [Unreleased]
 
 - Added new CLI options:
     - -v, --version
     - -m, --memload
-    --monitor
-    --tasks
-    --check-config
+    - --monitor
+    - --tasks
+    - --check-config
 - Possible process crashes are fixed:
     - Fixed crash at startup due to `UnicodeDecodeError` on some systems
     - Handled  `UnicodeDecodeError` if victim name consists of many unicode characters ([rfjakob/earlyoom#110](https://github.com/rfjakob/earlyoom/issues/110))
@@ -21,7 +23,7 @@
     - Added the ability to log into a separate file
 - Improved GUI warnings:
     - Reduced the idle time of the daemon in the process of launching a notification
-    - All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled
+    - All notify-send calls are made using the `nohang_notify_helper` script, in which all timeouts are handled (not anymore: nohang_notify_helper has been removed)
     - Native python implementation of `env` search without running `ps` to notify all users if nohang started with UID=0.
 - Improved modifing badness via matching with regular expressions:
     - Added the ability to set many different `badness_adj` for processes depending on the matching `Name`, `CGroup_v1`, `CGroup_v2`, `cmdline`, `realpath`, `environ` and `EUID` with the specified regular expressions ([issue #11](https://github.com/hakavlad/nohang/issues/11))
