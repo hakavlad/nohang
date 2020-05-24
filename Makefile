@@ -15,7 +15,13 @@ MANDIR ?=  $(DATADIR)/man
 all:
 	@ echo "Use: make install, make install-openrc, make uninstall"
 
-base:
+manpages:
+	-pandoc docs/nohang.manpage.md -s -t man > man/nohang.8
+	-pandoc docs/oom-sort.manpage.md -s -t man > man/oom-sort.1
+	-pandoc docs/psi2log.manpage.md -s -t man > man/psi2log.1
+	-pandoc docs/psi-top.manpage.md -s -t man > man/psi-top.1
+
+base: manpages
 	install -d $(DESTDIR)$(SBINDIR)
 	install -m0755 src/nohang $(DESTDIR)$(SBINDIR)/nohang
 
@@ -85,6 +91,11 @@ daemon-reload:
 	-systemctl daemon-reload
 
 build_deb: base units
+
+reinstall-deb:
+	set -v
+	deb/build.sh
+	sudo apt install --reinstall ./deb/package.deb
 
 install: base units chcon daemon-reload
 
