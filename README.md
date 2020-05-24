@@ -591,3 +591,10 @@ full io        0.54   7.52   6.80
 ## Changelog
 
 See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
+
+## Yet another documentation
+
+- [nohang.manpage.md](docs/nohang.manpage.md)
+- [oom-sort.manpage.md](docs/oom-sort.manpage.md)
+- [psi2log.manpage.md](docs/psi2log.manpage.md)
+- [FAQ.ru.md](docs/FAQ.ru.md)
