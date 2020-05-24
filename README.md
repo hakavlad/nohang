@@ -353,15 +353,16 @@ Process with highest badness (found in 55 ms):
 
 To view the latest entries in the log (for systemd users):
 ```bash
-$ sudo journalctl -eu nohang
+$ sudo journalctl -eu nohang.service
+
+#### or
+
+$ sudo journalctl -eu nohang-desktop.service
 ```
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
 
-## Additional diagnostic tools
-
-
-### oom-sort
+## oom-sort
 
 `oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info.
 
@@ -464,7 +465,7 @@ oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
 
 Kthreads, zombies and Pid 1 will not be displayed.
 
-### psi-top
+## psi-top
 
 It needs `Linux` (>= 4.20) with `CONFIG_PSI=y`.
 
@@ -522,7 +523,7 @@ some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-log
 ```
 </details>
 
-### psi2log
+## psi2log
 
 It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
 
@@ -588,13 +589,14 @@ full io        0.54   7.52   6.80
 - Use cases, feature requests and any questions are [welcome](https://github.com/hakavlad/nohang/issues).
 - Pull requests in `dev` branch are welcome.
 
-## Changelog
-
-See [CHANGELOG.md](https://github.com/hakavlad/nohang/blob/master/CHANGELOG.md)
-
-## Yet another documentation
+## Documentation
 
 - [nohang.manpage.md](docs/nohang.manpage.md)
 - [oom-sort.manpage.md](docs/oom-sort.manpage.md)
 - [psi2log.manpage.md](docs/psi2log.manpage.md)
 - [FAQ.ru.md](docs/FAQ.ru.md)
+- [CHANGELOG.md](CHANGELOG.md)
+
+## License
+
+This project is licensed under the terms of the [MIT license](LICENSE).
