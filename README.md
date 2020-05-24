@@ -225,7 +225,7 @@ Just read the description of the parameters and edit the values. Please restart 
 
 If testing occurs while `nohang` is running, these processes should be terminated before OOM occurs.
 
-## Print table of processes with their badness values
+## Tasks state
 
 Run `sudo nohang -c/--config CONFIG --tasks` to see the table of prosesses with their badness values, oom_scores, names, UIDs etc.
 
