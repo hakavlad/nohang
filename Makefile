@@ -12,16 +12,23 @@ DATADIR ?= $(PREFIX)/share
 DOCDIR ?=  $(DATADIR)/doc/nohang
 MANDIR ?=  $(DATADIR)/man
 
+PANDOC := $(shell command -v pandoc 2> /dev/null)
+
 all:
 	@ echo "Use: make install, make install-openrc, make uninstall"
 
-manpages:
-	-pandoc docs/nohang.manpage.md -s -t man > man/nohang.8
-	-pandoc docs/oom-sort.manpage.md -s -t man > man/oom-sort.1
-	-pandoc docs/psi2log.manpage.md -s -t man > man/psi2log.1
-	-pandoc docs/psi-top.manpage.md -s -t man > man/psi-top.1
+update-manpages:
 
-base: manpages
+ifdef PANDOC
+	pandoc docs/nohang.manpage.md -s -t man > man/nohang.8
+	pandoc docs/oom-sort.manpage.md -s -t man > man/oom-sort.1
+	pandoc docs/psi2log.manpage.md -s -t man > man/psi2log.1
+	pandoc docs/psi-top.manpage.md -s -t man > man/psi-top.1
+else
+	@echo "pandoc is not installed, skipping manpages generation"
+endif
+
+base:
 	install -d $(DESTDIR)$(SBINDIR)
 	install -m0755 src/nohang $(DESTDIR)$(SBINDIR)/nohang
 
