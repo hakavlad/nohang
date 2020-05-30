@@ -64,12 +64,12 @@ base:
 	install -m0644 conf/logrotate.d/nohang $(DESTDIR)$(LOGROTATECONFDIR)/nohang
 
 	install -d $(DESTDIR)$(MANDIR)/man1
-	gzip -c man/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
-	gzip -c man/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
-	gzip -c man/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
+	gzip -9cn man/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
+	gzip -9cn man/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
+	gzip -9cn man/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
 	install -d $(DESTDIR)$(MANDIR)/man8
-	gzip -c man/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
+	gzip -9cn man/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
 
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
