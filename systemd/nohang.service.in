@@ -1,6 +1,6 @@
 [Unit]
 Description=Sophisticated low memory handler
-Documentation=man:nohang(1) https://github.com/hakavlad/nohang
+Documentation=man:nohang(8) https://github.com/hakavlad/nohang
 Conflicts=nohang-desktop.service
 After=system.slice
 
@@ -41,7 +41,11 @@ CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH C
 
 # `PrivateNetwork=true` breaks GUI notifications on oldstable distros (Debian 8, CentOS 7, Linux Mint 18)
 # On modern distros you can set PrivateNetwork=true for security reasons
-PrivateNetwork=false
+#PrivateNetwork=true
+
+# Set realtime CPU scheduling policy if you want
+#CPUSchedulingPolicy=rr
+#CPUSchedulingPriority=1
 
 [Install]
 WantedBy=multi-user.target
