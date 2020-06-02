@@ -40,7 +40,7 @@ Use one of the userspace OOM killers.
 - Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation.
 - Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
-- [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor) is used by default on Endless OS.
+- Use of [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor). It's used by default on [Endless OS](https://endlessos.com/).
 - Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
 
 Of course, you can also [download more RAM](https://downloadmoreram.com/), tune [virtual memory](https://www.kernel.org/doc/Documentation/sysctl/vm.txt), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
