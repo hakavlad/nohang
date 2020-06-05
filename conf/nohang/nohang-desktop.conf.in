@@ -1,28 +1,24 @@
-    This is nohang's config file.
-    Lines starting with #, tabs and spaces are comments.
-    Lines starting with @ contain optional parameters.
-    All values are case sensitive.
-    Be careful: nohang does not forbid you to shoot yourself in the foot.
-
-    The configuration includes the following sections:
+  This is the configuration file of the nohang daemon.
+  The configuration includes the following sections:
 
     1. Common zram settings
     2. Common PSI settings
     3. Poll rate
     4. Warnings and notifications
-    5. Soft threshold
-    6. Hard threshold
+    5. Soft (SIGTERM) threshold
+    6. Hard (SIGKILL) threshold
     7. Customize victim selection: adjusting badness of processes
     8. Customize soft corrective actions
     9. Misc settings
    10. Verbosity, debug, logging
 
-    Just read the description of the parameters and edit the values.
-    Please restart the program after editing the config.
-
-    TODO: improve descriptions
-
-    You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang-desktop.conf
+  WARNING!
+    - Lines starting with #, tabs and whitespace characters are comments.
+    - Lines starting with @ contain optional parameters that may be repeated.
+    - All values are case sensitive.
+    - nohang doesn't forbid you to shoot yourself in the foot. Be careful!
+    - Restart the daemon after editing the file to apply the new settings.
+    - You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang-desktop.conf
 
 ###############################################################################
 
