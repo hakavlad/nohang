@@ -799,14 +799,19 @@ def signal_handler(signum, frame):
     log('Got the {} signal '.format(
         sig_dict[signum]))
 
-    fd['mi'].close()
+    if len(fd) > 0:
+        for f in fd:
+            fd[f].close()
+
     print_stat_dict()
-    m1 = monotonic()
-    pt1 = process_time()
-    ab = pt1 - pt0
-    perc = (pt1 - pt0) / (m1 - m0) * 100
+
+    m = monotonic() - m0
+    pt = process_time() - pt0
+    pt_percent = pt / m * 100
+
     log('CPU time since monitoring has started: {} ({}%); exit.'.format(
-        format_time(ab), round(perc, 3)))
+        format_time(pt), round(pt_percent, 3)))
+
     exit()
 
 
