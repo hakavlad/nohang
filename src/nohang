@@ -2387,8 +2387,8 @@ def implement_corrective_action(
         dset = s1 - s2
 
         if len(dset) > 0:
-            log('During the search for the victim, the processes were '
-                'completed: {}'.format(dset))
+            log('During the search for the victim, the next processes were'
+                ' died: {}'.format(dset))
 
             sleep(over_sleep)
 
@@ -2477,8 +2477,8 @@ def implement_corrective_action(
         if victim_id in v_dict:
             dt = monotonic() - v_dict[victim_id]['time']
             if dt > max_soft_exit_time:
-                log('max_soft_exit_time (value={}s) is exceeded the victim:'
-                    ' it will get SIGKILL'.format(
+                log('max_soft_exit_time (value={}s) is exceeded for the victim'
+                    ', hard corrective action will be applied'.format(
                         max_soft_exit_time))
                 threshold = SIGKILL
             else:
@@ -2536,8 +2536,8 @@ def implement_corrective_action(
                 mp[3], mp[4], mp[5]
             ))
 
-        soft_match = False
-        if soft_actions and threshold is SIGTERM:
+        if (threshold is SIGKILL and post_kill_exe != '') or (
+                soft_actions and threshold is SIGTERM):
 
             name = pid_to_name(pid)
             cgroup_v1 = pid_to_cgroup_v1(pid)
@@ -2557,6 +2557,10 @@ def implement_corrective_action(
                     service = ''
             else:
                 service = ''
+
+        soft_match = False
+
+        if soft_actions and threshold is SIGTERM:
 
             for i in soft_actions_list:
                 unit = i[0]
@@ -2718,12 +2722,9 @@ def implement_corrective_action(
                 round(ma_mib, 1), round(sf_mib, 1)))
 
         if threshold is SIGKILL and post_kill_exe != '':
-
+            log('Executing post_kill_exe: {}'.format(post_kill_exe))
             cmd = post_kill_exe.replace('$PID', pid).replace(
-                '$NAME', pid_to_name(pid))
-
-            log('Execute post_kill_exe')
-
+                '$NAME', name).replace('$SERVICE', service)
             start_thread(exe, cmd)
 
         if post_action_gui_notifications:
