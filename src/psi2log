@@ -286,7 +286,7 @@ def print_head_2():
     """
     """
     log('======|=============|=============|')
-    log(' cpu  |     io      |   memory    |')
+    log(' cpu  |      io     |    memory   |')
     log('----- | ----------- | ----------- |')
     log(' some |  some  full |  some  full | interval')
     log('----- | ----- ----- | ----- ----- | --------')
@@ -412,9 +412,15 @@ else:
     logstring = 'log file is not set, '
 
 
+if interval < 0.1:
+    log_head('error: argument -i/--interval: the value must be greater than or'
+             ' equal to 0.1')
+    exit(1)
+
+
 log_head('Starting psi2log, target: {}, mode: {}, interval: {} sec, {}suppress'
          ' output: {}'.format(
-             target, mode, interval, logstring, suppress_output))
+             target, mode, round(interval, 3), logstring, suppress_output))
 
 
 fd = dict()
@@ -540,7 +546,7 @@ if mode == '2':
             round(avg_ms, 1),
             round(avg_mf, 1),
 
-            round(dm, 3)
+            round(dm, 2)
 
         ))
 

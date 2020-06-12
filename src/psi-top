@@ -97,7 +97,7 @@ met = args.metrics
 
 
 if not (met == 'memory' or met == 'io' or met == 'cpu'):
-    print('Invalid metrics:', met)
+    print('ERROR: invalid metrics:', met)
     exit(1)
 
 
@@ -130,9 +130,9 @@ path_list = get_psi_mem_files(cgroup2_mountpoint, met)
 
 head_mem_io = '''PSI metrics: {}
 cgroup_v2 mountpoint: {}
----------------------------------------------------------
+=====================|======================|
          some        |          full        |
--------------------- | -------------------- | -----------
+-------------------- | -------------------- |
  avg10  avg60 avg300 |  avg10  avg60 avg300 | cgroup_v2
 ------ ------ ------ | ------ ------ ------ | -----------'''.format(
     met, cgroup2_mountpoint)
@@ -140,9 +140,9 @@ cgroup_v2 mountpoint: {}
 
 head_cpu = '''PSI metrics: {}
 cgroup_v2 mountpoint: {}
-----------------------------------
+=====================|
          some        |
--------------------- | -----------
+-------------------- |
  avg10  avg60 avg300 | cgroup_v2
 ------ ------ ------ | -----------'''.format(
     met, cgroup2_mountpoint)
