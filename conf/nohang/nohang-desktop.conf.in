@@ -365,7 +365,7 @@ ignore_positive_oom_score_adj = False
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/budgie-wm|/usr/bin/budgie-panel)$
 
     Protect other.
-@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/compiz|/usr/bin/openbox|/usr/bin/fluxbox|/usr/bin/awesome|/usr/bin/icewm|/usr/bin/enlightenment|/usr/bin/gala|/usr/bin/wingpanel)$
+@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/compiz|/usr/bin/openbox|/usr/bin/fluxbox|/usr/bin/awesome|/usr/bin/icewm|/usr/bin/enlightenment|/usr/bin/gala|/usr/bin/wingpanel|/usr/bin/i3)$
 
     Protect display managers.
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/sbin/gdm|/usr/sbin/gdm3|/usr/sbin/sddm|/usr/bin/sddm|/usr/lib/x86_64-linux-gnu/sddm/sddm-helper|/usr/bin/slim|/usr/sbin/lightdm|/usr/libexec/gdm-session-worker|/usr/libexec/gdm-wayland-session|/usr/lib/gdm3/gdm-wayland-session|/usr/lib/gdm3/gdm-session-worker)$
