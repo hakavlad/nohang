@@ -313,7 +313,7 @@ ignore_positive_oom_score_adj = False
     Prefer terminating Firefox tabs instead of terminating the entire browser.
     (In Chromium and Electron-based apps child processes get oom_score_adj=300
     by default.)
-@BADNESS_ADJ_RE_NAME   200  ///  ^Web Content$
+@BADNESS_ADJ_RE_NAME   200  ///  ^(Web Content|Privileged Cont)$
 
 @BADNESS_ADJ_RE_NAME  -200  ///  ^(dnf|packagekitd)$
 
