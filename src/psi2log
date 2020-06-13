@@ -143,13 +143,18 @@ def mlockall():
     MCL_CURRENT = 1
     MCL_FUTURE = 2
     MCL_ONFAULT = 4
+
     libc = CDLL('libc.so.6', use_errno=True)
     result = libc.mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)
+
     if result != 0:
         result = libc.mlockall(MCL_CURRENT | MCL_FUTURE)
         if result != 0:
-            log_head('WARNING: cannot lock all memory: [Errno {}]'.format(
-                result))
+            log('WARNING: cannot lock all memory: [Errno {}]'.format(result))
+        else:
+            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
+    else:
+        log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
 def psi_file_mem_to_metrics0(psi_path):
@@ -412,9 +417,22 @@ else:
     logstring = 'log file is not set, '
 
 
-if interval < 0.1:
+if interval < 1:
     log_head('error: argument -i/--interval: the value must be greater than or'
-             ' equal to 0.1')
+             ' equal to 1')
+    exit(1)
+
+
+if not (mode == '1' or mode == '2'):
+    log_head('ERROR: invalid mode. Valid values are 1 and 2. Exit.')
+    exit(1)
+
+
+try:
+    psi_file_mem_to_metrics0('/proc/pressure/memory')
+except Exception as e:
+    log_head('ERROR: {}'.format(e))
+    log_head('PSI metrics are not provided by the kernel. Exit.')
     exit(1)
 
 
@@ -424,14 +442,6 @@ log_head('Starting psi2log, target: {}, mode: {}, interval: {} sec, {}suppress'
 
 
 fd = dict()
-
-
-try:
-    psi_file_mem_to_metrics0('/proc/pressure/memory')
-except Exception as e:
-    log('ERROR: {}'.format(e))
-    log('PSI metrics are not provided by the kernel. Exit.')
-    exit(1)
 
 
 if target == 'SYSTEM_WIDE':
@@ -495,7 +505,7 @@ if mode == '2':
             monotonic1 = monotonic()
             dm = monotonic1 - monotonic0
 
-            if dm > abnormal_interval:
+            if dm > abnormal_interval and dm - interval > 0.05:
                 log('WARNING: abnormal interval ({} sec), metrics may be prov'
                     'ided incorrect'.format(round(dm, 3)))
 
@@ -546,17 +556,12 @@ if mode == '2':
             round(avg_ms, 1),
             round(avg_mf, 1),
 
-            round(dm, 2)
+            round(dm, 3)
 
         ))
 
         stdout.flush()
         sleep(interval)
-
-
-if mode != '1':
-    log('ERROR: invalid mode. Exit.')
-    exit(1)
 
 
 print_head_1()
