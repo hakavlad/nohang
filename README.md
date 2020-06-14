@@ -95,8 +95,8 @@ To show GUI notifications (optional):
 ## Known problems
 
 - Awful documentation.
-- The ZFS ARC cache is memory-reclaimable, like the Linux buffer cache. However, in contrast to the buffer cache, it currently does not count to MemAvailable (see [openzfs/zfs#10255](https://github.com/openzfs/zfs/issues/10255)). See also https://github.com/rfjakob/earlyoom/pull/191.
-- Linux kernels without CONFIG_CGROUP_CPUACCT=y ([linux-ck](https://wiki.archlinux.org/index.php/Linux-ck), for example) provide incorrect PSI metrics, see [issue](https://github.com/hakavlad/nohang/issues/25#issuecomment-643716504).
+- The ZFS ARC cache is memory-reclaimable, like the Linux buffer cache. However, in contrast to the buffer cache, it currently does not count to MemAvailable (see [openzfs/zfs#10255](https://github.com/openzfs/zfs/issues/10255)). See also https://github.com/rfjakob/earlyoom/pull/191 and https://github.com/hakavlad/nohang/issues/89.
+- Linux kernels without `CONFIG_CGROUP_CPUACCT=y` ([linux-ck](https://wiki.archlinux.org/index.php/Linux-ck), for example) provide incorrect PSI metrics, see [issue](https://github.com/hakavlad/nohang/issues/25#issuecomment-643716504).
 
 ## nohang vs nohang-desktop
 
