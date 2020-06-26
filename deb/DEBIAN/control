@@ -3,10 +3,12 @@ Version: 0.1
 Section: admin
 Architecture: all
 Depends: python3
-Recommends: libnotify-bin, sudo, logrotate
+Suggests: libnotify-bin, sudo, logrotate
 Maintainer: Alexey Avramov <hakavlad@gmail.com>
 Priority: optional
 Homepage: https://github.com/hakavlad/nohang
 Description: Sophisticated low memory handler
- A highly configurable daemon for Linux which is able to correctly prevent out
- of memory (OOM) and keep system responsiveness in low memory conditions.
+ nohang is a highly configurable daemon for Linux which is able to correctly
+ prevent out of memory (OOM) and keep system responsiveness in low memory
+ conditions. The package also includes additional diagnostic tools: oom-sort,
+ psi2log, psi-top.
