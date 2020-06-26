@@ -315,7 +315,7 @@ ignore_positive_oom_score_adj = False
     by default.)
 @BADNESS_ADJ_RE_NAME   200  ///  ^(Web Content|Privileged Cont)$
 
-@BADNESS_ADJ_RE_NAME  -200  ///  ^(dnf|packagekitd)$
+@BADNESS_ADJ_RE_NAME  -200  ///  ^(dnf|yum|packagekitd)$
 
 
     7.2.2. Matching CGroup_v1-line with RE patterns
@@ -379,6 +379,9 @@ ignore_positive_oom_score_adj = False
 
     Protect dbus.
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/dbus-daemon|/usr/bin/dbus-run-session|/usr/bin/dbus-broker-launcher|/usr/bin/dbus-broker)$
+
+    Protect package managers.
+@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/dpkg|/usr/bin/pacman|/usr/bin/yay)$
 
     Prefer stress.
     @BADNESS_ADJ_RE_REALPATH  900  ///  ^(/usr/bin/stress|/usr/bin/stress-ng)$
