@@ -461,6 +461,8 @@ def send_notify_warn():
     """
     log('Warning threshold exceeded')
 
+    log_meminfo()
+
     if check_warning_exe:
         start_thread(exe, warning_exe)
 
@@ -2319,6 +2321,37 @@ def is_victim_alive(victim_id):
     return 0
 
 
+def log_meminfo():
+    """
+    """
+    mid = meminfo()
+    log('Memory info, MiB:')
+    log('  total={}, used={}, free={}, available={}, shared={}, buffers'
+        '={}, cache={},'.format(
+            round(mem_total / 1024),
+            round(mid['used'] / 1024),
+            round(mid['free'] / 1024),
+            round(mid['available'] / 1024),
+            round(mid['shared'] / 1024),
+            round(mid['buffers'] / 1024),
+            round(mid['cache'] / 1024)
+        ))
+    log('  swap_total={}, swap_used={}, swap_free={}'.format(
+        round(mid['swap_total'] / 1024),
+        round(mid['swap_used'] / 1024),
+        round(mid['swap_free'] / 1024)
+    ))
+    if PSI_KERNEL_OK:
+        mp = psi_file_mem_to_metrics('/proc/pressure/memory')
+        log('Memory pressure (system-wide):')
+        log('  some avg10={} avg60={} avg300={}'.format(
+            mp[0], mp[1], mp[2]
+        ))
+        log('  full avg10={} avg60={} avg300={}'.format(
+            mp[3], mp[4], mp[5]
+        ))
+
+
 def implement_corrective_action(
         threshold,
         mem_info_list,
@@ -2509,32 +2542,7 @@ def implement_corrective_action(
 
                 return psi_t0
 
-        mid = meminfo()
-        log('Memory info, MiB:')
-        log('  total={}, used={}, free={}, available={}, shared={}, buffers'
-            '={}, cache={},'.format(
-                round(mem_total / 1024),
-                round(mid['used'] / 1024),
-                round(mid['free'] / 1024),
-                round(mid['available'] / 1024),
-                round(mid['shared'] / 1024),
-                round(mid['buffers'] / 1024),
-                round(mid['cache'] / 1024)
-            ))
-        log('  swap_total={}, swap_used={}, swap_free={}'.format(
-            round(mid['swap_total'] / 1024),
-            round(mid['swap_used'] / 1024),
-            round(mid['swap_free'] / 1024)
-        ))
-        if PSI_KERNEL_OK:
-            mp = psi_file_mem_to_metrics('/proc/pressure/memory')
-            log('Memory pressure (system-wide):')
-            log('  some avg10={} avg60={} avg300={}'.format(
-                mp[0], mp[1], mp[2]
-            ))
-            log('  full avg10={} avg60={} avg300={}'.format(
-                mp[3], mp[4], mp[5]
-            ))
+        log_meminfo()
 
         if (threshold is SIGKILL and post_kill_exe != '') or (
                 soft_actions and threshold is SIGTERM):
