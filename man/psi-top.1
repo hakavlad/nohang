@@ -4,7 +4,38 @@
 .hy
 .SH NAME
 .PP
-psi\-top
+psi\-top \- print the PSI metrics values for every cgroup.
 .SH SYNOPSIS
 .PP
 \f[B]psi\-top\f[] [\f[B]OPTION\f[]]...
+.SH DESCRIPTION
+.PP
+psi\-top is script that prints the PSI metrics values for every cgroup.
+psi\-top is part of nohang package.
+.SH OPTIONS
+.SS \-h, \-\-help
+.PP
+show this help message and exit
+.SS \-m METRICS, \-\-metrics METRICS
+.PP
+metrics (memory, io or cpu)
+.SH EXAMPLES
+.PP
+$ psi\-top
+.PP
+$ psi\-top \-\-metrics io
+.PP
+$ psi\-top \-m cpu
+.SH REPORTING BUGS
+.PP
+Please ask any questions and report bugs at
+<https://github.com/hakavlad/nohang/issues>.
+.SH AUTHOR
+.PP
+Written by Alexey Avramov <hakavlad@gmail.com>.
+.SH HOMEPAGE
+.PP
+Homepage is <https://github.com/hakavlad/nohang>.
+.SH SEE ALSO
+.PP
+oom\-sort(1), psi2log(1), nohang(8)

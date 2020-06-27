@@ -8,3 +8,34 @@ oom\-sort \- sort processes by oom_score
 .SH SYNOPSIS
 .PP
 \f[B]oom\-sort\f[] [\f[B]OPTION\f[]]...
+.SH DESCRIPTION
+.PP
+oom\-sort is script that sorts tasks by oom_score by default.
+oom\-sort is part of nohang package.
+.SH OPTIONS
+.SS \-h, \-\-help
+.PP
+show this help message and exit
+.SS \-\-num NUM, \-n NUM
+.PP
+max number of lines; default: 99999
+.SS \-\-len LEN, \-l LEN
+.PP
+max cmdline length; default: 99999
+.SS \-\-sort SORT, \-s SORT
+.PP
+sort by unit; available units: oom_score, oom_score_adj, UID, PID, Name,
+VmRSS, VmSwap, cmdline (optional); default unit: oom_score
+.SH REPORTING BUGS
+.PP
+Please ask any questions and report bugs at
+<https://github.com/hakavlad/nohang/issues>.
+.SH AUTHOR
+.PP
+Written by Alexey Avramov <hakavlad@gmail.com>.
+.SH HOMEPAGE
+.PP
+Homepage is <https://github.com/hakavlad/nohang>.
+.SH SEE ALSO
+.PP
+psi\-top(1), psi2log(1), nohang(8)

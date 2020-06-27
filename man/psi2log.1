@@ -8,3 +8,51 @@ psi2log \- PSI metrics monitor and logger
 .SH SYNOPSIS
 .PP
 \f[B]psi2log\f[] [\f[B]OPTION\f[]]...
+.SH DESCRIPTION
+.PP
+psi2log is a CLI tool that can check and log PSI metrics from specified
+target.
+psi2log is part of nohang package.
+.SH OPTIONS
+.SS \-h, \-\-help
+.PP
+show this help message and exit
+.SS \-t TARGET, \-\-target TARGET
+.PP
+target (cgroup_v2 or SYTSTEM_WIDE)
+.SS \-i INTERVAL, \-\-interval INTERVAL
+.PP
+interval in sec
+.SS \-l LOG, \-\-log LOG
+.PP
+path to log file
+.SS \-m MODE, \-\-mode MODE
+.PP
+mode (1 or 2)
+.SS \-s SUPPRESS_OUTPUT, \-\-suppress\-output SUPPRESS_OUTPUT
+.PP
+suppress output
+.SH EXAMPLES
+.PP
+$ psi2log
+.PP
+$ psi2log \-\-mode 2
+.PP
+$ psi2log \-\-target /user.slice \-\-interval 1.5 \-\-log psi.log
+.SH SIGNALS
+.PP
+Sending SIGTERM, SIGINT, SIGQUIT or SIGHUP signals to the psi2log
+process causes it displays peak values and exits..
+.SH REPORTING BUGS
+.PP
+Please ask any questions and report bugs at
+<https://github.com/hakavlad/nohang/issues>.
+.SH AUTHOR
+.PP
+Written by Alexey Avramov <hakavlad@gmail.com>.
+.SH HOMEPAGE
+.PP
+Homepage is <https://github.com/hakavlad/nohang>.
+.SH SEE ALSO
+.PP
+oom\-sort(1), psi\-top(1), nohang(8)

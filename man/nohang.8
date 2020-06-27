@@ -31,7 +31,7 @@ libnotify (Arch Linux, Fedora, openSUSE) or libnotify\-bin (Debian
 GNU/Linux, Ubuntu)
 .IP \[bu] 2
 sudo if nohang started with UID=0.
-.SH OPTIONS
+.SH COMMAND\-LINE OPTIONS
 .SS \-h, \-\-help
 .PP
 show this help message and exit
@@ -59,6 +59,44 @@ This should only be used with \-c/\-\-config CONFIG option
 .PP
 show tasks state and exit.
 This should only be used with \-c/\-\-config CONFIG option
+.SH FILES
+.SS $SYSCONFDIR/nohang/nohang.conf
+.PP
+path to vanilla nohang configuration file
+.SS $SYSCONFDIR/nohang/nohang\-desktop.conf
+.PP
+path to configuration file with settings optimized for desktop usage
+.SS $DATADIR/nohang/nohang.conf
+.PP
+path to file with \f[I]default\f[] nohang.conf values
+.SS $DATADIR/nohang/nohang\-desktop.conf
+.PP
+path to file with \f[I]default\f[] nohang\-desktop.conf values
+.SS $LOGDIR/nohang/nohang.log
+.PP
+optional log file that stores entries if separate_log=True in the config
+.SS /etc/logrotate.d/nohang
+.PP
+logrotate config file that controls rotation in /var/log/nohang/
+.SH nohang.conf vs nohang\-desktop.conf
+.IP \[bu] 2
+nohang.conf provides vanilla default settings without PSI checking
+enabled, without any badness correction and without GUI notifications
+enabled.
+.IP \[bu] 2
+nohang\-desktop.conf provides default settings optimized for desktop
+usage.
+.SH PROBLEMS
+.PP
+The next problems can occur with out\-of\-tree kernels and modules:
+.IP \[bu] 2
+The ZFS ARC cache is memory\-reclaimable, like the Linux buffer cache.
+However, in contrast to the buffer cache, it currently does not count to
+MemAvailable [1].
+See also [2] and [3].
+.IP \[bu] 2
+Linux kernels without CONFIG_CGROUP_CPUACCT=y (linux\-ck, for example)
+provide incorrect PSI metrics, see this thread [4].
 .SH HOW TO CONFIGURE
 .PP
 The program can be configured by editing the config file.
@@ -92,6 +130,11 @@ Misc
 .PP
 Just read the description of the parameters and edit the values.
 Restart the daemon to apply the changes.
+.SH CHECK CONFIG
+.PP
+Check the config for errors:
+.PP
+$ nohang \-\-check \-\-config /path/to/config
 .SH HOW TO TEST
 .PP
 The safest way is to run \f[B]nohang \-\-memload\f[].
@@ -113,3 +156,29 @@ $ \f[B]sudo journalctl \-eu nohang\-desktop.service\f[]
 .PP
 You can also enable \f[B]separate_log\f[] in the config to logging in
 \f[B]/var/log/nohang/nohang.log\f[].
+.SH SIGNALS
+.PP
+Sending SIGTERM, SIGINT, SIGQUIT or SIGHUP signals to the nohang process
+causes it displays corrective action stats and exits.
+.SH REPORTING BUGS
+.PP
+Please ask any questions and report bugs at
+<https://github.com/hakavlad/nohang/issues>.
+.SH AUTHOR
+.PP
+Written by Alexey Avramov <hakavlad@gmail.com>.
+.SH HOMEPAGE
+.PP
+Homepage is <https://github.com/hakavlad/nohang>.
+.SH SEE ALSO
+.PP
+oom\-sort(1), psi\-top(1), psi2log(1)
+.SH NOTES
+.IP "1." 3
+https://github.com/openzfs/zfs/issues/10255
+.IP "2." 3
+https://github.com/rfjakob/earlyoom/pull/191#issuecomment\-622314296
+.IP "3." 3
+https://github.com/hakavlad/nohang/issues/89
+.IP "4." 3
+https://github.com/hakavlad/nohang/issues/25#issuecomment\-521390412
