@@ -102,6 +102,9 @@ To show GUI notifications (optional):
 
 `nohang` comes with two configs: `nohang.conf` and `nohang-desktop.conf`. `nohang` comes with two systemd service unit files: `nohang.service` and `nohang-desktop.service`. Choose one.
 
+- `nohang.conf` provides vanilla default settings without PSI checking enabled, without any badness correction and without GUI notifications enabled.
+- `nohang-desktop.conf` provides default settings optimized for desktop usage.
+
 ## How to install
 
 #### To install on Fedora 30+:
