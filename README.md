@@ -368,7 +368,7 @@ You can also enable `separate_log` in the config to logging in `/var/log/nohang/
 
 ## oom-sort
 
-`oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info.
+`oom-sort` is an additional diagnostic tool that will be installed with `nohang` package. It sorts the processes in descending order of their `oom_score` and also displays `oom_score_adj`, `Uid`, `Pid`, `Name`, `VmRSS`, `VmSwap` and optionally `cmdline`. Run `oom-sort --help` for more info. Man page: [oom-sort.manpage.md](docs/oom-sort.manpage.md).
 
 Usage:
 
@@ -378,7 +378,6 @@ $ oom-sort
 
 <details>
  <summary>Output example</summary>
-
 ```
 oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
 --------- ------------- ---- ----- --------------- ------- -------- -------
@@ -471,11 +470,10 @@ Kthreads, zombies and Pid 1 will not be displayed.
 
 ## psi-top
 
-It needs `Linux` (>= 4.20) with `CONFIG_PSI=y`.
+psi-top is script that prints the PSI metrics values for every cgroup. It requires `Linux` >= 4.20 with `CONFIG_PSI=y`. Man page: [psi-top.manpage.md](docs/psi-top.manpage.md).
 
 <details>
  <summary>Output example</summary>
-
 ```
 $ $ psi-top
 cgroup2 mountpoint: /sys/fs/cgroup
@@ -529,11 +527,10 @@ some   0.00   0.18   0.30 | full   0.00   0.18   0.30  /system.slice/systemd-log
 
 ## psi2log
 
-It needs `Linux` >= 4.20 with `CONFIG_PSI=y`.
+psi2log is a CLI tool that can check and log PSI metrics from specified target. It requires `Linux` >= 4.20 with `CONFIG_PSI=y`. Man page: [psi2log.manpage.md](docs/psi2log.manpage.md).
 
 <details>
  <summary>Output example</summary>
-
 ```
 $ psi2log
 Starting psi2log
@@ -598,6 +595,7 @@ full io        0.54   7.52   6.80
 - [nohang.manpage.md](docs/nohang.manpage.md)
 - [oom-sort.manpage.md](docs/oom-sort.manpage.md)
 - [psi2log.manpage.md](docs/psi2log.manpage.md)
+- [psi-top.manpage.md](docs/psi-top.manpage.md)
 - [FAQ.ru.md](docs/FAQ.ru.md)
 - [CHANGELOG.md](CHANGELOG.md)
 
