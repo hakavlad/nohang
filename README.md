@@ -378,6 +378,7 @@ $ oom-sort
 
 <details>
  <summary>Output example</summary>
+
 ```
 oom_score oom_score_adj  UID   PID Name            VmRSS   VmSwap   cmdline
 --------- ------------- ---- ----- --------------- ------- -------- -------
@@ -474,6 +475,7 @@ psi-top is script that prints the PSI metrics values for every cgroup. It requir
 
 <details>
  <summary>Output example</summary>
+
 ```
 $ $ psi-top
 cgroup2 mountpoint: /sys/fs/cgroup
@@ -531,6 +533,7 @@ psi2log is a CLI tool that can check and log PSI metrics from specified target. 
 
 <details>
  <summary>Output example</summary>
+
 ```
 $ psi2log
 Starting psi2log
