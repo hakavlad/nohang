@@ -387,7 +387,7 @@ ignore_positive_oom_score_adj = False
     @BADNESS_ADJ_RE_REALPATH  900  ///  ^(/usr/bin/stress|/usr/bin/stress-ng)$
 
 
-    7.2.6. Matching cwd with RE patterns
+    7.2.6. Matching /proc/[pid]/cwd realpath with RE patterns
 
     @BADNESS_ADJ_RE_CWD  200  ///  ^/home/
 

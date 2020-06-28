@@ -651,7 +651,7 @@ def check_config():
     else:
         log('    (not set)')
 
-    log('7.2.6. Matching cwd with RE patterns')
+    log('7.2.6. Matching /proc/[pid]/cwd realpath with RE patterns')
     if len(badness_adj_re_cwd_list) > 0:
         log('    badness_adj:  regexp:')
         for i in badness_adj_re_cwd_list:
