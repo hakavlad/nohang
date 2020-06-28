@@ -3341,16 +3341,19 @@ if separate_log:
         pass
     except PermissionError:
         errprint('ERROR: cannot create {}'.format(log_dir))
-        exit(1)
+        if root:
+            exit(1)
 
     try:
         os.chmod(log_dir, mode=0o750)
     except FileNotFoundError:
         errprint('ERROR: file not found: {}'.format(log_dir))
-        exit(1)
+        if root:
+            exit(1)
     except PermissionError:
         errprint('ERROR: permission denied: {}'.format(log_dir))
-        exit(1)
+        if root:
+            exit(1)
 
     try:
         logging.basicConfig(
@@ -3359,11 +3362,12 @@ if separate_log:
             format="%(asctime)s: %(message)s")
     except FileNotFoundError:
         errprint('ERROR: file not found: {}'.format(logfile))
-        exit(1)
+        if root:
+            exit(1)
     except PermissionError:
         errprint('ERROR: permission denied: {}'.format(logfile))
-        exit(1)
-
+        if root:
+            exit(1)
 
 if separate_log:
     logging.info('Starting nohang with the config: {}'.format(config))
