@@ -3,9 +3,6 @@ PREFIX ?=         /usr/local
 SYSCONFDIR ?=     /usr/local/etc
 SYSTEMDUNITDIR ?= /usr/local/lib/systemd/system
 
-LOGDIR ?=           /var/log
-LOGROTATECONFDIR ?= /etc/logrotate.d
-
 BINDIR ?=  $(PREFIX)/bin
 SBINDIR ?= $(PREFIX)/sbin
 DATADIR ?= $(PREFIX)/share
@@ -60,8 +57,8 @@ base:
 	rm -fv nohang-desktop.conf
 	rm -fv version
 
-	install -d $(DESTDIR)$(LOGROTATECONFDIR)
-	install -m0644 conf/logrotate.d/nohang $(DESTDIR)$(LOGROTATECONFDIR)/nohang
+	install -d $(DESTDIR)/etc/logrotate.d
+	install -m0644 conf/logrotate.d/nohang $(DESTDIR)/etc/logrotate.d/nohang
 
 	install -d $(DESTDIR)$(MANDIR)/man1
 	gzip -9cn man/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
@@ -135,9 +132,9 @@ uninstall-base:
 
 	rm -fv $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
 
-	rm -fvr $(DESTDIR)$(LOGROTATECONFDIR)/nohang
+	rm -fvr $(DESTDIR)$/etc/logrotate.d/nohang
 	rm -fvr $(DESTDIR)$(DOCDIR)/
-	rm -fvr $(DESTDIR)$(LOGDIR)/nohang/
+	rm -fvr $(DESTDIR)/var/log/nohang/
 	rm -fvr $(DESTDIR)$(DATADIR)/nohang/
 	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
 

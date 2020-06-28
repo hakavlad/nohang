@@ -61,7 +61,7 @@ path to file with *default* nohang.conf values
 #### $DATADIR/nohang/nohang-desktop.conf
 path to file with *default* nohang-desktop.conf values
 
-#### $LOGDIR/nohang/nohang.log
+#### /var/log/nohang/nohang.log
 optional log file that stores entries if separate_log=True in the config
 
 #### /etc/logrotate.d/nohang
