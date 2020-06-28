@@ -66,7 +66,12 @@ base:
 	gzip -9cn man/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
 	install -d $(DESTDIR)$(MANDIR)/man8
-	gzip -9cn man/nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
+
+	sed "s|:SYSCONFDIR:|$(SYSCONFDIR)|g; s|:DATADIR:|$(DATADIR)|g" \
+		man/nohang.8 > nohang.8
+
+	gzip -9cn nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
+	rm -fv nohang.8
 
 	install -d $(DESTDIR)$(DOCDIR)
 	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md

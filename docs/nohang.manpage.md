@@ -49,16 +49,16 @@ show tasks state and exit. This should only be used with -c/--config CONFIG opti
 
 # FILES
 
-#### $SYSCONFDIR/nohang/nohang.conf
+#### :SYSCONFDIR:/nohang/nohang.conf
 path to vanilla nohang configuration file
 
-#### $SYSCONFDIR/nohang/nohang-desktop.conf
+#### :SYSCONFDIR:/nohang/nohang-desktop.conf
 path to configuration file with settings optimized for desktop usage
 
-#### $DATADIR/nohang/nohang.conf
+#### :DATADIR:/nohang/nohang.conf
 path to file with *default* nohang.conf values
 
-#### $DATADIR/nohang/nohang-desktop.conf
+#### :DATADIR:/nohang/nohang-desktop.conf
 path to file with *default* nohang-desktop.conf values
 
 #### /var/log/nohang/nohang.log
