@@ -53,15 +53,15 @@ def check_permissions():
     try:
         os.path.realpath('/proc/1/exe')
     except Exception as e:
-        print('WARNING: missing CAP_SYS_PTRACE: {}'.format(e))
+        log('WARNING: missing CAP_SYS_PTRACE: {}'.format(e))
     try:
         os.kill(1, 0)
     except Exception as e:
-        print('WARNING: cannot send a signal: {}'.format(e))
+        log('WARNING: cannot send a signal: {}'.format(e))
     try:
         rline1('/proc/1/oom_score')
     except Exception as e:
-        print('ERROR: {}'.format(e))
+        errprint('ERROR: {}'.format(e))
         exit(1)
 
 
@@ -75,19 +75,19 @@ def memload():
         t0 = monotonic()
         inp = input(hi)
     except KeyboardInterrupt:
-        print('KeyboardInterrupt\nExit')
+        errprint('KeyboardInterrupt\nExit')
         exit(1)
     try:
         os.setreuid(1, 1)
     except Exception:
         pass
     if inp != r:
-        print('Captcha is not passed ("{}" != "{}")'.format(inp, r))
-        print('memload() is not for robots\nExit')
+        errprint('Captcha is not passed ("{}" != "{}")'.format(inp, r))
+        errprint('memload() is not for robots\nExit')
         exit(1)
     if monotonic() - t0 > 30:
-        print('Captcha is not passed (timeout expired)')
-        print('memload() is not for robots\nExit')
+        errprint('Captcha is not passed (timeout expired)')
+        errprint('memload() is not for robots\nExit')
         exit(1)
     else:
         print('-' * 68)
@@ -99,7 +99,7 @@ def memload():
     try:
         mem_available_index = mem_list_names.index('MemAvailable')
     except ValueError:
-        print('Your Linux kernel is too old, Linux 3.14+ required\nExit')
+        errprint('Your Linux kernel is too old, Linux 3.14+ required\nExit')
     swap_total_index = mem_list_names.index('SwapTotal')
     swap_free_index = mem_list_names.index('SwapFree')
 
@@ -132,7 +132,7 @@ def memload():
     try:
         inp = input(hi)
     except KeyboardInterrupt:
-        print('KeyboardInterrupt\nExit')
+        errprint('KeyboardInterrupt\nExit')
         exit(1)
     if inp != 'Yes':
         print('Exit')
@@ -160,12 +160,12 @@ def memload():
                 z = monotonic()
                 print_mem(mem_available, swap_free)
         except KeyboardInterrupt:
-            print('KeyboardInterrupt')
-            print('Self terminating by the SIGUSR1 signal')
+            errprint('KeyboardInterrupt')
+            errprint('Self terminating by the SIGUSR1 signal')
             os.kill(self_pid, SIGUSR1)
         except MemoryError:
-            print('MemoryError')
-            print('Self terminating by the SIGUSR1 signal')
+            errprint('MemoryError')
+            errprint('Self terminating by the SIGUSR1 signal')
             os.kill(self_pid, SIGUSR1)
 
 
@@ -2886,9 +2886,7 @@ def calculate_percent(arg_key):
 # {victim_id : {'time': timestamp, 'name': name}
 v_dict = dict()
 
-
 start_time = monotonic()
-
 
 help_mess = """usage: nohang [-h|--help] [-v|--version] [-m|--memload]
               [-c|--config CONFIG] [--check] [--monitor] [--tasks]
@@ -2962,8 +2960,8 @@ check_config_flag = False
 a = argv[1:]
 la = len(a)
 if la == 0:
-    print('ERROR: invalid input: missing CLI options\n')
-    print(help_mess)
+    errprint('ERROR: invalid input: missing CLI options\n')
+    errprint(help_mess)
     exit(1)
 if la == 1:
     if a[0] == '-h' or a[0] == '--help':
@@ -2973,12 +2971,12 @@ if la == 1:
         print_version()
     if a[0] == '-m' or a[0] == '--memload':
         memload()
-    print('ERROR: invalid input\n')
-    print(help_mess)
+    errprint('ERROR: invalid input\n')
+    errprint(help_mess)
     exit(1)
 if la == 2:
-    print('ERROR: invalid input\n')
-    print(help_mess)
+    errprint('ERROR: invalid input\n')
+    errprint(help_mess)
     exit(1)
 if la == 3:
     if '-c' in a or '--config' in a:
@@ -2994,29 +2992,29 @@ if la == 3:
             try:
                 config = a[aaa + 1]
             except IndexError:
-                print('ERROR: invalid input\n')
-                print(help_mess)
+                errprint('ERROR: invalid input\n')
+                errprint(help_mess)
                 exit(1)
             if (config == '--check' or config == '--monitor' or
                     config == '--tasks:'):
-                print('ERROR: invalid input\n')
-                print(help_mess)
+                errprint('ERROR: invalid input\n')
+                errprint(help_mess)
                 exit(1)
             if '--check' in a:
                 check_config_flag = True
             if '--tasks' in a:
                 print_proc_table_flag = True
         else:
-            print('ERROR: invalid input\n')
-            print(help_mess)
+            errprint('ERROR: invalid input\n')
+            errprint(help_mess)
             exit(1)
     else:
-        print('ERROR: invalid input\n')
-        print(help_mess)
+        errprint('ERROR: invalid input\n')
+        errprint(help_mess)
         exit(1)
 if la > 3:
-    print('ERROR: invalid CLI input: too many options\n')
-    print(help_mess)
+    errprint('ERROR: invalid CLI input: too many options\n')
+    errprint(help_mess)
     exit(1)
 
 
@@ -3076,7 +3074,8 @@ except ValueError:
 
 config = os.path.abspath(config)
 
-log('config: ' + config)
+print('Starting nohang with the config: {}'.format(config))
+
 
 separator_in = '>>' + '=' * 75 + '>>'
 separator_out = '<<' + '=' * 75 + '<<'
@@ -3134,7 +3133,7 @@ try:
                 if key not in config_dict:
                     config_dict[key] = value
                 else:
-                    log('ERROR: config key duplication: {}'.format(key))
+                    errprint('ERROR: config key duplication: {}'.format(key))
                     exit(1)
 
             if etc:
@@ -3342,13 +3341,16 @@ if separate_log:
         pass
     except PermissionError:
         errprint('ERROR: cannot create {}'.format(log_dir))
+        exit(1)
 
     try:
         os.chmod(log_dir, mode=0o750)
     except FileNotFoundError:
         errprint('ERROR: file not found: {}'.format(log_dir))
+        exit(1)
     except PermissionError:
         errprint('ERROR: permission denied: {}'.format(log_dir))
+        exit(1)
 
     try:
         logging.basicConfig(
@@ -3357,8 +3359,15 @@ if separate_log:
             format="%(asctime)s: %(message)s")
     except FileNotFoundError:
         errprint('ERROR: file not found: {}'.format(logfile))
+        exit(1)
     except PermissionError:
         errprint('ERROR: permission denied: {}'.format(logfile))
+        exit(1)
+
+
+if separate_log:
+    logging.info('Starting nohang with the config: {}'.format(config))
+
 
 debug_psi = conf_parse_bool('debug_psi')
 print_statistics = conf_parse_bool('print_statistics')
