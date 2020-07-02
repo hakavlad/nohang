@@ -2,7 +2,7 @@
 Description=Sophisticated low memory handler
 Documentation=man:nohang(8) https://github.com/hakavlad/nohang
 Conflicts=nohang.service
-After=system.slice
+After=sysinit.target
 
 [Service]
 ExecStart=:TARGET_SBINDIR:/nohang --monitor --config :TARGET_SYSCONFDIR:/nohang/nohang-desktop.conf
@@ -26,6 +26,7 @@ ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 PrivateDevices=true
+PrivateTmp=true
 MemoryDenyWriteExecute=yes
 RestrictNamespaces=yes
 LockPersonality=yes
