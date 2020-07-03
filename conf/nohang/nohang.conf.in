@@ -1,562 +1,361 @@
-  This is the configuration file of the nohang daemon.
-  The configuration includes the following sections:
+## This is the configuration file of the nohang daemon.
 
-    1. Common zram settings
-    2. Common PSI settings
-    3. Poll rate
-    4. Warnings and notifications
-    5. Soft (SIGTERM) threshold
-    6. Hard (SIGKILL) threshold
-    7. Customize victim selection: adjusting badness of processes
-    8. Customize soft corrective actions
-    9. Misc settings
-   10. Verbosity, debug, logging
+## The configuration includes the following sections:
+##  1. Common zram settings
+##  2. Common PSI settings
+##  3. Poll rate
+##  4. Warnings and notifications
+##  5. Soft (SIGTERM) threshold
+##  6. Hard (SIGKILL) threshold
+##  7. Customize victim selection: adjusting badness of processes
+##  8. Customize soft corrective actions
+##  9. Misc settings
+## 10. Verbosity, debug, logging
 
-  WARNING!
-    - Lines starting with #, tabs and whitespace characters are comments.
-    - Lines starting with @ contain optional parameters that may be repeated.
-    - All values are case sensitive.
-    - nohang doesn't forbid you to shoot yourself in the foot. Be careful!
-    - Restart the daemon after editing the file to apply the new settings.
-    - You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang.conf
+## WARNING!
+##  - Lines starting with #, tabs and whitespace characters are comments.
+##  - Lines starting with @ contain optional parameters that may be repeated.
+##  - All values are case sensitive.
+##  - nohang doesn't forbid you to shoot yourself in the foot. Be careful!
+##  - Restart the daemon after editing the file to apply the new settings.
+##  - You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang.conf
+
+## To find config keys descriptions see man(8) nohang
 
 ###############################################################################
 
-    1. Common zram settings
-
-    Key: zram_checking_enabled
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  1. Common zram settings
 
 zram_checking_enabled = False
+##  Type: boolean, valid values: True | False
+##  Default value: False
 
 ###############################################################################
 
-    2. Common PSI settings
-
-    Key: psi_checking_enabled
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  2. Common PSI settings
 
 psi_checking_enabled = False
-
-    Key: psi_path
-    Description:
-    Type: string
-    Valid values: any string
-    Default value: /proc/pressure/memory
+##  Type: boolean, valid values: True | False
+##  Default value: False
 
 psi_path = /proc/pressure/memory
-
-    Key: psi_metrics
-    Description:
-    Type: string
-    Valid values: some_avg10, some_avg60, some_avg300,
-                  full_avg10, full_avg60, full_avg300
-    Default value: some_avg10
+##  Type: string; valid values: any string
+##  Default value: /proc/pressure/memory
 
 psi_metrics = some_avg10
-
-    Key: psi_excess_duration
-    Description:
-    Type: float
-    Valid values: >= 0
-    Default value: 30
+##  Type: string; valid values: some_avg10, some_avg60, some_avg300,
+##                              full_avg10, full_avg60, full_avg300
+##  Default value: some_avg10
 
 psi_excess_duration = 30
-
-    Key: psi_post_action_delay
-    Description:
-    Type: float
-    Valid values: >= 10
-    Default value: 15
+##  Type: float; valid values: >= 0
+##  Default value: 30
 
 psi_post_action_delay = 15
+##  Type: float; valid values: >= 10
+##  Default value: 15
 
 ###############################################################################
 
-    3. Poll rate
-
-    Key: fill_rate_mem
-    Description:
-    Type: float
-    Valid values: >= 100
-    Default value: 6000
+##  3. Poll rate
 
 fill_rate_mem  = 6000
-
-    Key: fill_rate_swap
-    Description:
-    Type: float
-    Valid values: >= 100
-    Default value: 2000
+##  Type: float; valid values: >= 100
+##  Default value: 6000
 
 fill_rate_swap = 2000
-
-    Key: fill_rate_zram
-    Description:
-    Type: float
-    Valid values: >= 100
-    Default value: 4000
+##  Type: float; valid values: >= 100
+##  Default value: 2000
 
 fill_rate_zram = 4000
-
-    Key: max_sleep
-    Description:
-    Type: float
-    Valid values: >= 0.01 and >= min_sleep
-    Default value: 3
+##  Type: float; valid values: >= 100
+##  Default value: 4000
 
 max_sleep = 3
-
-    Key: min_sleep
-    Description:
-    Type: float
-    Valid values: >= 0.01 and <= max_sleep
-    Default value: 0.1
+##  Type: float; valid values: >= 0.01 and >= min_sleep
+##  Default value: 3
 
 min_sleep = 0.1
+##  Type: float; valid values: >= 0.01 and <= max_sleep
+##  Default value: 0.1
 
 ###############################################################################
 
-    4. Warnings and notifications
+##  4. Warnings and notifications
 
-    4.1. GUI notifications after corrective actions
-
-    Key: post_action_gui_notifications
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  4.1. GUI notifications after corrective actions
 
 post_action_gui_notifications = False
-
-    Key: hide_corrective_action_type
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 hide_corrective_action_type = False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
-    4.2. Low memory warnings
 
-    Key: low_memory_warnings_enabled
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  4.2. Low memory warnings
 
 low_memory_warnings_enabled = False
-
-    Key: warning_exe
-    Description:
-    Type: string
-    Valid values: any string
-    Default value: (empty string)
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 warning_exe =
+##  Type: string; valid values: any string
+##  Default value: (empty string)
 
-    Key: warning_threshold_min_mem
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [0; 100] %
-    Default value: 20 %
 
 warning_threshold_min_mem  = 20 %
-
-    Key: warning_threshold_min_swap
-    Description:
-    Type: float (with % or M)
-    Valid values: [0; 100] % or >= 0 M
-    Default value: 20 %
+##  Type: float (with % or M); valid values: from the range [0; 100] %
+##  Default value: 20 %
 
 warning_threshold_min_swap = 25 %
-
-    Key: warning_threshold_max_zram
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [0; 100] %
-    Default value: 45 %
+##  Type: float (with % or M); valid values: [0; 100] % or >= 0 M
+##  Default value: 20 %
 
 warning_threshold_max_zram = 45 %
-
-    Key: warning_threshold_max_psi
-    Description:
-    Type: float
-    Valid values: from the range [0; 100]
-    Default value: 10
+##  Type: float (with % or M); valid values: from the range [0; 100] %
+##  Default value: 45 %
 
 warning_threshold_max_psi  = 10
+##  Type: float; valid values: from the range [0; 100]
+##  Default value: 10
 
-    Key: min_post_warning_delay
-    Description:
-    Type: float
-    Valid values: >= 1
-    Default value: 60
 
 min_post_warning_delay = 60
-
-    Key: env_cache_time
-    Description:
-    Type: float
-    Valid values: >= 0
-    Default value: 300
+##  Type: float; valid values: >= 1
+##  Default value: 60
 
 env_cache_time = 300
+##  Type: float; valid values: >= 0
+##  Default value: 300
 
 ###############################################################################
 
-    5. Soft threshold (thresholds for sending the SIGTERM signal or
-                       implementing other soft corrective action)
-
-    Key: soft_threshold_min_mem
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [0; 50] %
-    Default value: 5 %
+##  5. Soft threshold (thresholds for sending the SIGTERM signal or
+##                     implementing other soft corrective action)
 
 soft_threshold_min_mem = 5 %
-
-    Key: soft_threshold_min_swap
-    Description:
-    Type: float (with % or M)
-    Valid values: [0; 100] % or >= 0 M
-    Default value: 10 %
+##  Type: float (with % or M); valid values: from the range [0; 50] %
+##  Default value: 5 %
 
 soft_threshold_min_swap = 10 %
-
-    Key: soft_threshold_max_zram
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [10; 90] %
-    Default value: 55 %
+##  Type: float (with % or M); valid values: [0; 100] % or >= 0 M
+##  Default value: 10 %
 
 soft_threshold_max_zram = 55 %
-
-    Key: soft_threshold_max_psi
-    Description:
-    Type: float
-    Valid values: from the range [5; 100]
-    Default value: 40
+##  Type: float (with % or M); valid values: from the range [10; 90] %
+##  Default value: 55 %
 
 soft_threshold_max_psi  = 40
+##  Type: float; valid values: from the range [5; 100]
+##  Default value: 40
 
 ###############################################################################
 
-    6. Hard threshold (thresholds for sending the SIGKILL signal)
-
-    Key: hard_threshold_min_mem
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [0; 50] %
-    Default value: 2 %
+##  6. Hard threshold (thresholds for sending the SIGKILL signal)
 
 hard_threshold_min_mem = 2 %
-
-    Key: hard_threshold_min_swap
-    Description:
-    Type: float (with % or M)
-    Valid values: [0; 100] % or >= 0 M
-    Default value: 4 %
+##  Type: float (with % or M); valid values: from the range [0; 50] %
+##  Default value: 2 %
 
 hard_threshold_min_swap = 4 %
-
-    Key: hard_threshold_max_zram
-    Description:
-    Type: float (with % or M)
-    Valid values: from the range [10; 90] %
-    Default value: 60 %
+##  Type: float (with % or M); valid values: [0; 100] % or >= 0 M
+##  Default value: 4 %
 
 hard_threshold_max_zram = 60 %
-
-    Key: hard_threshold_max_psi
-    Description:
-    Type: float
-    Valid values: from the range [5; 100]
-    Default value: 90
+##  Type: float (with % or M); valid values: from the range [10; 90] %
+##  Default value: 60 %
 
 hard_threshold_max_psi = 90
+##  Type: float; valid values: from the range [5; 100]
+##  Default value: 90
 
 ###############################################################################
 
-    7. Customize victim selection: adjusting badness of processes
+##  7. Customize victim selection: adjusting badness of processes
 
-    7.1. Ignore positive oom_score_adj
-
-    Key: ignore_positive_oom_score_adj
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  7.1. Ignore positive oom_score_adj
 
 ignore_positive_oom_score_adj = False
-
-    7.2.1. Matching process names with RE patterns change their badness
-
-    Syntax:
-
-    @BADNESS_ADJ_RE_NAME  badness_adj  ///  RE_pattern
-
-    New badness value will be += badness_adj
-
-    It is possible to compare multiple patterns
-    with different badness_adj values.
-
-    Example:
-    @BADNESS_ADJ_RE_NAME 200 /// ^Web Content$
-
-    7.2.2. Matching CGroup_v1-line with RE patterns
-
-    @BADNESS_ADJ_RE_CGROUP_V1 -50 ///  ^/system\.slice/
-
-    @BADNESS_ADJ_RE_CGROUP_V1  50 ///  /foo\.service$
-
-    @BADNESS_ADJ_RE_CGROUP_V1 -50 ///  ^/user\.slice/
-
-    7.2.3. Matching CGroup_v2-line with RE patterns
-
-    @BADNESS_ADJ_RE_CGROUP_V2  100 /// ^/workload
-
-    7.2.4. Matching eUIDs with RE patterns
-
-    @BADNESS_ADJ_RE_UID -100 /// ^0$
-
-    7.2.5. Matching /proc/[pid]/exe realpath with RE patterns
-
-    Example:
-    @BADNESS_ADJ_RE_REALPATH  900  ///  ^(/usr/bin/stress|/usr/bin/stress-ng)$
-
-    7.2.6. Matching /proc/[pid]/cwd realpath with RE patterns
-
-    @BADNESS_ADJ_RE_CWD  200  ///  ^/home/
-
-    7.2.7. Matching cmdlines with RE patterns
-    WARNING: using this option can greatly slow down the search for a victim
-    in conditions of heavily swapping.
-
-    Prefer Chromium tabs and Electron-based apps
-    @BADNESS_ADJ_RE_CMDLINE  200 /// --type=renderer
-
-    Prefer Firefox tabs (Web Content and WebExtensions)
-    @BADNESS_ADJ_RE_CMDLINE  100 /// -appomni
-
-    @BADNESS_ADJ_RE_CMDLINE -200 /// ^/usr/lib/virtualbox
-
-    7.2.8. Matching environ with RE patterns
-    WARNING: using this option can greatly slow down the search for a victim
-    in conditions of heavy swapping.
-
-    @BADNESS_ADJ_RE_ENVIRON 100 /// USER=user
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 
-    Note that you can control badness also via systemd units via
-    OOMScoreAdjust, see
-    www.freedesktop.org/software/systemd/man/systemd.exec.html#OOMScoreAdjust=
+##  7.2. Matching process properties with regular expressions to change their
+##       badness.
+
+##  Syntax:
+##  @BADNESS_ADJ_RE_PROPERTY  badness_adj  ///  RE_pattern
+##  New badness value will be added to process's badness_adj
+
+##  It is possible to compare multiple patterns
+##  with different badness_adj values.
+
+
+##  7.2.1. Matching process names with RE patterns to change their badness
+##  Example:
+#   @BADNESS_ADJ_RE_NAME 200 /// ^Web Content$
+
+##  7.2.2. Matching CGroup_v1-line with RE patterns
+#   @BADNESS_ADJ_RE_CGROUP_V1  50 ///  /foo\.service$
+#   @BADNESS_ADJ_RE_CGROUP_V1 -50 ///  ^/user\.slice/
+
+##  7.2.3. Matching CGroup_v2-line with RE patterns
+#   @BADNESS_ADJ_RE_CGROUP_V2  100 /// ^/workload
+
+##  7.2.4. Matching eUIDs with RE patterns
+#   @BADNESS_ADJ_RE_UID -100 /// ^0$
+
+##  7.2.5. Matching /proc/[pid]/exe realpath with RE patterns
+##  Example:
+#   @BADNESS_ADJ_RE_REALPATH  900  ///  ^(/usr/bin/stress|/usr/bin/stress-ng)$
+
+##  7.2.6. Matching /proc/[pid]/cwd realpath with RE patterns
+#   @BADNESS_ADJ_RE_CWD  200  ///  ^/home/
+
+##  7.2.7. Matching cmdlines with RE patterns
+##  WARNING: using this option can greatly slow down the search for a victim
+##  in conditions of intense swapping.
+
+##  Prefer Chromium tabs and Electron-based apps
+#   @BADNESS_ADJ_RE_CMDLINE  200 /// --type=renderer
+
+##  Prefer Firefox tabs (Web Content and WebExtensions)
+#   @BADNESS_ADJ_RE_CMDLINE  100 /// -appomni
+
+##  Avoid Virtualbox processes
+#   @BADNESS_ADJ_RE_CMDLINE -200 /// ^/usr/lib/virtualbox
+
+##  7.2.8. Matching environ with RE patterns
+##  WARNING: using this option can greatly slow down the search for a victim
+##  in conditions of heavy swapping.
+#   @BADNESS_ADJ_RE_ENVIRON 100 /// USER=user
+
+
+#   Note that you can control badness also via systemd units via
+#   OOMScoreAdjust, see
+#   www.freedesktop.org/software/systemd/man/systemd.exec.html#OOMScoreAdjust=
 
 ###############################################################################
 
-    8. Customize soft corrective actions
+##  8. Customize soft corrective actions
 
-    Run the command instead of sending a signal with at soft corrective action
-    if the victim's name or cgroup matches the regular expression.
+##  Run the command instead of sending a signal with at soft corrective action
+##  if the victim's name or cgroup matches the regular expression.
 
-    Syntax:
-    KEY                         REGEXP      SEPARATOR     COMMAND
+##  Syntax:
+##  KEY                         REGEXP      SEPARATOR     COMMAND
 
-    @SOFT_ACTION_RE_NAME       ^foo$             /// kill -USR1  $PID
-    @SOFT_ACTION_RE_CGROUP_V1  ^/system\.slice/  /// systemctl restart $SERVICE
-    @SOFT_ACTION_RE_CGROUP_V2  /foo\.service$    /// systemctl restart $SERVICE
+#   @SOFT_ACTION_RE_NAME       ^foo$             /// kill -USR1  $PID
+#   @SOFT_ACTION_RE_CGROUP_V1  ^/system\.slice/  /// systemctl restart $SERVICE
+#   @SOFT_ACTION_RE_CGROUP_V2  /foo\.service$    /// systemctl restart $SERVICE
 
-    $PID will be replaced by process PID.
-    $NAME will be replaced by process name.
-    $SERVICE will be replaced by .service if it exists (overwise it will be
-                                                        relpaced by empty line)
+##  $PID will be replaced by process PID.
+##  $NAME will be replaced by process name.
+##  $SERVICE will be replaced by .service if it exists (overwise it will be
+##                                                       relpaced by empty line)
 
 ###############################################################################
 
-    9. Misc settings
-
-    Key: max_soft_exit_time
-    Description:
-    Type: float
-    Valid values: >= 0.1
-    Default value: 10
+##  9. Misc settings
 
 max_soft_exit_time = 10
-
-    Key: post_kill_exe
-    Description:
-    Type: string
-    Valid values: any string
-    Default value: (empty string)
+##  Type: float; valid values: >= 0.1
+##  Default value: 10
 
 post_kill_exe =
-
-    Key: min_badness
-    Description:
-    Type: integer
-    Valid values: >= 1
-    Default value: 1
+##  Type: string; valid values: any string
+##  Default value: (empty string)
 
 min_badness = 1
-
-    Key: post_soft_action_delay
-    Description:
-    Type: float
-    Valid values: >= 0.1
-    Default value: 3
+##  Type: integer; valid values: >= 1
+##  Default value: 1
+##  nohang will do nothing if the badness of all processes is below min_badness
+##  (actualy it will spam to stdout/log)
 
 post_soft_action_delay = 3
-
-    Key: post_zombie_delay
-    Description:
-    Type: float
-    Valid values: >= 0
-    Default value: 0.1
+##  Type: float; valid values: >= 0.1
+##  Default value: 3
 
 post_zombie_delay = 0.1
-
-    Key: victim_cache_time
-    Description:
-    Type: float
-    Valid values: >= 0
-    Default value: 10
+##  Type: float; valid values: >= 0
+##  Default value: 0.1
 
 victim_cache_time = 10
-
-    Key: exe_timeout
-    Description:
-    Type: float
-    Valid values: >= 0.1
-    Default value: 20
+##  Type: float; valid values: >= 0
+##  Default value: 10
 
 exe_timeout = 20
+##  Type: float; valid values: >= 0.1
+##  Default value: 20
 
 ###############################################################################
 
-   10. Verbosity, debug, logging
-
-    Key: print_config_at_startup
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##   10. Verbosity, debug, logging
 
 print_config_at_startup = False
-
-    Key: print_mem_check_results
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 print_mem_check_results = False
-
-    Key: min_mem_report_interval
-    Description:
-    Type: float
-    Valid values: >= 0
-    Default value: 60
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 min_mem_report_interval = 60
-
-    Key: print_proc_table
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: float; valid values: >= 0
+##  Default value: 60
 
 print_proc_table = False
-
-    Key: extra_table_info
-    Description:
-    WARNING: using "cmdline" or "environ" keys can greatly slow down
-    the search for a victim in conditions of heavy swapping.
-    Type: string
-    Valid values: None, cgroup_v1, cgroup_v2, realpath,
-                  cwd, cmdline, environ
-    Default value: None
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 extra_table_info = None
-
-    Key: print_victim_status
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: True
+##  Type: string; valid values: None, cgroup_v1, cgroup_v2, realpath, cwd,
+##                              cmdline, environ
+##  Default value: None
+##  WARNING: using "cmdline" or "environ" keys can greatly slow down the search
+##           for a victim in conditions of heavy swapping.
 
 print_victim_status = True
-
-    Key: print_victim_cmdline
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: True
 
 print_victim_cmdline = False
-
-    Key: max_victim_ancestry_depth
-    Description:
-    Type: integer
-    Valid values: >= 1
-    Default value: 3
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 max_victim_ancestry_depth = 3
-
-    Key: print_statistics
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: True
+##  Type: integer; valid values: >= 1
+##  Default value: 3
 
 print_statistics = True
 
-    Key: debug_psi
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: True
 
 debug_psi = False
-
-    Key: debug_gui_notifications
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 debug_gui_notifications = False
-
-    Key: debug_sleep
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 debug_sleep = False
-
-    Key: debug_threading
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 debug_threading = False
-
-    Key: separate_log
-    Description:
-    Type: boolean
-    Valid values: True | False
-    Default value: False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 separate_log = False
+##  Type: boolean; valid values: True | False
+##  Default value: False
 
 ###############################################################################
 
-    Use cases, feature requests and any questions are welcome:
-    https://github.com/hakavlad/nohang/issues
+##  Use cases, feature requests and any questions are welcome:
+##  https://github.com/hakavlad/nohang/issues
+##
