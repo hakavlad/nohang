@@ -108,22 +108,16 @@ reinstall-deb:
 
 install: base units chcon daemon-reload
 
-openrc:
+install-openrc: base
 	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
-
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		openrc/nohang.in > openrc/nohang
-
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		openrc/nohang-desktop.in > openrc/nohang-desktop
-
-	install -m0775 nohang/openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
-	install -m0775 nohang/openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
-
+	install -m0775 openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
+	install -m0775 openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 	rm -fv openrc/nohang
 	rm -fv openrc/nohang-desktop
-
-install-openrc: base openrc
 
 uninstall-base:
 	rm -fv $(DESTDIR)$(SBINDIR)/nohang
