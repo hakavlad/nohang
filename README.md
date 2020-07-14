@@ -156,6 +156,35 @@ $ sudo systemctl enable nohang-desktop
 $ sudo systemctl start nohang-desktop
 ```
 
+#### To install on Gentoo and derivatives (e.g. Funtoo):
+
+Add the [eph kit](https://git.sr.ht/~happy_shredder/eph_kit) overlay, for example using layman or as a local repository.
+Then update your repos:
+
+```
+$ sudo layman -S # if added via layman
+$ sudo emerge --sync # local repo on Gentoo
+$ sudo ego sync # local repo on Funtoo
+```
+
+Install:
+
+```
+$ sudo emerge -a nohang
+```
+
+Start the service:
+
+```
+$ sudo rc-service nohang-desktop start
+```
+
+Optionally add to startup:
+
+```
+$ sudo rc-update add nohang-desktop default
+```
+
 #### To install the latest version on any distro:
 ```bash
 $ git clone https://github.com/hakavlad/nohang.git && cd nohang
