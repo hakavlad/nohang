@@ -14,7 +14,7 @@ RestartSec=0
 CPUSchedulingResetOnFork=true
 RestrictRealtime=yes
 
-TasksMax=20
+TasksMax=25
 MemoryMax=100M
 MemorySwapMax=100M
 
@@ -25,11 +25,13 @@ InaccessiblePaths=/home /root
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-PrivateDevices=true
-PrivateTmp=true
+ProtectHostname=true
 MemoryDenyWriteExecute=yes
 RestrictNamespaces=yes
 LockPersonality=yes
+PrivateTmp=true
+DeviceAllow=/dev/kmsg rw
+DevicePolicy=closed
 
 # Capabilities whitelist:
 # CAP_KILL is required to send signals
@@ -37,11 +39,17 @@ LockPersonality=yes
 # CAP_SYS_PTRACE is required to check /proc/[pid]/exe realpathes
 # CAP_DAC_READ_SEARCH is required to read /proc/[pid]/environ files
 # CAP_DAC_OVERRIDE fixes #94
-# CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE are required to send GUI notifications
-CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+# CAP_DAC_READ_SEARCH CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE
+#   are required to send GUI notifications
+# CAP_SYSLOG is required to check /dev/kmsg for OOM events
 
-# `PrivateNetwork=true` breaks GUI notifications on oldstable distros (Debian 8, CentOS 7, Linux Mint 18)
-# On modern distros you can set PrivateNetwork=true for security reasons
+CapabilityBoundingSet=CAP_KILL CAP_IPC_LOCK CAP_SYS_PTRACE \
+CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE CAP_AUDIT_WRITE CAP_SETUID CAP_SETGID \
+CAP_SYS_RESOURCE CAP_SYSLOG
+
+# `PrivateNetwork=true` breaks GUI notifications on oldstable distros
+# (Debian 8, CentOS 7, Linux Mint 18). On modern distros you can set
+# PrivateNetwork=true for security reasons.
 #PrivateNetwork=true
 
 # Set realtime CPU scheduling policy if you want

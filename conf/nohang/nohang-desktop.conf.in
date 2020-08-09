@@ -1,24 +1,39 @@
-  This is the configuration file of the nohang daemon.
-  The configuration includes the following sections:
+## This is the configuration file of the nohang daemon.
 
-    1. Common zram settings
-    2. Common PSI settings
-    3. Poll rate
-    4. Warnings and notifications
-    5. Soft (SIGTERM) threshold
-    6. Hard (SIGKILL) threshold
-    7. Customize victim selection: adjusting badness of processes
-    8. Customize soft corrective actions
-    9. Misc settings
-   10. Verbosity, debug, logging
+## The configuration includes the following sections:
+##  0. Check kernel messages for OOM events
+##  1. Common zram settings
+##  2. Common PSI settings
+##  3. Poll rate
+##  4. Warnings and notifications
+##  5. Soft (SIGTERM) threshold
+##  6. Hard (SIGKILL) threshold
+##  7. Customize victim selection: adjusting badness of processes
+##  8. Customize soft corrective actions
+##  9. Misc settings
+## 10. Verbosity, debug, logging
 
-  WARNING!
-    - Lines starting with #, tabs and whitespace characters are comments.
-    - Lines starting with @ contain optional parameters that may be repeated.
-    - All values are case sensitive.
-    - nohang doesn't forbid you to shoot yourself in the foot. Be careful!
-    - Restart the daemon after editing the file to apply the new settings.
-    - You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang-desktop.conf
+## WARNING!
+##  - Lines starting with #, tabs and whitespace characters are comments.
+##  - Lines starting with @ contain optional parameters that may be repeated.
+##  - All values are case sensitive.
+##  - nohang doesn't forbid you to shoot yourself in the foot. Be careful!
+##  - Restart the daemon after editing the file to apply the new settings.
+##  - You can find the file with default values here: :TARGET_DATADIR:/nohang/nohang.conf
+
+## To find config keys descriptions see man(8) nohang
+
+###############################################################################
+
+##  0. Check kernel messages for OOM events
+
+#   @check_kmsg
+##  Type: boolean
+##  Comment/uncomment to disable/enable checking kmsg for OOM events
+
+#   @debug_kmsg
+##  Type: boolean
+##  Comment/uncomment to disable/enable debug checking kmsg
 
 ###############################################################################
 

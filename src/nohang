@@ -228,7 +228,7 @@ def exe(cmd):
                 proc.wait(timeout=exe_timeout)
                 exit_status = proc.poll()
                 t4 = monotonic()
-                log('Command-{} execution completed in {} sec; exit status'
+                log('Command-{} execution completed in {}s; exit status'
                     ': {}'.format(cmd_num, round(t4 - t3, 3), exit_status))
             except TimeoutExpired:
                 proc.kill()
@@ -352,7 +352,7 @@ def pop(cmd):
     cmd_num = cmd_num_dict['cmd_num']
 
     if swap_total == 0:
-        wait_time = 10
+        wait_time = 15
     else:
         wait_time = 30
 
@@ -375,7 +375,7 @@ def pop(cmd):
                 t4 = monotonic()
 
                 if debug_gui_notifications:
-                    log('Command-{} execution completed in {} sec; exit status'
+                    log('Command-{} execution completed in {}s; exit status'
                         ': {}'.format(cmd_num, round(t4 - t3, 3), err))
 
             except TimeoutExpired:
@@ -537,6 +537,10 @@ def send_notify_etc(pid, name, command):
 def check_config():
     """
     """
+    log('\n0. Check kernel messages for OOM events')
+    log('    @check_kmsg:    <{}>'.format(check_kmsg))
+    log('    @debug_kmsg:    <{}>'.format(debug_kmsg))
+
     log('\n1. Common zram settings')
 
     log('    zram_checking_enabled:   {}'.format(zram_checking_enabled))
@@ -2352,6 +2356,32 @@ def log_meminfo():
         ))
 
 
+def is_post_oom_delay_exceeded():
+    """
+    """
+    oom_t = oom_dict['t']
+
+    if oom_t is not None:
+
+        post_oom_t = monotonic() - oom_t
+
+        if post_oom_t < post_oom_delay:
+
+            log('Time since OOM: {}s; post OOM delay ({}s) is not exceed'
+                'ed'.format(round(post_oom_t, 3), post_oom_delay))
+
+            if debug_sleep:
+                log('Sleep {}s'.format(over_sleep))
+            sleep(over_sleep)
+
+            return False
+        else:
+            return True
+
+    else:
+        return True
+
+
 def implement_corrective_action(
         threshold,
         mem_info_list,
@@ -2367,6 +2397,11 @@ def implement_corrective_action(
     log(separator_in)
 
     debug_corrective_action = True
+
+    post_oom_delay_exceeded = is_post_oom_delay_exceeded()
+    if not post_oom_delay_exceeded:
+        log(separator_out)
+        return psi_t0
 
     time0 = monotonic()
 
@@ -2439,6 +2474,11 @@ def implement_corrective_action(
             return psi_t0
 
         pid, victim_badness, name, victim_id = fff
+
+    post_oom_delay_exceeded = is_post_oom_delay_exceeded()
+    if not post_oom_delay_exceeded:
+        log(separator_out)
+        return psi_t0
 
     log('Recheck memory levels...')
 
@@ -2582,6 +2622,11 @@ def implement_corrective_action(
                     break
 
         start_action = monotonic()
+
+        post_oom_delay_exceeded = is_post_oom_delay_exceeded()
+        if not post_oom_delay_exceeded:
+            log(separator_out)
+            return psi_t0
 
         if soft_match:
 
@@ -2880,6 +2925,182 @@ def calculate_percent(arg_key):
     return mem_min_kb, mem_min_mb, mem_min_percent
 
 
+def is_kmsg_ok():
+    """
+    """
+    m_test0 = monotonic()
+    test_string = 'nohang: clock calibration: {}\n'.format(m_test0)
+    try:
+        write(kmsg_path, test_string)
+    except Exception as e:
+        log(e)
+        return None
+    try:
+        with open(kmsg_path):
+            pass
+    except Exception as e:
+        log(e)
+        return None
+    return m_test0, test_string
+
+
+def check_kmsg_fn():
+    """
+    Checking kernel messages for OOM events.
+
+    It catches lines like follow:
+
+    3,591,248095206,-;Out of memory: Kill process 1061 (tail) score 917 or sacr
+     ifice child
+
+    3,1699,7208057400,-;Out of memory: Killed process 9277 (tail) total-vm:7837
+     24kB, anon-rss:566796kB, file-rss:1508kB, shmem-rss:0kB, UID:1000
+
+    3,728,398101038,-;Memory cgroup out of memory: Killed process 2497 (tail) t
+     otal-vm:6468944kB, anon-rss:3013188kB, file-rss:1676kB, shmem-rss:0kB, UID
+     : 1000 pgtables:12300kB oom_score_adj:0
+
+    4,2928853,54035939870,-;tail invoked oom-killer: gfp_mask=0x100cca(GFP_HIGH
+     USER_MOVABLE), order=0, oom_score_adj=0
+
+    6,2928994,54035940084,-;Tasks in /user.slice/user-1000.slice/session-235.sc
+     ope are going to be killed due to memory.oom.group set
+
+    6,2929028,54036119432,-;oom_reaper: reaped process 15512 (tail), now anon-r
+     ss:0kB, file-rss:0kB, shmem-rss:0kB
+
+    """
+    broken_pipe = False
+    start_t0 = monotonic()
+    counter = 0
+
+    with open(kmsg_path) as f:
+
+        while True:
+
+            d = monotonic() - start_t0
+            if d > kmsg_start_timeout:
+                log('kmsg: cannot start in {}s'.format(
+                    kmsg_start_timeout))
+                return None
+
+            try:
+                s = f.readline()
+                counter += 1
+                if broken_pipe:
+                    log('kmsg: BrokenPipeError occurred, some messages lost')
+                    broken_pipe = False
+            except BrokenPipeError:
+                broken_pipe = True
+                if debug_kmsg:
+                    log('debug kmsg: BrokenPipeError, sleep {}s'.format(
+                        sleep_at_broken_pipe))
+                sleep(sleep_at_broken_pipe)
+                continue
+
+            if test_string in s:
+
+                if debug_kmsg:
+                    log('debug kmsg: {}'.format(s[:-1]))
+
+                kmsg_mono0 = float(s.split(',')[2]) / 1000000
+                kmsg_t_delta = kmsg_mono0 - m_test0
+
+                if debug_kmsg:
+                    log('debug kmsg: kmsg_t_delta (kmsg_mono - test_mono)'
+                        ': {}'.format(round(kmsg_t_delta, 3)))
+
+                log('Checking kmsg for OOM events has started in {}s;'
+                    ' {} lines parsed'.format(round(d, 3), counter))
+
+                break
+
+        while True:
+
+            try:
+                s = f.readline()
+                if broken_pipe:
+                    log('kmsg: BrokenPipeError occurred, some messages lost')
+                    broken_pipe = False
+            except BrokenPipeError:
+                if debug_kmsg:
+                    log('debug kmsg: BrokenPipeError, sleep {}s'.format(
+                        sleep_at_broken_pipe))
+                broken_pipe = True
+                sleep(sleep_at_broken_pipe)
+                continue
+
+            if (s[:2] == '3,' and 'ut of memory: Kill' in s):
+
+                if debug_kmsg:
+                    log('debug kmsg: {}'.format(s[:-1]))
+
+                k_mono = float((s.split(',')[2])) / 1000000
+                krm = k_mono - kmsg_t_delta
+                oom_dict['t'] = krm
+                last_action_dict['t'] = krm
+                kmsg = s[:-1].rpartition(';')[2]
+                log('kmsg: {}'.format(kmsg))
+
+                update_stat_dict('kmsg: Out of memory: Kill')
+
+                continue
+
+            if s[:2] == '6,':
+
+                if ';oom_reaper: reaped process ' in s:
+
+                    if debug_kmsg:
+                        log('debug kmsg: {}'.format(s[:-1]))
+
+                    k_mono = float((s.split(',')[2])) / 1000000
+                    krm = k_mono - kmsg_t_delta
+                    last_action_dict['t'] = None
+                    kmsg = s[:-1].rpartition(';')[2]
+                    log('kmsg: {}'.format(kmsg))
+
+                    update_stat_dict('kmsg: oom_reaper: reaped process')
+
+                    continue
+
+                if 'killed due to memory.oom.group set' in s:
+
+                    if debug_kmsg:
+                        log('debug kmsg: {}'.format(s[:-1]))
+
+                    k_mono = float((s.split(',')[2])) / 1000000
+                    krm = k_mono - kmsg_t_delta
+                    oom_dict['t'] = krm
+                    last_action_dict['t'] = krm
+                    kmsg = s[:-1].rpartition(';')[2]
+                    log('kmsg: {}'.format(kmsg))
+
+                    update_stat_dict('killed due to memory.oom.group set')
+
+                    continue
+
+            if (s[:2] == '4,' and ' invoked oom-killer: ' in s):
+
+                if debug_kmsg:
+                    log('debug kmsg: {}'.format(s[:-1]))
+
+                k_mono = float((s.split(',')[2])) / 1000000
+                krm = k_mono - kmsg_t_delta
+                oom_dict['t'] = krm
+                last_action_dict['t'] = krm
+                kmsg = s[:-1].rpartition(';')[2]
+                log('kmsg: {}'.format(kmsg))
+
+                update_stat_dict('kmsg: invoked oom-killer')
+                print_stat_dict()
+
+                if post_action_gui_notifications:
+                    send_notification(
+                        'kmsg: Out of memory!', 'invoked oom-killer')
+
+                continue
+
+
 ###############################################################################
 
 
@@ -3077,8 +3298,16 @@ config = os.path.abspath(config)
 print('Starting nohang with the config: {}'.format(config))
 
 
-separator_in = '>>' + '=' * 75 + '>>'
-separator_out = '<<' + '=' * 75 + '<<'
+# separator_in = '>>' + '=' * 75 + '>>'
+# separator_out = '<<' + '=' * 75 + '<<'
+
+
+# separator_in = '>>=== implement_corrective_action() ==================>>'
+# separator_out = '<<=== exit from implement_corrective_action() ========<<'
+
+
+separator_in = '>----- implement_corrective_action() ------------------>'
+separator_out = '<----- exit from implement_corrective_action() --------<'
 
 
 ###############################################################################
@@ -3108,6 +3337,11 @@ soft_actions_list = []
 # separator for optional parameters (that starts with @)
 opt_separator = '///'
 
+
+check_kmsg = False
+debug_kmsg = False
+
+
 # stupid conf parsing, it needs refactoring
 try:
     with open(config) as f:
@@ -3122,6 +3356,16 @@ try:
             etc = line.startswith('@SOFT_ACTION_RE_NAME')
             etc2 = line.startswith('@SOFT_ACTION_RE_CGROUP_V1')
             etc2_2 = line.startswith('@SOFT_ACTION_RE_CGROUP_V2')
+
+            if line.startswith('@check_kmsg'):
+                line = line.rstrip()
+                if line == '@check_kmsg':
+                    check_kmsg = True
+
+            if line.startswith('@debug_kmsg'):
+                line = line.rstrip()
+                if line == '@debug_kmsg':
+                    debug_kmsg = True
 
             if (not a and not b and not c and not d and not etc and
                     not etc2 and not etc2_2):
@@ -3698,7 +3942,8 @@ if print_proc_table_flag:
     func_print_proc_table()
 
 
-if (low_memory_warnings_enabled or
+if (check_kmsg or
+    low_memory_warnings_enabled or
     post_action_gui_notifications or
     check_warning_exe or
     soft_actions or
@@ -3830,6 +4075,27 @@ arcstats_path = '/proc/spl/kstat/zfs/arcstats'
 # arcstats_path = './arcstats'
 
 ZFS = os.path.exists(arcstats_path)
+
+
+kmsg_path = '/dev/kmsg'
+
+post_oom_delay = 1.0
+
+kmsg_start_timeout = 10.0
+
+sleep_at_broken_pipe = 0.1
+
+oom_dict = dict()
+
+oom_dict['t'] = None
+
+
+if check_kmsg:
+    kmsg_test = is_kmsg_ok()
+    if kmsg_test is not None:
+        m_test0, test_string = kmsg_test
+        start_thread(check_kmsg_fn)
+
 
 if ZFS:
     log('WARNING: ZFS found. Available memory will not be calculated '
