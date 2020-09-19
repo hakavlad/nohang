@@ -3055,7 +3055,7 @@ def check_kmsg_fn():
 
                     k_mono = float((s.split(',')[2])) / 1000000
                     krm = k_mono - kmsg_t_delta
-                    last_action_dict['t'] = None
+                    last_action_dict['t'] = krm
                     kmsg = s[:-1].rpartition(';')[2]
                     log('kmsg: {}'.format(kmsg))
 
