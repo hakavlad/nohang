@@ -6,6 +6,7 @@ After=sysinit.target
 
 [Service]
 ExecStart=:TARGET_SBINDIR:/nohang --monitor --config :TARGET_SYSCONFDIR:/nohang/nohang-desktop.conf
+Slice=hostcritical.slice
 SyslogIdentifier=nohang-desktop
 KillMode=mixed
 Restart=always
