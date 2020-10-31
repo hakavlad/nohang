@@ -55,10 +55,10 @@ psi_path = /proc/pressure/memory
 ##  Type: string; valid values: any string
 ##  Default value: /proc/pressure/memory
 
-psi_metrics = some_avg10
+psi_metrics = full_avg10
 ##  Type: string; valid values: some_avg10, some_avg60, some_avg300,
 ##                              full_avg10, full_avg60, full_avg300
-##  Default value: some_avg10
+##  Default value: full_avg10
 
 psi_excess_duration = 30
 ##  Type: float; valid values: >= 0
