@@ -132,6 +132,16 @@ $ yay -S nohang-git
 $ sudo systemctl enable --now nohang-desktop
 ```
 
+#### To install on Ubuntu 20.04/20.10
+
+To install from [PPA](https://launchpad.net/~oibaf/+archive/ubuntu/test/):
+```
+$ sudo add-apt-repository ppa:oibaf/test
+$ sudo apt update
+$ sudo apt install nohang
+$ sudo systemctl enable --now nohang-desktop.service
+```
+
 #### To install on Debian and Ubuntu-based systems:
 
 It's easy to build a deb package with the latest git snapshot. Install build dependencies:
