@@ -26,15 +26,15 @@ else
 endif
 
 base:
-	install -d $(DESTDIR)$(SBINDIR)
-	install -m0755 src/nohang $(DESTDIR)$(SBINDIR)/nohang
+	install -p -d $(DESTDIR)$(SBINDIR)
+	install -p -m0755 src/nohang $(DESTDIR)$(SBINDIR)/nohang
 
-	install -d $(DESTDIR)$(BINDIR)
-	install -m0755 src/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
-	install -m0755 src/psi-top $(DESTDIR)$(BINDIR)/psi-top
-	install -m0755 src/psi2log $(DESTDIR)$(BINDIR)/psi2log
+	install -p -d $(DESTDIR)$(BINDIR)
+	install -p -m0755 src/oom-sort $(DESTDIR)$(BINDIR)/oom-sort
+	install -p -m0755 src/psi-top $(DESTDIR)$(BINDIR)/psi-top
+	install -p -m0755 src/psi2log $(DESTDIR)$(BINDIR)/psi2log
 
-	install -d $(DESTDIR)$(SYSCONFDIR)/nohang
+	install -p -d $(DESTDIR)$(SYSCONFDIR)/nohang
 
 	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
 		conf/nohang/nohang.conf.in > nohang.conf
@@ -42,30 +42,30 @@ base:
 	sed "s|:TARGET_DATADIR:|$(DATADIR)|" \
 		conf/nohang/nohang-desktop.conf.in > nohang-desktop.conf
 
-	install -m0644 nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
-	install -m0644 nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
+	install -p -m0644 nohang.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang.conf
+	install -p -m0644 nohang-desktop.conf $(DESTDIR)$(SYSCONFDIR)/nohang/nohang-desktop.conf
 
-	install -d $(DESTDIR)$(DATADIR)/nohang
+	install -p -d $(DESTDIR)$(DATADIR)/nohang
 
-	install -m0644 nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
-	install -m0644 nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
+	install -p -m0644 nohang.conf $(DESTDIR)$(DATADIR)/nohang/nohang.conf
+	install -p -m0644 nohang-desktop.conf $(DESTDIR)$(DATADIR)/nohang/nohang-desktop.conf
 
 	-git describe --tags --long --dirty > version
-	install -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
+	install -p -m0644 version $(DESTDIR)$(DATADIR)/nohang/version
 
 	rm -fv nohang.conf
 	rm -fv nohang-desktop.conf
 	rm -fv version
 
-	install -d $(DESTDIR)/etc/logrotate.d
-	install -m0644 conf/logrotate.d/nohang $(DESTDIR)/etc/logrotate.d/nohang
+	install -p -d $(DESTDIR)/etc/logrotate.d
+	install -p -m0644 conf/logrotate.d/nohang $(DESTDIR)/etc/logrotate.d/nohang
 
-	install -d $(DESTDIR)$(MANDIR)/man1
+	install -p -d $(DESTDIR)$(MANDIR)/man1
 	gzip -9cn man/oom-sort.1 > $(DESTDIR)$(MANDIR)/man1/oom-sort.1.gz
 	gzip -9cn man/psi-top.1 > $(DESTDIR)$(MANDIR)/man1/psi-top.1.gz
 	gzip -9cn man/psi2log.1 > $(DESTDIR)$(MANDIR)/man1/psi2log.1.gz
 
-	install -d $(DESTDIR)$(MANDIR)/man8
+	install -p -d $(DESTDIR)$(MANDIR)/man8
 
 	sed "s|:SYSCONFDIR:|$(SYSCONFDIR)|g; s|:DATADIR:|$(DATADIR)|g" \
 		man/nohang.8 > nohang.8
@@ -73,12 +73,12 @@ base:
 	gzip -9cn nohang.8 > $(DESTDIR)$(MANDIR)/man8/nohang.8.gz
 	rm -fv nohang.8
 
-	install -d $(DESTDIR)$(DOCDIR)
-	install -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
-	install -m0644 CHANGELOG.md $(DESTDIR)$(DOCDIR)/CHANGELOG.md
+	install -p -d $(DESTDIR)$(DOCDIR)
+	install -p -m0644 README.md $(DESTDIR)$(DOCDIR)/README.md
+	install -p -m0644 CHANGELOG.md $(DESTDIR)$(DOCDIR)/CHANGELOG.md
 
 units:
-	install -d $(DESTDIR)$(SYSTEMDUNITDIR)
+	install -p -d $(DESTDIR)$(SYSTEMDUNITDIR)
 
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		systemd/nohang.service.in > nohang.service
@@ -86,15 +86,15 @@ units:
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		systemd/nohang-desktop.service.in > nohang-desktop.service
 
-	install -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	install -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	install -p -m0644 nohang.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
+	install -p -m0644 nohang-desktop.service $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 
 	rm -fv nohang.service
 	rm -fv nohang-desktop.service
 
 chcon:
-	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
-	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
+	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service &>/dev/null
+	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service &>/dev/null
 
 daemon-reload:
 	-systemctl daemon-reload
@@ -107,15 +107,16 @@ reinstall-deb:
 	sudo apt install --reinstall ./deb/package.deb
 
 install: base units chcon daemon-reload
+	# This is fine.
 
 install-openrc: base
-	install -d $(DESTDIR)$(SYSCONFDIR)/init.d
+	install -p -d $(DESTDIR)$(SYSCONFDIR)/init.d
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		openrc/nohang.in > openrc/nohang
 	sed "s|:TARGET_SBINDIR:|$(SBINDIR)|; s|:TARGET_SYSCONFDIR:|$(SYSCONFDIR)|" \
 		openrc/nohang-desktop.in > openrc/nohang-desktop
-	install -m0775 openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
-	install -m0775 openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
+	install -p -m0775 openrc/nohang $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
+	install -p -m0775 openrc/nohang-desktop $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
 	rm -fv openrc/nohang
 	rm -fv openrc/nohang-desktop
 
