@@ -115,11 +115,11 @@ $ sudo systemctl enable --now nohang-desktop.service
 
 #### To install on CentOS 7 and RHEL 8:
 
-Nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
+nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
 $ sudo yum install nohang
-$ sudo systemctl enable nohang
-$ sudo systemctl start nohang
+$ sudo systemctl enable nohang.service
+$ sudo systemctl start nohang.service
 ```
 
 Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
@@ -129,13 +129,13 @@ Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr
 Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
 $ yay -S nohang-git
-$ sudo systemctl enable --now nohang-desktop
+$ sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on Ubuntu 20.04/20.10
 
 To install from [PPA](https://launchpad.net/~oibaf/+archive/ubuntu/test/):
-```
+```bash
 $ sudo add-apt-repository ppa:oibaf/test
 $ sudo apt update
 $ sudo apt install nohang
@@ -162,8 +162,7 @@ $ sudo apt install --reinstall ./deb/package.deb
 
 Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
 ```bash
-$ sudo systemctl enable nohang-desktop
-$ sudo systemctl start nohang-desktop
+$ sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on Gentoo and derivatives (e.g. Funtoo):
@@ -171,7 +170,7 @@ $ sudo systemctl start nohang-desktop
 Add the [eph kit](https://git.sr.ht/~happy_shredder/eph_kit) overlay, for example using layman or as a local repository.
 Then update your repos:
 
-```
+```bash
 $ sudo layman -S # if added via layman
 $ sudo emerge --sync # local repo on Gentoo
 $ sudo ego sync # local repo on Funtoo
@@ -179,19 +178,19 @@ $ sudo ego sync # local repo on Funtoo
 
 Install:
 
-```
+```bash
 $ sudo emerge -a nohang
 ```
 
 Start the service:
 
-```
+```bash
 $ sudo rc-service nohang-desktop start
 ```
 
 Optionally add to startup:
 
-```
+```bash
 $ sudo rc-update add nohang-desktop default
 ```
 
@@ -202,19 +201,17 @@ $ sudo make install
 ```
 
 Config files will be located in `/usr/local/etc/nohang/`. To enable and start unit without GUI notifications:
-```
-$ sudo systemctl enable nohang
-$ sudo systemctl start nohang
+```bash
+$ sudo systemctl enable --now nohang.service
 ```
 
 To enable and start unit with GUI notifications:
-```
-$ sudo systemctl enable nohang-desktop
-$ sudo systemctl start nohang-desktop
+```bash
+$ sudo systemctl enable --now nohang-desktop.service
 ```
 
 On systems with OpenRC:
-```
+```bash
 $ sudo make install-openrc
 ```
 
@@ -414,7 +411,7 @@ You can also enable `separate_log` in the config to logging in `/var/log/nohang/
 
 Usage:
 
-```
+```bash
 $ oom-sort
 ```
 
@@ -519,7 +516,7 @@ psi-top is script that prints the PSI metrics values for every cgroup. It requir
  <summary>Output example</summary>
 
 ```
-$ $ psi-top
+$ psi-top
 cgroup2 mountpoint: /sys/fs/cgroup
       avg10  avg60 avg300         avg10  avg60 avg300  cgroup2
       -----  ----- ------         -----  ----- ------  ---------
