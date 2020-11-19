@@ -93,11 +93,11 @@ units:
 	rm -fv nohang-desktop.service
 
 chcon:
-	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service &>/dev/null
-	-chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service &>/dev/null
+	chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service || :
+	chcon -t systemd_unit_file_t $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service || :
 
 daemon-reload:
-	-systemctl daemon-reload
+	systemctl daemon-reload || :
 
 build_deb: base units
 
@@ -139,19 +139,17 @@ uninstall-base:
 	rm -fvr $(DESTDIR)$(SYSCONFDIR)/nohang/
 
 uninstall-units:
-	# 'make uninstall-units' must not fail with error if systemctl is unavailable or returns error
-	-systemctl stop nohang.service || true
-	-systemctl stop nohang-desktop.service || true
-	-systemctl disable nohang.service || true
-	-systemctl disable nohang-desktop.service || true
+	systemctl stop nohang.service || :
+	systemctl stop nohang-desktop.service || :
+	systemctl disable nohang.service || :
+	systemctl disable nohang-desktop.service || :
 
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang.service
 	rm -fv $(DESTDIR)$(SYSTEMDUNITDIR)/nohang-desktop.service
 
 uninstall-openrc:
-	# 'make uninstall-openrc' must not fail with error if openrc is unavailable or returns error
-	-rc-service nohang-desktop stop || true
-	-rc-service nohang stop || true
+	rc-service nohang-desktop stop || :
+	rc-service nohang stop || :
 
 	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang
 	rm -fv $(DESTDIR)$(SYSCONFDIR)/init.d/nohang-desktop
