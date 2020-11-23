@@ -58,7 +58,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
     - Low memory warnings (displays available memory).
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger);
 - [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support;
-- Easy configuration with a commented [config file](https://github.com/hakavlad/nohang/blob/master/nohang/nohang.conf.in).
+- Easy configuration with a commented [config file](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in).
 
 ## Demo
 
