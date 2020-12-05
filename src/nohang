@@ -100,7 +100,6 @@ def memload():
         mem_available_index = mem_list_names.index('MemAvailable')
     except ValueError:
         errprint('Your Linux kernel is too old, Linux 3.14+ required\nExit')
-    swap_total_index = mem_list_names.index('SwapTotal')
     swap_free_index = mem_list_names.index('SwapFree')
 
     def check_mem_and_swap():
@@ -110,13 +109,10 @@ def memload():
                 if n == mem_available_index:
                     mem_available = int(line.split(':')[1][:-4])
                     continue
-                if n == swap_total_index:
-                    swap_total = int(line.split(':')[1][:-4])
-                    continue
                 if n == swap_free_index:
                     swap_free = int(line.split(':')[1][:-4])
                     break
-        return mem_available, swap_total, swap_free
+        return mem_available, swap_free
 
     def print_mem(mem_available, swap_free):
         print('\033MMemAvailable: {} MiB, SwapFree: {} MiB     '
@@ -146,7 +142,7 @@ def memload():
 
     while True:
         try:
-            mem_available, swap_total, swap_free = check_mem_and_swap()
+            mem_available, swap_free = check_mem_and_swap()
             x = mem_available + swap_free
             if x <= 1024 * 40:  # 40 MiB
                 print_mem(mem_available, swap_free)
@@ -275,9 +271,7 @@ def re_pid_environ(pid):
     try:
         with open('/proc/' + pid + '/environ', 'rb') as f:
             env = f.read().decode('utf-8', 'ignore')
-    except FileNotFoundError:
-        return None
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return None
 
     if display_env in env and dbus_env in env and user_env in env:
@@ -772,11 +766,7 @@ def pid_to_rss(pid):
     try:
         rss = int(rline1(
             '/proc/{}/statm'.format(pid)).split(' ')[1]) * SC_PAGESIZE
-    except IndexError:
-        rss = None
-    except FileNotFoundError:
-        rss = None
-    except ProcessLookupError:
+    except (IndexError, FileNotFoundError, ProcessLookupError):
         rss = None
     return rss
 
@@ -787,11 +777,7 @@ def pid_to_vm_size(pid):
     try:
         vm_size = int(rline1(
             '/proc/{}/statm'.format(pid)).partition(' ')[0]) * SC_PAGESIZE
-    except IndexError:
-        vm_size = None
-    except FileNotFoundError:
-        vm_size = None
-    except ProcessLookupError:
+    except (IndexError, FileNotFoundError, ProcessLookupError):
         vm_size = None
     return vm_size
 
@@ -904,7 +890,7 @@ def pid_to_cgroup_v1(pid):
                 if index == cgroup_v1_index:
                     cgroup_v1 = '/' + line.partition('/')[2][:-1]
         return cgroup_v1
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -918,7 +904,7 @@ def pid_to_cgroup_v2(pid):
                 if index == cgroup_v2_index:
                     cgroup_v2 = line[3:-1]
         return cgroup_v2
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -957,21 +943,17 @@ def get_victim_id(pid):
     try:
         return rline1('/proc/' + pid + '/stat').rpartition(
             ')')[2].split(' ')[20] + '_pid' + pid
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
 def pid_to_state(pid):
-    """
+    """ ПЕРЕПИСАТЬ НАХРЕН - С БИН ЧТЕНИЕМ И НУЛЕВЫМ БУФЕРОМ==
     """
     try:
         with open('/proc/' + pid + '/stat', 'rb') as f:
             return f.read(40).decode('utf-8', 'ignore').rpartition(')')[2][1]
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
     except IndexError:
         with open('/proc/' + pid + '/stat', 'rb') as f:
@@ -984,9 +966,7 @@ def pid_to_name(pid):
     try:
         with open('/proc/{}/comm'.format(pid), 'rb', buffering=0) as f:
             return f.read().decode('utf-8', 'ignore')[:-1]
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -998,9 +978,7 @@ def pid_to_ppid(pid):
             for n, line in enumerate(f):
                 if n is ppid_index:
                     return line.split('\t')[1].strip()
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
     except UnicodeDecodeError:
         with open('/proc/' + pid + '/status', 'rb') as f:
@@ -1044,9 +1022,7 @@ def pid_to_cmdline(pid):
         with open('/proc/' + pid + '/cmdline', 'rb') as f:
             return f.read().decode('utf-8', 'ignore').replace(
                 '\x00', ' ').rstrip()
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -1061,9 +1037,7 @@ def pid_to_environ(pid):
         with open('/proc/' + pid + '/environ', 'rb') as f:
             return f.read().decode('utf-8', 'ignore').replace(
                 '\x00', ' ').rstrip()
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -1072,11 +1046,7 @@ def pid_to_realpath(pid):
     """
     try:
         return os.path.realpath('/proc/{}/exe'.format(pid))
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
-        return ''
-    except PermissionError:
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
         return ''
 
 
@@ -1085,11 +1055,7 @@ def pid_to_cwd(pid):
     """
     try:
         return os.path.realpath('/proc/{}/cwd'.format(pid))
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
-        return ''
-    except PermissionError:
+    except (FileNotFoundError, ProcessLookupError, PermissionError):
         return ''
 
 
@@ -1099,9 +1065,7 @@ def pid_to_uid(pid):
         with open('/proc/{}/status'.format(pid), 'rb', buffering=0) as f:
             f_list = f.read().decode('utf-8', 'ignore').split('\n')
             return f_list[uid_index].split('\t')[2]
-    except FileNotFoundError:
-        return ''
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return ''
 
 
@@ -1235,9 +1199,7 @@ def pid_to_badness(pid, oom_score):
 
         return badness, oom_score
 
-    except FileNotFoundError:
-        return None, None
-    except ProcessLookupError:
+    except (FileNotFoundError, ProcessLookupError):
         return None, None
 
 
@@ -1275,13 +1237,7 @@ def pid_to_status(pid):
 
         return name, state, ppid, uid, vm_size, vm_rss, vm_swap
 
-    except FileNotFoundError:
-        return None
-
-    except ProcessLookupError:
-        return None
-
-    except ValueError:
+    except (FileNotFoundError, ProcessLookupError, ValueError):
         return None
 
 
@@ -1308,24 +1264,13 @@ def mlockall():
     MCL_CURRENT = 1
     MCL_FUTURE = 2
     MCL_ONFAULT = 4
-
-    libc = CDLL('libc.so.6', use_errno=True)
-    result = libc.mlockall(
-        MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT
-    )
-
+    libc = CDLL(None, use_errno=True)
+    result = libc.mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)
     if result != 0:
-        result = libc.mlockall(
-            MCL_CURRENT | MCL_FUTURE
-        )
+        result = libc.mlockall(MCL_CURRENT | MCL_FUTURE)
         if result != 0:
-            log('WARNING: cannot lock all memory: [Errno {}]'.format(result))
-        else:
-            pass
-            # log('All memory locked with MCL_CURRENT | MCL_FUTURE')
-    else:
-        pass
-        # log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+            log('WARNING: cannot lock process memory: [Errno {}]'.format(
+                result))
 
 
 def update_stat_dict(key):
@@ -1358,25 +1303,25 @@ def print_stat_dict():
 def find_psi_metrics_value(psi_path, psi_metrics):
     """
     """
-    foo = read_path(psi_path)
+    foooo = read_path(psi_path)
 
-    if foo is None:
+    if foooo is None:
         return None
 
     try:
 
         if psi_metrics == 'some_avg10':
-            return float(foo.split('\n')[0].split(' ')[1].split('=')[1])
+            return float(foooo.split('\n')[0].split(' ')[1].split('=')[1])
         if psi_metrics == 'some_avg60':
-            return float(foo.split('\n')[0].split(' ')[2].split('=')[1])
+            return float(foooo.split('\n')[0].split(' ')[2].split('=')[1])
         if psi_metrics == 'some_avg300':
-            return float(foo.split('\n')[0].split(' ')[3].split('=')[1])
+            return float(foooo.split('\n')[0].split(' ')[3].split('=')[1])
         if psi_metrics == 'full_avg10':
-            return float(foo.split('\n')[1].split(' ')[1].split('=')[1])
+            return float(foooo.split('\n')[1].split(' ')[1].split('=')[1])
         if psi_metrics == 'full_avg60':
-            return float(foo.split('\n')[1].split(' ')[2].split('=')[1])
+            return float(foooo.split('\n')[1].split(' ')[2].split('=')[1])
         if psi_metrics == 'full_avg300':
-            return float(foo.split('\n')[1].split(' ')[3].split('=')[1])
+            return float(foooo.split('\n')[1].split(' ')[3].split('=')[1])
 
     except Exception as e:
         if debug_psi:
@@ -1466,21 +1411,30 @@ def check_zram():
 def format_time(t):
     """
     """
-    t = int(t)
+    total_s = int(t)
 
-    if t < 60:
-        return '{}s'.format(t)
+    if total_s < 60:
+        return '{}s'.format(round(t, 1))
 
-    if t > 3600:
-        h = t // 3600
-        s0 = t - h * 3600
-        m = s0 // 60
-        s = s0 % 60
-        return '{}h {}min {}s'.format(h, m, s)
+    if total_s < 3600:
+        total_m = total_s // 60
+        mod_s = total_s % 60
+        return '{}min {}s'.format(total_m, mod_s)
 
-    m = t // 60
-    s = t % 60
-    return '{}min {}s'.format(m, s)
+    if total_s < 86400:
+        total_m = total_s // 60
+        mod_s = total_s % 60
+        total_h = total_m // 60
+        mod_m = total_m % 60
+        return '{}h {}min {}s'.format(total_h, mod_m, mod_s)
+
+    total_m = total_s // 60
+    mod_s = total_s % 60
+    total_h = total_m // 60
+    mod_m = total_m % 60
+    total_d = total_h // 24
+    mod_h = total_h % 24
+    return '{}d {}h {}min {}s'.format(total_d, mod_h, mod_m, mod_s)
 
 
 def string_to_float_convert_test(string):
@@ -1577,13 +1531,8 @@ def is_alive(pid):
             rss = f.read().decode().split(' ')[1]
             if rss != '0':
                 return True
-    except FileNotFoundError:
-        return False
-    except ProcessLookupError:
-        return False
-    except NotADirectoryError:
-        return False
-    except PermissionError:
+    except (FileNotFoundError, ProcessLookupError, NotADirectoryError,
+            PermissionError):
         return False
 
 
@@ -1593,7 +1542,7 @@ def alive_pid_list():
     pid_list = []
     for pid in os.listdir('/proc'):
 
-        if pid[0].isdecimal() is False:
+        if not pid[0].isdecimal():
             continue
 
         if is_alive(pid):
@@ -1611,24 +1560,16 @@ def pid_to_oom_score(pid):
     try:
         with open('/proc/{}/oom_score'.format(pid), 'rb', buffering=0) as f:
             return int(f.read())
-    except FileNotFoundError:
-        return 0
-    except ProcessLookupError:
-        return 0
-    except NotADirectoryError:
+    except (FileNotFoundError, ProcessLookupError, NotADirectoryError):
         return 0
 
 
 def pid_to_oom_score_adj(pid):
     try:
-        with open('/proc/{}/oom_score_adj'.format(pid), 'rb', buffering=0
-                  ) as f:
+        with open(
+                '/proc/{}/oom_score_adj'.format(pid), 'rb', buffering=0) as f:
             return int(f.read())
-    except FileNotFoundError:
-        return 0
-    except ProcessLookupError:
-        return 0
-    except NotADirectoryError:
+    except (FileNotFoundError, ProcessLookupError, NotADirectoryError):
         return 0
 
 
@@ -1639,7 +1580,7 @@ def badness_pid_list():
     for pid in os.listdir('/proc'):
         o = pid_to_oom_score(pid)
         if o >= 1:
-            if pid[0].isdecimal() is False:
+            if not pid[0].isdecimal():
                 continue
             if pid == self_pid or pid == '1':
                 continue
@@ -1810,9 +1751,7 @@ def find_victim(_print_proc_table):
                 str(vm_rss).rjust(5),
                 str(vm_swap).rjust(6),
                 name.ljust(15),
-                extra_table_line
-            )
-            )
+                extra_table_line))
 
         pid_badness_list.append((pid, badness))
 
@@ -1839,15 +1778,12 @@ def find_victim(_print_proc_table):
     log('Found {} tasks with non-zero VmRSS (except init and self)'.format(
         real_proc_num))
 
-    log(
-        'Process with highest badness (found in {}ms):\n  PID: {}, Na'
+    log('Process with highest badness (found in {}ms):\n  PID: {}, Na'
         'me: {}, badness: {}'.format(
             round((monotonic() - ft1) * 1000),
             pid,
             victim_name,
-            victim_badness
-        )
-    )
+            victim_badness))
 
     return pid, victim_badness, victim_name, victim_id
 
@@ -1900,14 +1836,8 @@ def find_victim_info(pid, victim_badness, name):
         oom_score = pid_to_oom_score(pid)
         oom_score_adj = pid_to_oom_score_adj(pid)
 
-    except IndexError:
-        x = 'The victim died in the search process: IndexError'
-        log(x)
-        update_stat_dict(x)
-        print_stat_dict()
-        return None
-    except ValueError:
-        x = 'The victim died in the search process: ValueError'
+    except (IndexError, ValueError):
+        x = 'Selected process died before corrective action'
         log(x)
         update_stat_dict(x)
         print_stat_dict()
@@ -1922,7 +1852,7 @@ def find_victim_info(pid, victim_badness, name):
         victim_cgroup_v2 = pid_to_cgroup_v2(pid)
 
     except FileNotFoundError:
-        x = 'The victim died in the search process: FileNotFoundError'
+        x = 'Selected process died before corrective action'
         log(x)
         update_stat_dict(x)
         print_stat_dict()
@@ -1930,7 +1860,7 @@ def find_victim_info(pid, victim_badness, name):
 
     ancestry = pid_to_ancestry(pid, max_victim_ancestry_depth)
 
-    if print_victim_cmdline is False:
+    if not print_victim_cmdline:
         cmdline = ''
         c1 = ''
     else:
@@ -1962,25 +1892,19 @@ def find_victim_info(pid, victim_badness, name):
             uid,
             nssid, pid_to_name(nssid),
             victim_lifetime,
-
             victim_badness,
             oom_score,
             oom_score_adj,
-
             vm_size,
             vm_rss,
             detailed_rss_info,
             vm_swap,
-
             victim_cgroup_v1,
             victim_cgroup_v2,
-
             ancestry,
             c1, cmdline,
             realpath,
-            cwd
-
-        )
+            cwd)
 
     return victim_info
 
@@ -2081,20 +2005,14 @@ def check_zram_ex():
     """
     mem_used_zram = check_zram()
 
-    if mem_available <= hard_threshold_min_mem_kb:
-        ma_hard_threshold_exceded = True
-    else:
-        ma_hard_threshold_exceded = False
+    ma_hard_threshold_exceded = bool(
+        mem_available <= hard_threshold_min_mem_kb)
 
-    if mem_available <= soft_threshold_min_mem_kb:
-        ma_soft_threshold_exceded = True
-    else:
-        ma_soft_threshold_exceded = False
+    ma_soft_threshold_exceded = bool(
+        mem_available <= soft_threshold_min_mem_kb)
 
-    if mem_available <= warning_threshold_min_mem_kb:
-        ma_warning_threshold_exceded = True
-    else:
-        ma_warning_threshold_exceded = False
+    ma_warning_threshold_exceded = bool(
+        mem_available <= warning_threshold_min_mem_kb)
 
     if (mem_used_zram >= hard_threshold_max_zram_kb and
             ma_hard_threshold_exceded):
@@ -2140,25 +2058,18 @@ def check_zram_ex():
     return None, None, mem_used_zram
 
 
-def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
+def check_psi_ex(psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
                  mem_available):
     """
     """
+    ma_hard_threshold_exceded = bool(
+        mem_available <= hard_threshold_min_mem_kb)
 
-    if mem_available <= hard_threshold_min_mem_kb:
-        ma_hard_threshold_exceded = True
-    else:
-        ma_hard_threshold_exceded = False
+    ma_soft_threshold_exceded = bool(
+        mem_available <= soft_threshold_min_mem_kb)
 
-    if mem_available <= soft_threshold_min_mem_kb:
-        ma_soft_threshold_exceded = True
-    else:
-        ma_soft_threshold_exceded = False
-
-    if mem_available <= warning_threshold_min_mem_kb:
-        ma_warning_threshold_exceded = True
-    else:
-        ma_warning_threshold_exceded = False
+    ma_warning_threshold_exceded = bool(
+        mem_available <= warning_threshold_min_mem_kb)
 
     if not (ma_warning_threshold_exceded or ma_soft_threshold_exceded or
             ma_hard_threshold_exceded) or swap_total == 0:
@@ -2168,7 +2079,7 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
                 'lds of available memory is exceeded')
 
         return (None, None,
-                psi_t0, psi_kill_exceeded_timer,
+                psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
 
     delta0 = monotonic() - x0
@@ -2185,14 +2096,12 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             psi_metrics, psi_path, psi_avg_value))
 
     if psi_avg_value is None:
-        return (None, None, psi_t0, -0.0001, -0.0001, x0)
+        return (None, None, -0.0001, -0.0001, x0)
 
-    psi_post_action_delay_timer = monotonic() - last_action_dict['t']  # psi_t0
+    psi_post_action_delay_timer = monotonic() - last_action_dict['t']
 
-    if psi_post_action_delay_timer >= psi_post_action_delay:
-        psi_post_action_delay_exceeded = True
-    else:
-        psi_post_action_delay_exceeded = False
+    psi_post_action_delay_exceeded = bool(
+        psi_post_action_delay_timer >= psi_post_action_delay)
 
     if psi_avg_value >= hard_threshold_max_psi:
         sigkill_psi_exceeded = True
@@ -2218,8 +2127,7 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             'eded: {}, hard_psi_excess_duration: {}'.format(
                 ma_hard_threshold_exceded,
                 sigkill_psi_exceeded,
-                round(psi_kill_exceeded_timer, 1)
-            ))
+                round(psi_kill_exceeded_timer, 1)))
 
     if (sigkill_psi_exceeded and psi_kill_exceeded_timer >=
             psi_excess_duration and psi_post_action_delay_exceeded and
@@ -2227,9 +2135,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
         mem_info = 'Memory status that requires corrective actions:\n  MemAv' \
                    'ailable [{} MiB, {} %] <= hard_threshold_min_mem [{} MiB' \
-                   ', {} %]\n  PSI avg value ({}) >= hard_threshold_max_psi ' \
-                   '({})\n  PSI avg value exceeded psi_excess_duration (valu' \
-                   'e={}s) for {}s'.format(
+                   ', {} %]\n  Current PSI metric value ({}) >= hard_thresho' \
+                   'ld_max_psi ({})\n  PSI metric value exceeded psi_excess_' \
+                   'duration ({}s) for {}s'.format(
                        kib_to_mib(mem_available),
                        percent(mem_available / mem_total),
                        kib_to_mib(hard_threshold_min_mem_kb),
@@ -2237,10 +2145,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
                        psi_avg_value,
                        hard_threshold_max_psi,
                        psi_excess_duration,
-                       round(psi_kill_exceeded_timer, 1)
-                   )
+                       round(psi_kill_exceeded_timer, 1))
 
-        return (SIGKILL, mem_info, psi_t0, psi_kill_exceeded_timer,
+        return (SIGKILL, mem_info, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
 
     if psi_avg_value >= soft_threshold_max_psi:
@@ -2262,8 +2169,7 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
             'eded: {}, soft_psi_excess_duration: {}'.format(
                 ma_soft_threshold_exceded,
                 sigterm_psi_exceeded,
-                round(psi_term_exceeded_timer, 1)
-            ))
+                round(psi_term_exceeded_timer, 1)))
 
     if (sigterm_psi_exceeded and psi_term_exceeded_timer >=
             psi_excess_duration and psi_post_action_delay_exceeded and
@@ -2271,9 +2177,9 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
 
         mem_info = 'Memory status that requires corrective actions:\n  MemA' \
                    'vailable [{} MiB, {} %] <= soft_threshold_min_mem [{} M' \
-                   'iB, {} %]\n  PSI avg value ({}) >= soft_threshold_max_p' \
-                   'si ({})\n  PSI avg value exceeded psi_excess_duration (' \
-                   'value={}s) for {}s'.format(
+                   'iB, {} %]\n  Current PSI metric value ({}) >= soft_thre' \
+                   'shold_max_psi ({})\n  PSI metric value exceeded psi_exc' \
+                   'ess_duration ({}s) for {}s'.format(
                        kib_to_mib(mem_available),
                        percent(mem_available / mem_total),
                        kib_to_mib(soft_threshold_min_mem_kb),
@@ -2281,20 +2187,19 @@ def check_psi_ex(psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
                        psi_avg_value,
                        soft_threshold_max_psi,
                        psi_excess_duration,
-                       round(psi_term_exceeded_timer, 1)
-                   )
+                       round(psi_term_exceeded_timer, 1))
 
-        return (SIGTERM, mem_info, psi_t0, psi_kill_exceeded_timer,
+        return (SIGTERM, mem_info, psi_kill_exceeded_timer,
                 psi_term_exceeded_timer, x0)
 
     if low_memory_warnings_enabled:
 
         if (psi_avg_value >= warning_threshold_max_psi and
                 ma_warning_threshold_exceded):
-            return ('WARN', None, psi_t0, psi_kill_exceeded_timer,
+            return ('WARN', None, psi_kill_exceeded_timer,
                     psi_term_exceeded_timer, x0)
 
-    return (None, None, psi_t0, psi_kill_exceeded_timer,
+    return (None, None, psi_kill_exceeded_timer,
             psi_term_exceeded_timer, x0)
 
 
@@ -2303,7 +2208,7 @@ def is_victim_alive(victim_id):
     We do not have a reliable sign of the end of the release of memory:
     https://github.com/rfjakob/earlyoom/issues/128#issuecomment-507023717
     """
-    starttime, pid = victim_id.split('_pid')
+    _, pid = victim_id.split('_pid')
     new_victim_id = get_victim_id(pid)
     if victim_id != new_victim_id:
         return 0
@@ -2385,7 +2290,6 @@ def is_post_oom_delay_exceeded():
 def implement_corrective_action(
         threshold,
         mem_info_list,
-        psi_t0,
         psi_kill_exceeded_timer,
         psi_term_exceeded_timer,
         x0,
@@ -2401,7 +2305,7 @@ def implement_corrective_action(
     post_oom_delay_exceeded = is_post_oom_delay_exceeded()
     if not post_oom_delay_exceeded:
         log(separator_out)
-        return psi_t0
+        return None
 
     time0 = monotonic()
 
@@ -2461,7 +2365,7 @@ def implement_corrective_action(
 
             log(separator_out)
 
-            return psi_t0
+            return None
 
         if fff is None:
 
@@ -2471,27 +2375,27 @@ def implement_corrective_action(
 
             log(separator_out)
 
-            return psi_t0
+            return None
 
         pid, victim_badness, name, victim_id = fff
 
     post_oom_delay_exceeded = is_post_oom_delay_exceeded()
     if not post_oom_delay_exceeded:
         log(separator_out)
-        return psi_t0
+        return None
 
     log('Recheck memory levels...')
 
-    (masf_threshold, masf_info, mem_available, hard_threshold_min_swap_kb,
-     soft_threshold_min_swap_kb, swap_free, swap_total) = check_mem_swap_ex()
+    (masf_threshold, masf_info, mem_available, _, _, swap_free, _
+     ) = check_mem_swap_ex()
 
     if zram_checking_enabled:
-        zram_threshold, zram_info, mem_used_zram = check_zram_ex()
+        zram_threshold, zram_info, _ = check_zram_ex()
 
     if CHECK_PSI:
-        (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
+        (psi_threshold, psi_info, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
-             psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
+             psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
              mem_available)
 
     if (masf_threshold is SIGKILL or zram_threshold is SIGKILL or
@@ -2527,7 +2431,7 @@ def implement_corrective_action(
     else:
         log('Thresholds is not exceeded now')
         log(separator_out)
-        return psi_t0
+        return None
 
     for i in mem_info_list:
         log(i)
@@ -2535,7 +2439,7 @@ def implement_corrective_action(
     if new_threshold is None or new_threshold == 'WARN':
         log('Thresholds is not exceeded now')
         log(separator_out)
-        return psi_t0
+        return None
 
     threshold = new_threshold
 
@@ -2560,7 +2464,7 @@ def implement_corrective_action(
 
                 log(separator_out)
 
-                return psi_t0
+                return None
 
     if victim_badness >= min_badness:
 
@@ -2573,7 +2477,7 @@ def implement_corrective_action(
 
                 log(separator_out)
 
-                return psi_t0
+                return None
 
         log_meminfo()
 
@@ -2626,7 +2530,7 @@ def implement_corrective_action(
         post_oom_delay_exceeded = is_post_oom_delay_exceeded()
         if not post_oom_delay_exceeded:
             log(separator_out)
-            return psi_t0
+            return None
 
         if soft_match:
 
@@ -2684,18 +2588,9 @@ def implement_corrective_action(
 
                 print_stat_dict()
 
-            except FileNotFoundError:
-
-                vwd = True
-                key = 'Cannot send a signal: FileNotFoundError'
-                update_stat_dict(key)
-                print_stat_dict()
-                log(key)
-
             except ProcessLookupError:
-
                 vwd = True
-                key = 'Cannot send a signal: ProcessLookupError'
+                key = 'Selected process died before corrective action'
                 update_stat_dict(key)
                 print_stat_dict()
                 log(key)
@@ -2707,8 +2602,7 @@ def implement_corrective_action(
                 update_stat_dict(key)
                 print_stat_dict()
                 log('Sleep {}s'.format(post_soft_action_delay))
-                sleep(post_soft_action_delay)
-                # do not send signal twice!
+                sleep(10)
 
         if not vwd:
             if victim_id not in v_dict:
@@ -2759,7 +2653,7 @@ def implement_corrective_action(
                 sleep(post_zombie_delay)
                 break
 
-        mem_available, swap_total, swap_free = check_mem_and_swap()
+        mem_available, _, swap_free = check_mem_and_swap()
         ma_mib = int(mem_available) / 1024.0
         sf_mib = int(swap_free) / 1024.0
         log('Memory status after implementing a corrective act'
@@ -2806,7 +2700,7 @@ def implement_corrective_action(
 
     log(separator_out)
 
-    return psi_t0
+    return None
 
 
 def sleep_after_check_mem():
@@ -3133,8 +3027,6 @@ SC_CLK_TCK = os.sysconf(os.sysconf_names['SC_CLK_TCK'])
 
 SC_PAGESIZE = os.sysconf(os.sysconf_names['SC_PAGESIZE'])
 
-conf_err_mess = 'Invalid config. Exit.'
-
 sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
 
 sig_dict = {
@@ -3149,11 +3041,7 @@ self_pid = str(os.getpid())
 
 self_uid = os.geteuid()
 
-if self_uid == 0:
-    root = True
-else:
-    root = False
-
+root = bool(self_uid == 0)
 
 last_action_dict = dict()
 
@@ -3295,19 +3183,11 @@ except ValueError:
 
 config = os.path.abspath(config)
 
-print('Starting nohang with the config: {}'.format(config))
+print('Starting nohang with config {}'.format(config))
 
 
-# separator_in = '>>' + '=' * 75 + '>>'
-# separator_out = '<<' + '=' * 75 + '<<'
-
-
-# separator_in = '>>=== implement_corrective_action() ==================>>'
-# separator_out = '<<=== exit from implement_corrective_action() ========<<'
-
-
-separator_in = '>----- implement_corrective_action() ------------------>'
-separator_out = '<----- exit from implement_corrective_action() --------<'
+separator_in = '>>=== STARTING implement_corrective_action() ====>>'
+separator_out = '<<=== FINISHING implement_corrective_action() ===<<'
 
 
 ###############################################################################
@@ -3493,20 +3373,10 @@ try:
                 badness_adj_re_environ_list.append((badness_adj, reg_exp))
 
 
-except PermissionError:
-    errprint('PermissionError', conf_err_mess)
-    exit(1)
-except UnicodeDecodeError:
-    errprint('UnicodeDecodeError', conf_err_mess)
-    exit(1)
-except IsADirectoryError:
-    errprint('IsADirectoryError', conf_err_mess)
-    exit(1)
-except IndexError:
-    errprint('IndexError', conf_err_mess)
-    exit(1)
-except FileNotFoundError:
-    errprint('FileNotFoundError', conf_err_mess)
+except (PermissionError, UnicodeDecodeError, IsADirectoryError, IndexError,
+        FileNotFoundError) as e:
+    errprint(e)
+    errprint('Invalid config. Exit.')
     exit(1)
 
 
@@ -3644,10 +3514,7 @@ except Exception as e:
         log('WARNING: PSI metrics are not provided by the kernel: {}'.format(
             e))
 
-if PSI_KERNEL_OK and psi_checking_enabled:
-    CHECK_PSI = True
-else:
-    CHECK_PSI = False
+CHECK_PSI = bool(PSI_KERNEL_OK and psi_checking_enabled)
 
 zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
 
@@ -3873,10 +3740,7 @@ else:
 
 if 'warning_exe' in config_dict:
     warning_exe = config_dict['warning_exe']
-    if warning_exe != '':
-        check_warning_exe = True
-    else:
-        check_warning_exe = False
+    check_warning_exe = bool(warning_exe != '')
 else:
     missing_config_key('warning_exe')
 
@@ -3929,12 +3793,7 @@ else:
 
 over_sleep = min_sleep
 sensitivity_test_time = over_sleep / 4
-
-
-if max_sleep == min_sleep:
-    stable_sleep = True
-else:
-    stable_sleep = False
+stable_sleep = bool(max_sleep == min_sleep)
 
 
 if print_proc_table_flag:
@@ -4047,7 +3906,6 @@ mem_info = None
 
 
 psi_kill_exceeded_timer = psi_term_exceeded_timer = -0.0001
-psi_t0 = monotonic()
 psi_threshold = zram_threshold = zram_info = psi_info = None
 
 
@@ -4133,39 +3991,30 @@ while True:
         zram_threshold, zram_info, mem_used_zram = check_zram_ex()
 
     if CHECK_PSI:
-        (psi_threshold, psi_info, psi_t0, psi_kill_exceeded_timer,
+        (psi_threshold, psi_info, psi_kill_exceeded_timer,
          psi_term_exceeded_timer, x0) = check_psi_ex(
-             psi_t0, psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
+             psi_kill_exceeded_timer, psi_term_exceeded_timer, x0,
              mem_available)
 
     if print_mem_check_results:
 
         if CHECK_PSI:
             psi_avg_value = find_psi_metrics_value(psi_path, psi_metrics)
-            if monotonic() - psi_t0 >= psi_post_action_delay:
-                psi_post_action_delay_exceeded = True
-            else:
-                psi_post_action_delay_exceeded = False
-
+            psi_post_action_delay_exceeded = bool(
+                monotonic() >= psi_post_action_delay)
             if print_mem_check_results:
                 psi_avg_string = 'PSI: {} | '.format(
                     str(psi_avg_value).rjust(6))
 
         wt1 = monotonic()
-
         delta = (mem_available + swap_free) - new_mem
-
         t_cycle = wt1 - wt2
-
         report_delta = wt1 - report0
 
         if report_delta >= min_mem_report_interval:
-
             mem_report = True
             new_mem = mem_available + swap_free
-
             report0 = wt1
-
         else:
             mem_report = False
 
@@ -4175,8 +4024,7 @@ while True:
 
             speed = delta / 1024.0 / report_delta
             speed_info = ' | dMem: {} M/s'.format(
-                str(round(speed)).rjust(5)
-            )
+                str(round(speed)).rjust(5))
 
             # Calculate 'swap-column' width
             swap_len = len(str(round(swap_total / 1024.0)))
@@ -4187,9 +4035,7 @@ while True:
                     psi_avg_string,
                     human(mem_available, mem_len),
                     just_percent_mem(mem_available / mem_total),
-                    speed_info
-                )
-                )
+                    speed_info))
 
             elif swap_total > 0 and mem_used_zram == 0:
                 log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} %{}'.format(
@@ -4198,9 +4044,7 @@ while True:
                     just_percent_mem(mem_available / mem_total),
                     human(swap_free, swap_len),
                     just_percent_swap(swap_free / (swap_total + 0.1)),
-                    speed_info
-                )
-                )
+                    speed_info))
 
             else:
                 log('{}MemAvail: {} M, {} % | SwapFree: {} M, {} % | Mem'
@@ -4212,9 +4056,7 @@ while True:
                         just_percent_swap(swap_free / (swap_total + 0.1)),
                         human(mem_used_zram, mem_len),
                         just_percent_mem(mem_used_zram / mem_total),
-                        speed_info
-                    )
-                    )
+                        speed_info))
 
     if (masf_threshold == SIGKILL or zram_threshold == SIGKILL or
             psi_threshold == SIGKILL):
@@ -4231,10 +4073,9 @@ while True:
         if psi_info is not None:
             mem_info_list.append(psi_info)
 
-        psi_t0 = implement_corrective_action(
+        implement_corrective_action(
             threshold,
             mem_info_list,
-            psi_t0,
             psi_kill_exceeded_timer,
             psi_term_exceeded_timer,
             x0, psi_threshold, zram_threshold, zram_info, psi_info)
@@ -4256,10 +4097,9 @@ while True:
 
             mem_info_list.append(psi_info)
 
-        psi_t0 = implement_corrective_action(
+        implement_corrective_action(
             threshold,
             mem_info_list,
-            psi_t0,
             psi_kill_exceeded_timer,
             psi_term_exceeded_timer,
             x0, psi_threshold, zram_threshold, zram_info, psi_info)
