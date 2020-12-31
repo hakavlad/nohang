@@ -38,7 +38,7 @@ Also look at these discussions:
 ## Solution
 
 Use one of the userspace OOM killers:
-- [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation.
+- [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM prevention daemon written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation (and F33 KDE).
 - [oomd](https://github.com/facebookincubator/oomd): This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/): There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor): It's used by default on [Endless OS](https://endlessos.com/).
@@ -129,7 +129,7 @@ $ sudo yum install nohang
 $ sudo systemctl enable nohang.service
 $ sudo systemctl start nohang.service
 ```
-PSI support may be enabled on RHEL 8 by passind `psi=1` to kernel boot cmdline.
+To enable PSI on RHEL 8 pass `psi=1` to kernel boot cmdline.
 
 #### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/)
 
