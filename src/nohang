@@ -948,7 +948,7 @@ def get_victim_id(pid):
 
 
 def pid_to_state(pid):
-    """ ПЕРЕПИСАТЬ НАХРЕН - С БИН ЧТЕНИЕМ И НУЛЕВЫМ БУФЕРОМ==
+    """
     """
     try:
         with open('/proc/' + pid + '/stat', 'rb') as f:
