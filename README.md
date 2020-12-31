@@ -128,6 +128,7 @@ $ sudo yum install nohang
 $ sudo systemctl enable nohang.service
 $ sudo systemctl start nohang.service
 ```
+PSI support may be enabled on RHEL 8 by passind `psi=1` to kernel boot cmdline.
 
 #### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/)
 
