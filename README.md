@@ -64,6 +64,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
     - Low memory warnings.
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger);
 - [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support;
+- Opt-in checking kmsg for OOM;
 - Easy setup with configuration files ([nohang.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in), [nohang-desktop.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang-desktop.conf.in)).
 
 ## Demo
