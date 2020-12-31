@@ -64,7 +64,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
     - Low memory warnings.
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger);
 - [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support;
-- Opt-in checking kmsg for OOM;
+- Support for checking the OOM events in kmsg;
 - Easy setup with configuration files ([nohang.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in), [nohang-desktop.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang-desktop.conf.in)).
 
 ## Demo
@@ -148,6 +148,7 @@ $ sudo apt update
 $ sudo apt install nohang
 $ sudo systemctl enable --now nohang-desktop.service
 ```
+Outdated and buggy nohang v0.1 release was packaged for [Debian 11](https://packages.debian.org/bullseye/source/nohang) and [Ubuntu 20.10](https://packages.ubuntu.com/source/groovy/nohang).
 
 #### To install on Debian and Ubuntu-based systems:
 
