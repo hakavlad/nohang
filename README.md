@@ -38,16 +38,16 @@ Also look at these discussions:
 ## Solution
 
 Use one of the userspace OOM killers:
-- Use of [earlyoom](https://github.com/rfjakob/earlyoom). This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation.
-- Use of [oomd](https://github.com/facebookincubator/oomd). This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
-- Use of [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/). There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
-- Use of [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor). It's used by default on [Endless OS](https://endlessos.com/).
-- Use of `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning.
+- [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM preventer written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation.
+- [oomd](https://github.com/facebookincubator/oomd): This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
+- [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/): There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
+- [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor): It's used by default on [Endless OS](https://endlessos.com/).
+- `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning. It's used by default on [Garuda Linux](https://garudalinux.org/).
 
 Use these tools to improve responsiveness during heavy swapping:
 - [le9-patch](https://github.com/hakavlad/le9-patch): Protect active file pages to prevent thrashing and improve responsiveness under low-memory conditions. It's kernel-side solution that can fix OOM killer behavior.
-- [prelockd](https://github.com/hakavlad/prelockd): Lock shared libraries and executables in memory to improve system responsiveness under low-memory conditions.
-- [memavaild](https://github.com/hakavlad/memavaild): Keep amount of available memory by by evicting memory of selected cgroups into swap space.
+- [prelockd](https://github.com/hakavlad/prelockd): Lock executables and shared libraries in memory to improve system responsiveness under low-memory conditions.
+- [memavaild](https://github.com/hakavlad/memavaild): Keep amount of available memory by evicting memory of selected cgroups into swap space.
 - [uresourced](https://gitlab.freedesktop.org/benzea/uresourced): This daemon will give resource allocations to active graphical users. It's [enabled by default](https://fedoraproject.org/wiki/Changes/Reserve_resources_for_active_user_WS) on Fedora 33 Workstation.
 
 Of course, you can also [download more RAM](https://downloadmoreram.com/), tune [virtual memory](https://www.kernel.org/doc/Documentation/sysctl/vm.txt), use [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt)/[zswap](https://www.kernel.org/doc/Documentation/vm/zswap.txt) and use [limits](https://www.freedesktop.org/software/systemd/man/systemd.resource-control.html) for cgroups.
