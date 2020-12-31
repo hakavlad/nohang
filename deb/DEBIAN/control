@@ -1,5 +1,5 @@
 Package: nohang
-Version: 0.1
+Version: 0.2.0
 Section: admin
 Architecture: all
 Depends: python3
