@@ -61,10 +61,10 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
     - `kill -INT $PID` (you can override the signal sent to the victim, $PID will be replaced by the victim's PID).
 - GUI notifications:
     - Notification of corrective actions taken and displaying the name and PID of the victim;
-    - Low memory warnings (displays available memory).
+    - Low memory warnings.
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger);
 - [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support;
-- Easy configuration with a commented [config file](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in).
+- Easy setup with configuration files ([nohang.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in), [nohang-desktop.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang-desktop.conf.in)).
 
 ## Demo
 
@@ -114,13 +114,13 @@ To show GUI notifications (optional):
 
 ## How to install
 
-#### To install on Fedora 30+:
+#### To install on Fedora:
 ```bash
 $ sudo dnf install nohang-desktop
 $ sudo systemctl enable --now nohang-desktop.service
 ```
 
-#### To install on CentOS 7 and RHEL 8:
+#### To install on RHEL 7 and RHEL 8:
 
 nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
@@ -128,8 +128,6 @@ $ sudo yum install nohang
 $ sudo systemctl enable nohang.service
 $ sudo systemctl start nohang.service
 ```
-
-Also for RPM-based Linux distributions (Fedora, RHEL, openSUSE) there is a [Copr package](https://copr.fedorainfracloud.org/coprs/atim/nohang/).
 
 #### For Arch Linux there's an [AUR package](https://aur.archlinux.org/packages/nohang-git/)
 
