@@ -64,7 +64,7 @@ Of course, you can also [download more RAM](https://downloadmoreram.com/), tune 
     - Low memory warnings.
 - [zram](https://www.kernel.org/doc/Documentation/blockdev/zram.txt) support (`mem_used_total` as a trigger);
 - [PSI](https://lwn.net/Articles/759658/) ([pressure stall information](https://facebookmicrosites.github.io/psi/)) support;
-- Support for checking the OOM events in kmsg;
+- Optional checking kernel messages for OOM events;
 - Easy setup with configuration files ([nohang.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang.conf.in), [nohang-desktop.conf](https://github.com/hakavlad/nohang/blob/master/conf/nohang/nohang-desktop.conf.in)).
 
 ## Demo
@@ -148,9 +148,10 @@ $ sudo apt update
 $ sudo apt install nohang
 $ sudo systemctl enable --now nohang-desktop.service
 ```
-Outdated and buggy nohang v0.1 release was packaged for [Debian 11](https://packages.debian.org/bullseye/source/nohang) and [Ubuntu 20.10](https://packages.ubuntu.com/source/groovy/nohang).
 
 #### To install on Debian and Ubuntu-based systems:
+
+Outdated and buggy nohang v0.1 release was packaged for [Debian 11](https://packages.debian.org/bullseye/source/nohang) and [Ubuntu 20.10](https://packages.ubuntu.com/source/groovy/nohang).
 
 It's easy to build a deb package with the latest git snapshot. Install build dependencies:
 ```bash
@@ -256,18 +257,19 @@ optional arguments:
 
 The program can be configured by editing the config file. The configuration includes the following sections:
 
-1. Common zram settings
-2. Common PSI settings
-3. Poll rate
-4. Warnings and notifications
-5. Soft threshold
-6. Hard threshold
-7. Customize victim selection
-8. Customize soft corrective actions
-9. Misc settings
-10. Verbosity, debug, logging
+0. Checking kernel messages for OOM events;
+1. Common zram settings;
+2. Common PSI settings;
+3. Poll rate;
+4. Warnings and notifications;
+5. Soft threshold;
+6. Hard threshold;
+7. Customize victim selection;
+8. Customize soft corrective actions;
+9. Misc settings;
+10. Verbosity, debug, logging.
 
-Just read the description of the parameters and edit the values. Please restart nohang to apply the changes.
+Just read the description of the parameters and edit the values. Please restart the daemon to apply the changes.
 
 ## How to test nohang
 
