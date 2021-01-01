@@ -4,9 +4,9 @@ sort processes by oom_score
 """
 
 
+from argparse import ArgumentParser
 from operator import itemgetter
 from os import listdir
-from argparse import ArgumentParser
 
 
 def pid_to_oom_score(pid):
@@ -96,7 +96,8 @@ sort_by = args.sort
 
 
 if sort_by not in sort_dict:
-    print('Invalid -s/--sort value. Valid values are:\n' + '\n'.join(sort_dict) + '\n  default is oom_score')
+    print('Invalid -s/--sort value. Valid values are:\nPID\noom_score [defau'
+          'lt value]\noom_score_adj\nUID\nName\ncmdline\nVmRSS\nVmSwap')
     exit()
 
 
