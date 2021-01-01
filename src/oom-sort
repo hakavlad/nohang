@@ -96,9 +96,7 @@ sort_by = args.sort
 
 
 if sort_by not in sort_dict:
-    print('Invalid -s/--sort value. Valid values are:\nPID\noom_scor'
-          'e [default value]\noom-sore_adj\nUID\nName\ncmdline\nVmR'
-          'SS\nVmSwap')
+    print('Invalid -s/--sort value. Valid values are:\n' + '\n'.join(sort_dict) + '\n  default is oom_score')
     exit()
 
 
