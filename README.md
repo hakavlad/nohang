@@ -46,7 +46,7 @@ Use one of the userspace OOM killers:
 - `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning. It's used by default on [Garuda Linux](https://garudalinux.org/).
 
 Use these tools to improve responsiveness during heavy swapping:
-- [le9-patch](https://github.com/hakavlad/le9-patch): Protect active file pages to prevent thrashing and improve responsiveness under low-memory conditions. It's kernel-side solution that can fix OOM killer behavior.
+- [le9-patch](https://github.com/hakavlad/le9-patch): [PATCH] mm: Protect file pages under memory pressure to prevent thrashing, avoid high latency and prevent livelock in near-OOM conditions. It's kernel-side solution that can fix the OOM killer behavior.
 - [prelockd](https://github.com/hakavlad/prelockd): Lock executables and shared libraries in memory to improve system responsiveness under low-memory conditions.
 - [memavaild](https://github.com/hakavlad/memavaild): Keep amount of available memory by evicting memory of selected cgroups into swap space.
 - [uresourced](https://gitlab.freedesktop.org/benzea/uresourced): This daemon will give resource allocations to active graphical users. It's [enabled by default](https://fedoraproject.org/wiki/Changes/Reserve_resources_for_active_user_WS) on Fedora 33 Workstation.
