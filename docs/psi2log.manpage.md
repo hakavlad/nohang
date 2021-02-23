@@ -24,7 +24,7 @@ interval in sec
 path to log file
 
 #### -m MODE, --mode MODE
-mode (1 or 2)
+mode (0, 1 or 2)
 
 #### -s SUPPRESS_OUTPUT, --suppress-output SUPPRESS_OUTPUT
 suppress output

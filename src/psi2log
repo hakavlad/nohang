@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """psi2log - PSI metrics monitor and logger"""
 
-from time import sleep, monotonic
-from ctypes import CDLL
-from sys import stdout, exit
 from argparse import ArgumentParser
-from signal import signal, SIGTERM, SIGINT, SIGQUIT, SIGHUP
+from ctypes import CDLL
+from signal import SIGHUP, SIGINT, SIGQUIT, SIGTERM, signal
+from sys import exit, stdout
+from time import monotonic, sleep
 
 
 def read_path(path):
@@ -65,7 +65,7 @@ def signal_handler(signum, frame):
 
     lpd = len(peaks_dict)
 
-    if lpd == 15:  # mode 1
+    if lpd == 15:  # mode 0 or 1
 
         log('=================================')
         log('Peak values:  avg10  avg60 avg300')
@@ -150,11 +150,13 @@ def mlockall():
     if result != 0:
         result = libc.mlockall(MCL_CURRENT | MCL_FUTURE)
         if result != 0:
-            log('WARNING: cannot lock all memory: [Errno {}]'.format(result))
+            log('WARNING: cannot lock process memory: [Errno {}]'.format(
+                result))
         else:
-            log('All memory locked with MCL_CURRENT | MCL_FUTURE')
+            log('Prosess memory locked with MCL_CURRENT | MCL_FUTURE')
     else:
-        log('All memory locked with MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
+        log('Process memory locked with '
+            'MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT')
 
 
 def psi_file_mem_to_metrics0(psi_path):
@@ -209,7 +211,6 @@ def psi_file_cpu_to_metrics(psi_path):
         return None
 
     try:
-
         psi_list = foo.split('\n')
 
         some_list = psi_list[0].split(' ')
@@ -232,7 +233,6 @@ def psi_file_mem_to_total(psi_path):
         return None
 
     try:
-
         psi_list = foo.split('\n')
 
         some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
@@ -255,7 +255,6 @@ def psi_file_cpu_to_total(psi_path):
         return None
 
     try:
-
         psi_list = foo.split('\n')
 
         some_list = psi_list[0].split(' ')
@@ -266,6 +265,24 @@ def psi_file_cpu_to_total(psi_path):
     except Exception as e:
         log('{}'.format(e))
         return None
+
+
+def print_head_0():
+    """
+    """
+    log('==================================================================='
+        '============')
+    log('     cpu      ||               io              ||            memory')
+    log('============= || ============================= || ================='
+        '============')
+    log('     some     ||      some     |      full     ||      some     |  '
+        '     full')
+    log('------------- || ------------- | ------------- || ------------- | -'
+        '------------')
+    log(' avg10  avg60 ||  avg10  avg60 |  avg10  avg60 ||  avg10  avg60 |  '
+        'avg10  avg60')
+    log('------ ------ || ------ ------ | ------ ------ || ------ ------ | -'
+        '----- ------')
 
 
 def print_head_1():
@@ -314,9 +331,6 @@ def log_head(*msg):
         logging.info(*msg)
 
 
-##############################################################################
-
-
 parser = ArgumentParser()
 
 parser.add_argument(
@@ -349,8 +363,8 @@ parser.add_argument(
 parser.add_argument(
     '-m',
     '--mode',
-    help="""mode (1 or 2)""",
-    default='1',
+    help="""mode (0, 1 or 2)""",
+    default='0',
     type=str
 )
 
@@ -373,9 +387,6 @@ suppress_output = args.suppress_output
 
 if target != 'SYSTEM_WIDE':
     target = '/' + target.strip('/')
-
-
-##############################################################################
 
 
 if log_file is None:
@@ -423,8 +434,8 @@ if interval < 1:
     exit(1)
 
 
-if not (mode == '1' or mode == '2'):
-    log_head('ERROR: invalid mode. Valid values are 1 and 2. Exit.')
+if not (mode == '0' or mode == '1' or mode == '2'):
+    log_head('ERROR: invalid mode. Valid values are 0, 1 and 2. Exit.')
     exit(1)
 
 
@@ -478,206 +489,326 @@ peaks_dict = dict()
 mlockall()
 
 
-if mode == '2':
+if mode == '0':
 
-    print_head_2()
-
-    try:
-
-        total_cs0 = psi_file_cpu_to_total(cpu_file)
-        total_is0, total_if0 = psi_file_mem_to_total(io_file)
-        total_ms0, total_mf0 = psi_file_mem_to_total(memory_file)
-        monotonic0 = monotonic()
-        stdout.flush()
-        sleep(interval)
-
-    except TypeError:
-        stdout.flush()
-        sleep(interval)
+    print_head_0()
 
     while True:
 
         try:
 
-            total_cs1 = psi_file_cpu_to_total(cpu_file)
-            total_is1, total_if1 = psi_file_mem_to_total(io_file)
-            total_ms1, total_mf1 = psi_file_mem_to_total(memory_file)
-            monotonic1 = monotonic()
-            dm = monotonic1 - monotonic0
+            (c_some_avg10, c_some_avg60, c_some_avg300
+             ) = psi_file_cpu_to_metrics(cpu_file)
 
-            if dm > abnormal_interval and dm - interval > 0.05:
-                log('WARNING: abnormal interval ({} sec), metrics may be prov'
-                    'ided incorrect'.format(round(dm, 3)))
+            (i_some_avg10, i_some_avg60, i_some_avg300,
+             i_full_avg10, i_full_avg60, i_full_avg300
+             ) = psi_file_mem_to_metrics(io_file)
 
-            monotonic0 = monotonic1
+            (m_some_avg10, m_some_avg60, m_some_avg300,
+             m_full_avg10, m_full_avg60, m_full_avg300
+             ) = psi_file_mem_to_metrics(memory_file)
 
         except TypeError:
             stdout.flush()
             sleep(interval)
             continue
 
-        dtotal_cs = total_cs1 - total_cs0
-        avg_cs = dtotal_cs / dm / 10000
-        if 'avg_cs' not in peaks_dict or peaks_dict['avg_cs'] < avg_cs:
-            peaks_dict['avg_cs'] = avg_cs
-        total_cs0 = total_cs1
+        log('{:>6} {:>6} || {:>6} {:>6} | {:>6} {:>6} || {:>6} {:>6} | {:>6} '
+            '{:>6}'.format(
 
-        dtotal_is = total_is1 - total_is0
-        avg_is = dtotal_is / dm / 10000
-        if 'avg_is' not in peaks_dict or peaks_dict['avg_is'] < avg_is:
-            peaks_dict['avg_is'] = avg_is
-        total_is0 = total_is1
+                c_some_avg10, c_some_avg60,
 
-        dtotal_if = total_if1 - total_if0
-        avg_if = dtotal_if / dm / 10000
-        if 'avg_if' not in peaks_dict or peaks_dict['avg_if'] < avg_if:
-            peaks_dict['avg_if'] = avg_if
-        total_if0 = total_if1
+                i_some_avg10, i_some_avg60,
+                i_full_avg10, i_full_avg60,
 
-        dtotal_ms = total_ms1 - total_ms0
-        avg_ms = dtotal_ms / dm / 10000
-        if 'avg_ms' not in peaks_dict or peaks_dict['avg_ms'] < avg_ms:
-            peaks_dict['avg_ms'] = avg_ms
-        total_ms0 = total_ms1
+                m_some_avg10, m_some_avg60,
+                m_full_avg10, m_full_avg60
 
-        dtotal_mf = total_mf1 - total_mf0
-        avg_mf = dtotal_mf / dm / 10000
-        if 'avg_mf' not in peaks_dict or peaks_dict['avg_mf'] < avg_mf:
-            peaks_dict['avg_mf'] = avg_mf
-        total_mf0 = total_mf1
+            ))
 
-        log('{:>5} | {:>5} {:>5} | {:>5} {:>5} | {}'.format(
+        c_some_avg10 = float(c_some_avg10)
+        if ('c_some_avg10' not in peaks_dict or
+                peaks_dict['c_some_avg10'] < c_some_avg10):
+            peaks_dict['c_some_avg10'] = c_some_avg10
 
-            round(avg_cs, 1),
+        c_some_avg60 = float(c_some_avg60)
+        if ('c_some_avg60' not in peaks_dict or
+                peaks_dict['c_some_avg60'] < c_some_avg60):
+            peaks_dict['c_some_avg60'] = c_some_avg60
 
-            round(avg_is, 1),
-            round(avg_if, 1),
+        c_some_avg300 = float(c_some_avg300)
+        if ('c_some_avg300' not in peaks_dict or
+                peaks_dict['c_some_avg300'] < c_some_avg300):
+            peaks_dict['c_some_avg300'] = c_some_avg300
 
-            round(avg_ms, 1),
-            round(avg_mf, 1),
+        #######################################################################
 
-            round(dm, 3)
+        i_some_avg10 = float(i_some_avg10)
+        if ('i_some_avg10' not in peaks_dict or
+                peaks_dict['i_some_avg10'] < i_some_avg10):
+            peaks_dict['i_some_avg10'] = i_some_avg10
 
-        ))
+        i_some_avg60 = float(i_some_avg60)
+        if ('i_some_avg60' not in peaks_dict or
+                peaks_dict['i_some_avg60'] < i_some_avg60):
+            peaks_dict['i_some_avg60'] = i_some_avg60
+
+        i_some_avg300 = float(i_some_avg300)
+        if ('i_some_avg300' not in peaks_dict or
+                peaks_dict['i_some_avg300'] < i_some_avg300):
+            peaks_dict['i_some_avg300'] = i_some_avg300
+
+        i_full_avg10 = float(i_full_avg10)
+        if ('i_full_avg10' not in peaks_dict or
+                peaks_dict['i_full_avg10'] < i_full_avg10):
+            peaks_dict['i_full_avg10'] = i_full_avg10
+
+        i_full_avg60 = float(i_full_avg60)
+        if ('i_full_avg60' not in peaks_dict or
+                peaks_dict['i_full_avg60'] < i_full_avg60):
+            peaks_dict['i_full_avg60'] = i_full_avg60
+
+        i_full_avg300 = float(i_full_avg300)
+        if ('i_full_avg300' not in peaks_dict or
+                peaks_dict['i_full_avg300'] < i_full_avg300):
+            peaks_dict['i_full_avg300'] = i_full_avg300
+
+        #######################################################################
+
+        m_some_avg10 = float(m_some_avg10)
+        if ('m_some_avg10' not in peaks_dict or
+                peaks_dict['m_some_avg10'] < m_some_avg10):
+            peaks_dict['m_some_avg10'] = m_some_avg10
+
+        m_some_avg60 = float(m_some_avg60)
+        if ('m_some_avg60' not in peaks_dict or
+                peaks_dict['m_some_avg60'] < m_some_avg60):
+            peaks_dict['m_some_avg60'] = m_some_avg60
+
+        m_some_avg300 = float(m_some_avg300)
+        if ('m_some_avg300' not in peaks_dict or
+                peaks_dict['m_some_avg300'] < m_some_avg300):
+            peaks_dict['m_some_avg300'] = m_some_avg300
+
+        m_full_avg10 = float(m_full_avg10)
+        if ('m_full_avg10' not in peaks_dict or
+                peaks_dict['m_full_avg10'] < m_full_avg10):
+            peaks_dict['m_full_avg10'] = m_full_avg10
+
+        m_full_avg60 = float(m_full_avg60)
+        if ('m_full_avg60' not in peaks_dict or
+                peaks_dict['m_full_avg60'] < m_full_avg60):
+            peaks_dict['m_full_avg60'] = m_full_avg60
+
+        m_full_avg300 = float(m_full_avg300)
+        if ('m_full_avg300' not in peaks_dict or
+                peaks_dict['m_full_avg300'] < m_full_avg300):
+            peaks_dict['m_full_avg300'] = m_full_avg300
 
         stdout.flush()
         sleep(interval)
 
 
-print_head_1()
+if mode == '1':
 
+    print_head_1()
+
+    while True:
+
+        try:
+
+            (c_some_avg10, c_some_avg60, c_some_avg300
+             ) = psi_file_cpu_to_metrics(cpu_file)
+
+            (i_some_avg10, i_some_avg60, i_some_avg300,
+             i_full_avg10, i_full_avg60, i_full_avg300
+             ) = psi_file_mem_to_metrics(io_file)
+
+            (m_some_avg10, m_some_avg60, m_some_avg300,
+             m_full_avg10, m_full_avg60, m_full_avg300
+             ) = psi_file_mem_to_metrics(memory_file)
+
+        except TypeError:
+            stdout.flush()
+            sleep(interval)
+            continue
+
+        log('{:>6} {:>6} {:>6} || {:>6} {:>6} {:>6} | {:>6} {:>6} {:>6} || '
+            '{:>6} {:>6} {:>6} | {:>6} {:>6} {:>6}'.format(
+
+                c_some_avg10, c_some_avg60, c_some_avg300,
+
+                i_some_avg10, i_some_avg60, i_some_avg300,
+                i_full_avg10, i_full_avg60, i_full_avg300,
+
+                m_some_avg10, m_some_avg60, m_some_avg300,
+                m_full_avg10, m_full_avg60, m_full_avg300
+
+            ))
+
+        c_some_avg10 = float(c_some_avg10)
+        if ('c_some_avg10' not in peaks_dict or
+                peaks_dict['c_some_avg10'] < c_some_avg10):
+            peaks_dict['c_some_avg10'] = c_some_avg10
+
+        c_some_avg60 = float(c_some_avg60)
+        if ('c_some_avg60' not in peaks_dict or
+                peaks_dict['c_some_avg60'] < c_some_avg60):
+            peaks_dict['c_some_avg60'] = c_some_avg60
+
+        c_some_avg300 = float(c_some_avg300)
+        if ('c_some_avg300' not in peaks_dict or
+                peaks_dict['c_some_avg300'] < c_some_avg300):
+            peaks_dict['c_some_avg300'] = c_some_avg300
+
+        #######################################################################
+
+        i_some_avg10 = float(i_some_avg10)
+        if ('i_some_avg10' not in peaks_dict or
+                peaks_dict['i_some_avg10'] < i_some_avg10):
+            peaks_dict['i_some_avg10'] = i_some_avg10
+
+        i_some_avg60 = float(i_some_avg60)
+        if ('i_some_avg60' not in peaks_dict or
+                peaks_dict['i_some_avg60'] < i_some_avg60):
+            peaks_dict['i_some_avg60'] = i_some_avg60
+
+        i_some_avg300 = float(i_some_avg300)
+        if ('i_some_avg300' not in peaks_dict or
+                peaks_dict['i_some_avg300'] < i_some_avg300):
+            peaks_dict['i_some_avg300'] = i_some_avg300
+
+        i_full_avg10 = float(i_full_avg10)
+        if ('i_full_avg10' not in peaks_dict or
+                peaks_dict['i_full_avg10'] < i_full_avg10):
+            peaks_dict['i_full_avg10'] = i_full_avg10
+
+        i_full_avg60 = float(i_full_avg60)
+        if ('i_full_avg60' not in peaks_dict or
+                peaks_dict['i_full_avg60'] < i_full_avg60):
+            peaks_dict['i_full_avg60'] = i_full_avg60
+
+        i_full_avg300 = float(i_full_avg300)
+        if ('i_full_avg300' not in peaks_dict or
+                peaks_dict['i_full_avg300'] < i_full_avg300):
+            peaks_dict['i_full_avg300'] = i_full_avg300
+
+        #######################################################################
+
+        m_some_avg10 = float(m_some_avg10)
+        if ('m_some_avg10' not in peaks_dict or
+                peaks_dict['m_some_avg10'] < m_some_avg10):
+            peaks_dict['m_some_avg10'] = m_some_avg10
+
+        m_some_avg60 = float(m_some_avg60)
+        if ('m_some_avg60' not in peaks_dict or
+                peaks_dict['m_some_avg60'] < m_some_avg60):
+            peaks_dict['m_some_avg60'] = m_some_avg60
+
+        m_some_avg300 = float(m_some_avg300)
+        if ('m_some_avg300' not in peaks_dict or
+                peaks_dict['m_some_avg300'] < m_some_avg300):
+            peaks_dict['m_some_avg300'] = m_some_avg300
+
+        m_full_avg10 = float(m_full_avg10)
+        if ('m_full_avg10' not in peaks_dict or
+                peaks_dict['m_full_avg10'] < m_full_avg10):
+            peaks_dict['m_full_avg10'] = m_full_avg10
+
+        m_full_avg60 = float(m_full_avg60)
+        if ('m_full_avg60' not in peaks_dict or
+                peaks_dict['m_full_avg60'] < m_full_avg60):
+            peaks_dict['m_full_avg60'] = m_full_avg60
+
+        m_full_avg300 = float(m_full_avg300)
+        if ('m_full_avg300' not in peaks_dict or
+                peaks_dict['m_full_avg300'] < m_full_avg300):
+            peaks_dict['m_full_avg300'] = m_full_avg300
+
+        stdout.flush()
+        sleep(interval)
+
+
+print_head_2()
+
+try:
+
+    total_cs0 = psi_file_cpu_to_total(cpu_file)
+    total_is0, total_if0 = psi_file_mem_to_total(io_file)
+    total_ms0, total_mf0 = psi_file_mem_to_total(memory_file)
+    monotonic0 = monotonic()
+    stdout.flush()
+    sleep(interval)
+
+except TypeError:
+    stdout.flush()
+    sleep(interval)
 
 while True:
 
     try:
 
-        (c_some_avg10, c_some_avg60, c_some_avg300
-         ) = psi_file_cpu_to_metrics(cpu_file)
+        total_cs1 = psi_file_cpu_to_total(cpu_file)
+        total_is1, total_if1 = psi_file_mem_to_total(io_file)
+        total_ms1, total_mf1 = psi_file_mem_to_total(memory_file)
+        monotonic1 = monotonic()
+        dm = monotonic1 - monotonic0
 
-        (i_some_avg10, i_some_avg60, i_some_avg300,
-         i_full_avg10, i_full_avg60, i_full_avg300
-         ) = psi_file_mem_to_metrics(io_file)
+        if dm > abnormal_interval and dm - interval > 0.05:
+            log('WARNING: abnormal interval ({} sec), metrics may be prov'
+                'ided incorrect'.format(round(dm, 3)))
 
-        (m_some_avg10, m_some_avg60, m_some_avg300,
-         m_full_avg10, m_full_avg60, m_full_avg300
-         ) = psi_file_mem_to_metrics(memory_file)
+        monotonic0 = monotonic1
 
     except TypeError:
         stdout.flush()
         sleep(interval)
         continue
 
-    log('{:>6} {:>6} {:>6} || {:>6} {:>6} {:>6} | {:>6} {:>6} {:>6} || {:>6}'
-        ' {:>6} {:>6} | {:>6} {:>6} {:>6}'.format(
+    dtotal_cs = total_cs1 - total_cs0
+    avg_cs = dtotal_cs / dm / 10000
+    if 'avg_cs' not in peaks_dict or peaks_dict['avg_cs'] < avg_cs:
+        peaks_dict['avg_cs'] = avg_cs
+    total_cs0 = total_cs1
 
-            c_some_avg10, c_some_avg60, c_some_avg300,
+    dtotal_is = total_is1 - total_is0
+    avg_is = dtotal_is / dm / 10000
+    if 'avg_is' not in peaks_dict or peaks_dict['avg_is'] < avg_is:
+        peaks_dict['avg_is'] = avg_is
+    total_is0 = total_is1
 
-            i_some_avg10, i_some_avg60, i_some_avg300,
-            i_full_avg10, i_full_avg60, i_full_avg300,
+    dtotal_if = total_if1 - total_if0
+    avg_if = dtotal_if / dm / 10000
+    if 'avg_if' not in peaks_dict or peaks_dict['avg_if'] < avg_if:
+        peaks_dict['avg_if'] = avg_if
+    total_if0 = total_if1
 
-            m_some_avg10, m_some_avg60, m_some_avg300,
-            m_full_avg10, m_full_avg60, m_full_avg300
+    dtotal_ms = total_ms1 - total_ms0
+    avg_ms = dtotal_ms / dm / 10000
+    if 'avg_ms' not in peaks_dict or peaks_dict['avg_ms'] < avg_ms:
+        peaks_dict['avg_ms'] = avg_ms
+    total_ms0 = total_ms1
 
-        ))
+    dtotal_mf = total_mf1 - total_mf0
+    avg_mf = dtotal_mf / dm / 10000
+    if 'avg_mf' not in peaks_dict or peaks_dict['avg_mf'] < avg_mf:
+        peaks_dict['avg_mf'] = avg_mf
+    total_mf0 = total_mf1
 
-    c_some_avg10 = float(c_some_avg10)
-    if ('c_some_avg10' not in peaks_dict or
-            peaks_dict['c_some_avg10'] < c_some_avg10):
-        peaks_dict['c_some_avg10'] = c_some_avg10
+    log('{:>5} | {:>5} {:>5} | {:>5} {:>5} | {}'.format(
 
-    c_some_avg60 = float(c_some_avg60)
-    if ('c_some_avg60' not in peaks_dict or
-            peaks_dict['c_some_avg60'] < c_some_avg60):
-        peaks_dict['c_some_avg60'] = c_some_avg60
+        round(avg_cs, 1),
 
-    c_some_avg300 = float(c_some_avg300)
-    if ('c_some_avg300' not in peaks_dict or
-            peaks_dict['c_some_avg300'] < c_some_avg300):
-        peaks_dict['c_some_avg300'] = c_some_avg300
+        round(avg_is, 1),
+        round(avg_if, 1),
 
-    #######################################################################
+        round(avg_ms, 1),
+        round(avg_mf, 1),
 
-    i_some_avg10 = float(i_some_avg10)
-    if ('i_some_avg10' not in peaks_dict or
-            peaks_dict['i_some_avg10'] < i_some_avg10):
-        peaks_dict['i_some_avg10'] = i_some_avg10
+        round(dm, 3)
 
-    i_some_avg60 = float(i_some_avg60)
-    if ('i_some_avg60' not in peaks_dict or
-            peaks_dict['i_some_avg60'] < i_some_avg60):
-        peaks_dict['i_some_avg60'] = i_some_avg60
-
-    i_some_avg300 = float(i_some_avg300)
-    if ('i_some_avg300' not in peaks_dict or
-            peaks_dict['i_some_avg300'] < i_some_avg300):
-        peaks_dict['i_some_avg300'] = i_some_avg300
-
-    i_full_avg10 = float(i_full_avg10)
-    if ('i_full_avg10' not in peaks_dict or
-            peaks_dict['i_full_avg10'] < i_full_avg10):
-        peaks_dict['i_full_avg10'] = i_full_avg10
-
-    i_full_avg60 = float(i_full_avg60)
-    if ('i_full_avg60' not in peaks_dict or
-            peaks_dict['i_full_avg60'] < i_full_avg60):
-        peaks_dict['i_full_avg60'] = i_full_avg60
-
-    i_full_avg300 = float(i_full_avg300)
-    if ('i_full_avg300' not in peaks_dict or
-            peaks_dict['i_full_avg300'] < i_full_avg300):
-        peaks_dict['i_full_avg300'] = i_full_avg300
-
-    #######################################################################
-
-    m_some_avg10 = float(m_some_avg10)
-    if ('m_some_avg10' not in peaks_dict or
-            peaks_dict['m_some_avg10'] < m_some_avg10):
-        peaks_dict['m_some_avg10'] = m_some_avg10
-
-    m_some_avg60 = float(m_some_avg60)
-    if ('m_some_avg60' not in peaks_dict or
-            peaks_dict['m_some_avg60'] < m_some_avg60):
-        peaks_dict['m_some_avg60'] = m_some_avg60
-
-    m_some_avg300 = float(m_some_avg300)
-    if ('m_some_avg300' not in peaks_dict or
-            peaks_dict['m_some_avg300'] < m_some_avg300):
-        peaks_dict['m_some_avg300'] = m_some_avg300
-
-    m_full_avg10 = float(m_full_avg10)
-    if ('m_full_avg10' not in peaks_dict or
-            peaks_dict['m_full_avg10'] < m_full_avg10):
-        peaks_dict['m_full_avg10'] = m_full_avg10
-
-    m_full_avg60 = float(m_full_avg60)
-    if ('m_full_avg60' not in peaks_dict or
-            peaks_dict['m_full_avg60'] < m_full_avg60):
-        peaks_dict['m_full_avg60'] = m_full_avg60
-
-    m_full_avg300 = float(m_full_avg300)
-    if ('m_full_avg300' not in peaks_dict or
-            peaks_dict['m_full_avg300'] < m_full_avg300):
-        peaks_dict['m_full_avg300'] = m_full_avg300
+    ))
 
     stdout.flush()
     sleep(interval)
+
