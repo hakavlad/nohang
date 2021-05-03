@@ -41,12 +41,13 @@ Also look at these discussions:
 Use one of the userspace OOM killers:
 - [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM prevention daemon written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation (and F33 KDE).
 - [oomd](https://github.com/facebookincubator/oomd): This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
+- [systemd-oomd](https://man7.org/linux/man-pages/man8/systemd-oomd.service.8.html): Provided by systemd as `systemd-oomd.service` that uses cgroups-v2 and pressure stall information (PSI) to monitor and take action on processes before an OOM occurs in kernel space. It's used by default on [desktop versions of Fedora 34](https://fedoraproject.org/wiki/Changes/EnableSystemdOomd).
 - [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/): There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor): It's used by default on [Endless OS](https://endlessos.com/).
 - `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning. It's used by default on [Garuda Linux](https://garudalinux.org/).
 
 Use these tools to improve responsiveness during heavy swapping:
-- [le9-patch](https://github.com/hakavlad/le9-patch): [PATCH] mm: Protect file pages under memory pressure to prevent thrashing, avoid high latency and prevent livelock in near-OOM conditions. It's kernel-side solution that can fix the OOM killer behavior.
+- [le9-patch](https://github.com/hakavlad/le9-patch): [PATCH] mm: Protect clean file pages under memory pressure to prevent thrashing, avoid high latency and prevent livelock in near-OOM conditions. It's kernel-side solution that can fix the OOM killer behavior.
 - [prelockd](https://github.com/hakavlad/prelockd): Lock executables and shared libraries in memory to improve system responsiveness under low-memory conditions.
 - [memavaild](https://github.com/hakavlad/memavaild): Keep amount of available memory by evicting memory of selected cgroups into swap space.
 - [uresourced](https://gitlab.freedesktop.org/benzea/uresourced): This daemon will give resource allocations to active graphical users. It's [enabled by default](https://fedoraproject.org/wiki/Changes/Reserve_resources_for_active_user_WS) on Fedora 33 Workstation.
@@ -116,7 +117,7 @@ To show GUI notifications (optional):
 
 ## How to install
 
-#### To install on Fedora:
+#### To install on [Fedora](https://src.fedoraproject.org/rpms/nohang/):
 ```bash
 $ sudo dnf install nohang-desktop
 $ sudo systemctl enable --now nohang-desktop.service
