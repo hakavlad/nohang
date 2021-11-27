@@ -56,30 +56,21 @@ def signal_handler(signum, frame):
     for i in sig_list:
         signal(i, signal_handler_inner)
 
-    if len(fd) > 0:
-        for f in fd:
-            fd[f].close()
-
     if signum == SIGINT:
         print('')
 
     lpd = len(peaks_dict)
 
-    if lpd == 15:  # mode 0 or 1
-
+    if lpd == 15:
         log('=================================')
         log('Peak values:  avg10  avg60 avg300')
-
         log('-----------  ------ ------ ------')
-
         log('some cpu     {:>6} {:>6} {:>6}'.format(
             form1(peaks_dict['c_some_avg10']),
             form1(peaks_dict['c_some_avg60']),
             form1(peaks_dict['c_some_avg300']),
         ))
-
         log('-----------  ------ ------ ------')
-
         log('some io      {:>6} {:>6} {:>6}'.format(
             form1(peaks_dict['i_some_avg10']),
             form1(peaks_dict['i_some_avg60']),
@@ -106,26 +97,72 @@ def signal_handler(signum, frame):
             form1(peaks_dict['m_full_avg300']),
         ))
 
-    if lpd == 5:  # mode 2
-
+    if lpd == 5:
         log('----- | ----- ----- | ----- ----- | --------')
-
         log('{:>5} | {:>5} {:>5} | {:>5} {:>5} | peaks'.format(
-
             form2(peaks_dict['avg_cs']),
-
             form2(peaks_dict['avg_is']),
             form2(peaks_dict['avg_if']),
-
             form2(peaks_dict['avg_ms']),
             form2(peaks_dict['avg_mf'])
-
         ))
+
+    if target == 'SYSTEM_WIDE':
+        log_stall_times()
 
     if separate_log:
         logging.info('')
 
     exit()
+
+
+def log_stall_times():
+    """
+    """
+    total_cs_1 = psi_file_cpu_to_total(cpu_file)
+    total_is_1, total_if_1 = psi_file_mem_to_total(io_file)
+    total_ms_1, total_mf_1 = psi_file_mem_to_total(memory_file)
+    t = monotonic() - t_0
+
+    M = 1000000
+
+    dcs = (total_cs_1 - total_cs_0) / M
+    dis = (total_is_1 - total_is_0) / M
+    dif = (total_if_1 - total_if_0) / M
+    dms = (total_ms_1 - total_ms_0) / M
+    dmf = (total_mf_1 - total_mf_0) / M
+
+    if mode == '0' or mode == '1':
+        log('=================================')
+    else:
+        log('--')
+
+    log('Stall times for the last {}s:'.format(round(t, 1)))
+    log('-----------')
+    log('some cpu     {}s, avg {}%'.format(
+        round(dcs, 1),
+        round(dcs / t * 100, 1)
+    ))
+    log('-----------')
+    log('some io      {}s, avg {}%'.format(
+        round(dis, 1),
+        round(dis / t * 100, 1)
+    ))
+    log('full io      {}s, avg {}%'.format(
+        round(dif, 1),
+        round(dif / t * 100, 1)
+    ))
+    log('-----------')
+
+    log('some memory  {}s, avg {}%'.format(
+        round(dms, 1),
+        round(dms / t * 100, 1)
+    ))
+
+    log('full memory  {}s, avg {}%'.format(
+        round(dmf, 1),
+        round(dmf / t * 100, 1)
+    ))
 
 
 def cgroup2_root():
@@ -144,7 +181,7 @@ def mlockall():
     MCL_FUTURE = 2
     MCL_ONFAULT = 4
 
-    libc = CDLL('libc.so.6', use_errno=True)
+    libc = CDLL(None, use_errno=True)
     result = libc.mlockall(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)
 
     if result != 0:
@@ -184,7 +221,6 @@ def psi_file_mem_to_metrics(psi_path):
         return None
 
     try:
-
         psi_list = foo.split('\n')
 
         some_list, full_list = psi_list[0].split(' '), psi_list[1].split(' ')
@@ -307,7 +343,7 @@ def print_head_1():
 def print_head_2():
     """
     """
-    log('======|=============|=============|')
+    log('----- - ----------- - ----------- -')
     log(' cpu  |      io     |    memory   |')
     log('----- | ----------- | ----------- |')
     log(' some |  some  full |  some  full | interval')
@@ -395,12 +431,6 @@ else:
     separate_log = True
     import logging
 
-
-sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
-
-for i in sig_list:
-    signal(i, signal_handler)
-
 if separate_log:
     try:
         logging.basicConfig(
@@ -481,9 +511,23 @@ else:
 
 
 abnormal_interval = 1.01 * interval
+abnormal_inaccuracy = 0.05
+
+
+if target == 'SYSTEM_WIDE':
+    total_cs_0 = psi_file_cpu_to_total(cpu_file)
+    total_is_0, total_if_0 = psi_file_mem_to_total(io_file)
+    total_ms_0, total_mf_0 = psi_file_mem_to_total(memory_file)
+    t_0 = monotonic()
 
 
 peaks_dict = dict()
+
+
+sig_list = [SIGTERM, SIGINT, SIGQUIT, SIGHUP]
+
+for i in sig_list:
+    signal(i, signal_handler)
 
 
 mlockall()
@@ -744,6 +788,8 @@ except TypeError:
     stdout.flush()
     sleep(interval)
 
+TT = 10000
+
 while True:
 
     try:
@@ -754,7 +800,7 @@ while True:
         monotonic1 = monotonic()
         dm = monotonic1 - monotonic0
 
-        if dm > abnormal_interval and dm - interval > 0.05:
+        if dm > abnormal_interval and dm - interval > abnormal_inaccuracy:
             log('WARNING: abnormal interval ({} sec), metrics may be prov'
                 'ided incorrect'.format(round(dm, 3)))
 
@@ -766,31 +812,31 @@ while True:
         continue
 
     dtotal_cs = total_cs1 - total_cs0
-    avg_cs = dtotal_cs / dm / 10000
+    avg_cs = dtotal_cs / dm / TT
     if 'avg_cs' not in peaks_dict or peaks_dict['avg_cs'] < avg_cs:
         peaks_dict['avg_cs'] = avg_cs
     total_cs0 = total_cs1
 
     dtotal_is = total_is1 - total_is0
-    avg_is = dtotal_is / dm / 10000
+    avg_is = dtotal_is / dm / TT
     if 'avg_is' not in peaks_dict or peaks_dict['avg_is'] < avg_is:
         peaks_dict['avg_is'] = avg_is
     total_is0 = total_is1
 
     dtotal_if = total_if1 - total_if0
-    avg_if = dtotal_if / dm / 10000
+    avg_if = dtotal_if / dm / TT
     if 'avg_if' not in peaks_dict or peaks_dict['avg_if'] < avg_if:
         peaks_dict['avg_if'] = avg_if
     total_if0 = total_if1
 
     dtotal_ms = total_ms1 - total_ms0
-    avg_ms = dtotal_ms / dm / 10000
+    avg_ms = dtotal_ms / dm / TT
     if 'avg_ms' not in peaks_dict or peaks_dict['avg_ms'] < avg_ms:
         peaks_dict['avg_ms'] = avg_ms
     total_ms0 = total_ms1
 
     dtotal_mf = total_mf1 - total_mf0
-    avg_mf = dtotal_mf / dm / 10000
+    avg_mf = dtotal_mf / dm / TT
     if 'avg_mf' not in peaks_dict or peaks_dict['avg_mf'] < avg_mf:
         peaks_dict['avg_mf'] = avg_mf
     total_mf0 = total_mf1
@@ -805,10 +851,8 @@ while True:
         round(avg_ms, 1),
         round(avg_mf, 1),
 
-        round(dm, 3)
-
+        round(dm, 2)
     ))
 
     stdout.flush()
     sleep(interval)
-
