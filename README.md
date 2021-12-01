@@ -137,7 +137,7 @@ To enable PSI on RHEL 8 pass `psi=1` to kernel boot cmdline.
 
 Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
-$ yay -S nohang-gitdesktop
+$ yay -S nohang-git
 $ sudo systemctl enable --now nohang-desktop.service
 $ sudo systemctl start nohang-desktop.service
 ```
