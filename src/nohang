@@ -3695,7 +3695,7 @@ if 'max_victim_ancestry_depth' in config_dict:
         errprint('Invalid max_victim_ancestry_depth value, not integer\nExit')
         exit(1)
     if max_victim_ancestry_depth < 1:
-        errprint('Invalud max_victim_ancestry_depth value\nExit')
+        errprint('Invalid max_victim_ancestry_depth value\nExit')
         exit(1)
 else:
     missing_config_key('max_victim_ancestry_depth')
