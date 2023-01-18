@@ -4,7 +4,6 @@
 
 [![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=master)](https://travis-ci.org/hakavlad/nohang)
 ![CodeQL](https://github.com/hakavlad/nohang/workflows/CodeQL/badge.svg)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/hakavlad/nohang.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/hakavlad/nohang/alerts/)
 [![Packaging status](https://repology.org/badge/tiny-repos/nohang.svg)](https://repology.org/project/nohang/versions)
 
 `nohang` package provides a highly configurable daemon for Linux which is able to correctly prevent [out of memory](https://en.wikipedia.org/wiki/Out_of_memory) (OOM) and keep system responsiveness in low memory conditions.
@@ -44,9 +43,10 @@ Use one of the userspace OOM killers:
 - [systemd-oomd](https://man7.org/linux/man-pages/man8/systemd-oomd.service.8.html): Provided by systemd as `systemd-oomd.service` that uses cgroups-v2 and pressure stall information (PSI) to monitor and take action on processes before an OOM occurs in kernel space. It's used by default on [desktop versions of Fedora 34](https://fedoraproject.org/wiki/Changes/EnableSystemdOomd).
 - [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/): There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
 - [psi-monitor](https://github.com/endlessm/eos-boot-helper/tree/master/psi-monitor): It's used by default on [Endless OS](https://endlessos.com/).
-- `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning. It's used by default on [Garuda Linux](https://garudalinux.org/).
+- `nohang`: nohang is earlyoom on steroids and has many useful features, see below. Maybe this is a good choice for modern desktops and servers if you need fine-tuning. Previously it was used by default on [Garuda Linux](https://garudalinux.org/).
 
 Use these tools to improve responsiveness during heavy swapping:
+- MGLRU patchset is merged in Linux 6.1. Setting `min_ttl_ms` > 50 can help you.
 - [le9-patch](https://github.com/hakavlad/le9-patch): [PATCH] mm: Protect clean file pages under memory pressure to prevent thrashing, avoid high latency and prevent livelock in near-OOM conditions. It's kernel-side solution that can fix the OOM killer behavior.
 - [prelockd](https://github.com/hakavlad/prelockd): Lock executables and shared libraries in memory to improve system responsiveness under low-memory conditions.
 - [memavaild](https://github.com/hakavlad/memavaild): Keep amount of available memory by evicting memory of selected cgroups into swap space.
@@ -118,10 +118,8 @@ To show GUI notifications (optional):
 ## How to install
 
 #### To install on [Fedora](https://src.fedoraproject.org/rpms/nohang/):
-```bash
-$ sudo dnf install nohang-desktop
-$ sudo systemctl enable --now nohang-desktop.service
-```
+
+Orphaned for 6+ weeks, not available.
 
 #### To install on RHEL 7 and RHEL 8:
 
