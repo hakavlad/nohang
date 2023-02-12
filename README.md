@@ -125,9 +125,9 @@ Orphaned for 6+ weeks, not available.
 
 nohang is avaliable in [EPEL repos](https://fedoraproject.org/wiki/EPEL).
 ```bash
-$ sudo yum install nohang
-$ sudo systemctl enable nohang.service
-$ sudo systemctl start nohang.service
+sudo yum install nohang
+sudo systemctl enable nohang.service
+sudo systemctl start nohang.service
 ```
 To enable PSI on RHEL 8 pass `psi=1` to kernel boot cmdline.
 
@@ -135,18 +135,18 @@ To enable PSI on RHEL 8 pass `psi=1` to kernel boot cmdline.
 
 Use your favorite [AUR helper](https://wiki.archlinux.org/index.php/AUR_helpers). For example,
 ```bash
-$ yay -S nohang-git
-$ sudo systemctl enable --now nohang-desktop.service
+yay -S nohang-git
+sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on Ubuntu 20.04/20.10
 
 To install from [PPA](https://launchpad.net/~oibaf/+archive/ubuntu/test/):
 ```bash
-$ sudo add-apt-repository ppa:oibaf/test
-$ sudo apt update
-$ sudo apt install nohang
-$ sudo systemctl enable --now nohang-desktop.service
+sudo add-apt-repository ppa:oibaf/test
+sudo apt update
+sudo apt install nohang
+sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on Debian and Ubuntu-based systems:
@@ -155,23 +155,23 @@ Outdated and buggy nohang v0.1 release was packaged for [Debian 11](https://pack
 
 It's easy to build a deb package with the latest git snapshot. Install build dependencies:
 ```bash
-$ sudo apt install make fakeroot
+sudo apt install make fakeroot
 ```
 
 Clone the latest git snapshot and run the build script to build the package:
 ```bash
-$ git clone https://github.com/hakavlad/nohang.git && cd nohang
-$ deb/build.sh
+git clone https://github.com/hakavlad/nohang.git && cd nohang
+deb/build.sh
 ```
 
 Install the package:
 ```bash
-$ sudo apt install --reinstall ./deb/package.deb
+sudo apt install --reinstall ./deb/package.deb
 ```
 
 Start and enable `nohang.service` or `nohang-desktop.service` after installing the package:
 ```bash
-$ sudo systemctl enable --now nohang-desktop.service
+sudo systemctl enable --now nohang-desktop.service
 ```
 
 #### To install on Gentoo and derivatives (e.g. Funtoo):
@@ -180,53 +180,53 @@ Add the [eph kit](https://git.sr.ht/~happy_shredder/eph_kit) overlay, for exampl
 Then update your repos:
 
 ```bash
-$ sudo layman -S # if added via layman
-$ sudo emerge --sync # local repo on Gentoo
-$ sudo ego sync # local repo on Funtoo
+sudo layman -S # if added via layman
+sudo emerge --sync # local repo on Gentoo
+sudo ego sync # local repo on Funtoo
 ```
 
 Install:
 
 ```bash
-$ sudo emerge -a nohang
+sudo emerge -a nohang
 ```
 
 Start the service:
 
 ```bash
-$ sudo rc-service nohang-desktop start
+sudo rc-service nohang-desktop start
 ```
 
 Optionally add to startup:
 
 ```bash
-$ sudo rc-update add nohang-desktop default
+sudo rc-update add nohang-desktop default
 ```
 
 #### To install the latest version on any distro:
 ```bash
-$ git clone https://github.com/hakavlad/nohang.git && cd nohang
-$ sudo make install
+git clone https://github.com/hakavlad/nohang.git && cd nohang
+sudo make install
 ```
 
 Config files will be located in `/usr/local/etc/nohang/`. To enable and start unit without GUI notifications:
 ```bash
-$ sudo systemctl enable --now nohang.service
+sudo systemctl enable --now nohang.service
 ```
 
 To enable and start unit with GUI notifications:
 ```bash
-$ sudo systemctl enable --now nohang-desktop.service
+sudo systemctl enable --now nohang-desktop.service
 ```
 
 On systems with OpenRC:
 ```bash
-$ sudo make install-openrc
+sudo make install-openrc
 ```
 
 To uninstall:
 ```bash
-$ sudo make uninstall
+sudo make uninstall
 ```
 
 ## Command line options
@@ -406,11 +406,11 @@ Process with highest badness (found in 55 ms):
 
 To view the latest entries in the log (for systemd users):
 ```bash
-$ sudo journalctl -eu nohang.service
+sudo journalctl -eu nohang.service
 
 #### or
 
-$ sudo journalctl -eu nohang-desktop.service
+sudo journalctl -eu nohang-desktop.service
 ```
 
 You can also enable `separate_log` in the config to logging in `/var/log/nohang/nohang.log`.
@@ -422,7 +422,7 @@ You can also enable `separate_log` in the config to logging in `/var/log/nohang/
 Usage:
 
 ```bash
-$ oom-sort
+oom-sort
 ```
 
 <details>
