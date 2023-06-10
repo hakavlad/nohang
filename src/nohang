@@ -237,11 +237,11 @@ def start_thread(func, *a, **k):
     """ run function in a new thread
     """
     th = threading.Thread(target=func, args=a, kwargs=k, daemon=True)
-    th_name = th.getName()
+    th_name = th.name
 
     if debug_threading:
         log('Starting {} from {}'.format(
-            th_name, threading.current_thread().getName()
+            th_name, threading.current_thread().name
         ))
 
     try:
