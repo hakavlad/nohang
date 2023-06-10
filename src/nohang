@@ -7,7 +7,7 @@ from time import sleep, monotonic
 from operator import itemgetter
 from sys import stdout, stderr, argv, exit
 from re import search
-from sre_constants import error as invalid_re
+from re import error as invalid_re
 from signal import signal, SIGKILL, SIGTERM, SIGINT, SIGQUIT, SIGHUP, SIGUSR1
 
 
@@ -209,7 +209,7 @@ def exe(cmd):
 
     cmd_num_dict['cmd_num'] += 1
     cmd_num = cmd_num_dict['cmd_num']
-    th_name = threading.current_thread().getName()
+    th_name = threading.current_thread().name
 
     log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
@@ -237,11 +237,11 @@ def start_thread(func, *a, **k):
     """ run function in a new thread
     """
     th = threading.Thread(target=func, args=a, kwargs=k, daemon=True)
-    th_name = th.getName()
+    th_name = th.name
 
     if debug_threading:
         log('Starting {} from {}'.format(
-            th_name, threading.current_thread().getName()
+            th_name, threading.current_thread().name
         ))
 
     try:
@@ -350,7 +350,7 @@ def pop(cmd):
     else:
         wait_time = 30
 
-    th_name = threading.current_thread().getName()
+    th_name = threading.current_thread().name
 
     log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
