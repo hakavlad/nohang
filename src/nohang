@@ -209,7 +209,7 @@ def exe(cmd):
 
     cmd_num_dict['cmd_num'] += 1
     cmd_num = cmd_num_dict['cmd_num']
-    th_name = threading.current_thread().getName()
+    th_name = threading.current_thread().name
 
     log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
@@ -350,7 +350,7 @@ def pop(cmd):
     else:
         wait_time = 30
 
-    th_name = threading.current_thread().getName()
+    th_name = threading.current_thread().name
 
     log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
