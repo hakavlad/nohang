@@ -165,41 +165,49 @@ def memload():
             os.kill(self_pid, SIGUSR1)
 
 
-def arcstats():
+def parse_zfs_arcstats():
     """
+    Parses '/proc/spl/kstat/zfs/arcstats'.
+    Returns a dictionary with 'name' as keys and 'data' as values.
     """
-    with open(arcstats_path, 'rb') as f:
-        a_list = f.read().decode().split('\n')
+    parsed_data = {}
 
-    for n, line in enumerate(a_list):
-        if n == c_min_index:
-            c_min = int(line.rpartition(' ')[2]) / 1024
-        elif n == size_index:
-            size = int(line.rpartition(' ')[2]) / 1024
+    with open(arcstats_path, 'r') as as_file:
+        lines = iter(as_file.readlines())
 
-        elif n == arc_meta_used_index:
-            arc_meta_used = int(line.rpartition(' ')[2]) / 1024
+        # consume lines until the header row:
+        for line in lines:
+            if 'name' in line and 'data' in line:
+                break
 
-        elif n == arc_meta_min_index:
-            arc_meta_min = int(line.rpartition(' ')[2]) / 1024
+        # Continue iterating over the remaining lines
+        for line in lines:
+            if line.strip():
+                parts = line.split()
+                name = parts[0]
+                data_type = parts[1]
+                data = parts[2]
+                if data_type == '4':
+                    data = int(data)
+                parsed_data[name] = data
 
-        else:
-            continue
+    return parsed_data
 
-    c_rec = size - c_min
 
-    if c_rec < 0:
-        c_rec = 0
+def zfs_arc_available():
+    """returns how many KiB of the zfs ARC are reclaimable"""
+    stats = parse_zfs_arcstats()
 
-    meta_rec = arc_meta_used - arc_meta_min
+    c_rec = max(stats['size'] - stats['c_min'], 0)
 
-    if meta_rec < 0:
-        meta_rec = 0
-    zfs_available = c_rec + meta_rec
+    # old zfs: consider arc_meta_used, arc_meta_min
+    if 'arc_meta_used' in stats and 'arc_meta_min' in stats:
+        meta_rec = max(stats['arc_meta_used'] - stats['arc_meta_min'], 0)
+        return (c_rec + meta_rec) / 1024
 
-    # return c_min, size, arc_meta_used, arc_meta_min, zfs_available
-
-    return zfs_available
+    # new zfs: metadata is no longer accounted for separately,
+    # https://github.com/openzfs/zfs/commit/a8d83e2a24de6419dc58d2a7b8f38904985726cb
+    return c_rec / 1024
 
 
 def exe(cmd):
@@ -1341,7 +1349,7 @@ def check_mem_and_swap():
     sf = int(m_list[swap_free_index].split(':')[1])
 
     if ZFS:
-        ma += arcstats()
+        ma += zfs_arc_available()
 
     return ma, st, sf
 
@@ -1369,7 +1377,7 @@ def meminfo():
     md['available'] = mem_available
 
     if ZFS:
-        z = arcstats()
+        z = zfs_arc_available()
         mem_available += z
 
     md['shared'] = shmem
@@ -3958,29 +3966,6 @@ if check_kmsg:
 if ZFS:
     log('WARNING: ZFS found. Available memory will not be calculated '
         'correctly (issue#89)')
-    try:
-        # find indexes
-        with open(arcstats_path, 'rb') as f:
-            a_list = f.read().decode().split('\n')
-        for n, line in enumerate(a_list):
-            if line.startswith('c_min '):
-                c_min_index = n
-
-            elif line.startswith('size '):
-                size_index = n
-
-            elif line.startswith('arc_meta_used '):
-                arc_meta_used_index = n
-
-            elif line.startswith('arc_meta_min '):
-                arc_meta_min_index = n
-
-            else:
-                continue
-    except Exception as e:
-        log(e)
-        ZFS = False
-
 
 while True:
 
