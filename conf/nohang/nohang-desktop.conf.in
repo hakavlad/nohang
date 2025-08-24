@@ -360,6 +360,9 @@ ignore_positive_oom_score_adj = False
     Protect GNOME.
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/gnome-shell|/usr/bin/metacity|/usr/bin/mutter|/usr/lib/gnome-session/gnome-session-binary|/usr/libexec/gnome-session-binary|/usr/libexec/gnome-session-ctl)$
 
+    Protect Phosh.
+@BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/phoc|/usr/libexec/phosh)$
+
     Protect KDE Plasma.
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/plasma-desktop|/usr/bin/plasmashell|/usr/bin/plasma_session|/usr/bin/kwin|/usr/bin/kwin_x11|/usr/bin/kwin_wayland)$
 @BADNESS_ADJ_RE_REALPATH -200  ///  ^(/usr/bin/startplasma-wayland|/usr/lib/x86_64-linux-gnu/libexec/startplasma-waylandsession|/usr/bin/ksmserver)$
