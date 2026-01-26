@@ -2,7 +2,6 @@
 
 # nohang
 
-[![Build Status](https://travis-ci.org/hakavlad/nohang.svg?branch=master)](https://travis-ci.org/hakavlad/nohang)
 ![CodeQL](https://github.com/hakavlad/nohang/workflows/CodeQL/badge.svg)
 [![Packaging status](https://repology.org/badge/tiny-repos/nohang.svg)](https://repology.org/project/nohang/versions)
 
@@ -151,7 +150,9 @@ sudo systemctl enable --now nohang-desktop.service
 
 #### To install on Debian and Ubuntu-based systems:
 
-Outdated and buggy nohang v0.1 release was packaged for [Debian 11](https://packages.debian.org/bullseye/source/nohang) and [Ubuntu 20.10](https://packages.ubuntu.com/source/groovy/nohang).
+```
+sudo apt install nohang
+```
 
 It's easy to build a deb package with the latest git snapshot. Install build dependencies:
 ```bash
@@ -232,7 +233,7 @@ sudo make uninstall
 ## Command line options
 
 ```
-./nohang -h
+$ nohang -h
 usage: nohang [-h|--help] [-v|--version] [-m|--memload]
               [-c|--config CONFIG] [--check] [--monitor] [--tasks]
 
@@ -648,7 +649,6 @@ full io        0.54   7.52   6.80
 - [oom-sort.manpage.md](docs/oom-sort.manpage.md)
 - [psi2log.manpage.md](docs/psi2log.manpage.md)
 - [psi-top.manpage.md](docs/psi-top.manpage.md)
-- [FAQ.ru.md](docs/FAQ.ru.md)
 - [CHANGELOG.md](CHANGELOG.md)
 
 ## License
