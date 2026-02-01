@@ -1084,7 +1084,7 @@ def pid_to_badness(pid, oom_score):
         if ignore_positive_oom_score_adj:
             oom_score_adj = pid_to_oom_score_adj(pid)
             if oom_score_adj > 0:
-                badness = badness - oom_score_adj
+                badness -= oom_score_adj * 2 // 3
 
         if regex_matching:
             name = pid_to_name(pid)
