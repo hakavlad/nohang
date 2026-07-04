@@ -21,7 +21,7 @@ nohang - A sophisticated low memory handler
 #### To show GUI notifications (optional):
 - Notification server (most desktop environments use their own implementations).
 - **libnotify** (Arch Linux, Fedora, openSUSE) or **libnotify-bin** (Debian GNU/Linux, Ubuntu).
-- sudo if **nohang** started with UID=0.
+- sudo or doas if **nohang** started with UID=0.
 
 # COMMAND-LINE OPTIONS
 
