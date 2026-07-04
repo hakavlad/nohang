@@ -428,7 +428,7 @@ def send_notification(title, body):
             display_value = display_tuple[2]
             dbus_value = dbus_tuple[2]
 
-            runner = 'doas' if shutil.which('doas') else 'sudo'
+            runner = 'sudo' if shutil.which('sudo') else 'doas'
 
             cmd = [
                 runner, '-u', username,
