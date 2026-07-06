@@ -3,7 +3,7 @@ Version: 0.3.0
 Section: admin
 Architecture: all
 Depends: python3
-Suggests: libnotify-bin, sudo, logrotate
+Suggests: libnotify-bin, sudo | opendoas, logrotate
 Maintainer: Alexey Avramov <hakavlad@gmail.com>
 Priority: optional
 Homepage: https://github.com/hakavlad/nohang
