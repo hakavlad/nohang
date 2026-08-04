@@ -37,7 +37,7 @@ Also look at these discussions:
 ## Solution
 
 Use one of the userspace OOM killers:
-- [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM prevention daemon written in C (the best choice for emedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation (and F33 KDE).
+- [earlyoom](https://github.com/rfjakob/earlyoom): This is a simple, stable and tiny OOM prevention daemon written in C (the best choice for embedded and old servers). It has a minimum dependencies and can work with oldest kernels. It is enabled by default on Fedora 32 Workstation (and F33 KDE).
 - [oomd](https://github.com/facebookincubator/oomd): This is a userspace OOM killer for linux systems written in C++ and developed by Facebook. This is the best choice for use in large data centers. It needs Linux 4.20+.
 - [systemd-oomd](https://man7.org/linux/man-pages/man8/systemd-oomd.service.8.html): Provided by systemd as `systemd-oomd.service` that uses cgroups-v2 and pressure stall information (PSI) to monitor and take action on processes before an OOM occurs in kernel space. It's used by default on [desktop versions of Fedora 34](https://fedoraproject.org/wiki/Changes/EnableSystemdOomd).
 - [low-memory-monitor](https://gitlab.freedesktop.org/hadess/low-memory-monitor/): There's a [project announcement](http://www.hadess.net/2019/08/low-memory-monitor-new-project.html).
