@@ -211,18 +211,16 @@ def zfs_arc_available():
     return c_rec / 1024
 
 
-def exe(cmd):
+def exe(cmd_list):
     """ execute cmd in subprocess.Popen()
     """
-    cmd_list = shlex.split(cmd)
-
     cmd_num_dict['cmd_num'] += 1
     cmd_num = cmd_num_dict['cmd_num']
     th_name = threading.current_thread().name
 
     log('Executing Command-{} {} with timeout {}s in {}'.format(
         cmd_num,
-        cmd_list,
+        shlex.join(cmd_list),
         exe_timeout,
         th_name,
     ))
@@ -457,7 +455,7 @@ def send_notify_warn():
     log_meminfo()
 
     if check_warning_exe:
-        start_thread(exe, warning_exe)
+        start_thread(exe, shlex.split(warning_exe))
 
     else:
         title = 'Low memory'
@@ -2532,16 +2530,15 @@ def implement_corrective_action(
             return None
 
         if soft_match:
-
-            cmd = command.replace('$PID', pid).replace('$NAME', pid_to_name(
-                pid)).replace('$SERVICE', service)
-
+            cmd_list = [{'$PID': pid, '$NAME': pid_to_name(pid),
+                          '$SERVICE': service}.get(part, part)
+                         for part in shlex.split(command)]
             preventing_oom_message = 'Implementing a corrective action:\n  ' \
-                'Executing the command: {}'.format(cmd)
+                'Executing the command: {}'.format(shlex.join(cmd_list))
 
             log(preventing_oom_message)
 
-            err = start_thread(exe, cmd)
+            err = start_thread(exe, cmd_list)
 
             if err == 1:
                 key = 'Cannot execute the command in the new thread'
@@ -2662,13 +2659,14 @@ def implement_corrective_action(
 
         if threshold is SIGKILL and post_kill_exe != '':
             log('Executing post_kill_exe: {}'.format(post_kill_exe))
-            cmd = post_kill_exe.replace('$PID', pid).replace(
-                '$NAME', name).replace('$SERVICE', service)
-            start_thread(exe, cmd)
+            cmd_list = [{'$PID': pid, '$NAME': name, '$SERVICE': service}
+                         .get(part, part)
+                         for part in shlex.split(post_kill_exe)]
+            start_thread(exe, cmd_list)
 
         if post_action_gui_notifications:
             if soft_match:
-                send_notify_etc(pid, name, cmd)
+                send_notify_etc(pid, name, shlex.join(cmd_list))
             else:
                 send_notify(threshold, name, pid)
 
