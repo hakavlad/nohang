@@ -303,6 +303,11 @@ exe_timeout = 20
 ##  Type: float; valid values: >= 0.1
 ##  Default value: 20
 
+ignore_zfs = True
+##  Type: boolean; valid values: True | False
+##  Default value: False
+##  If True, nohang will completely bypass ZFS arcstats checks. Useful for LXC containers.
+
 ###############################################################################
 
 ##   10. Verbosity, debug, logging

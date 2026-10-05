@@ -695,6 +695,8 @@ def check_config():
     log('    victim_cache_time:          {} sec'.format(victim_cache_time))
     log('    exe_timeout:                {} sec'.format(exe_timeout))
 
+    log('    ignore_zfs:                 {}'.format(ignore_zfs))
+
     log('\n10. Verbosity')
 
     log('    print_config_at_startup:    {}'.format(print_config_at_startup))
@@ -3517,6 +3519,11 @@ CHECK_PSI = bool(PSI_KERNEL_OK and psi_checking_enabled)
 
 zram_checking_enabled = conf_parse_bool('zram_checking_enabled')
 
+if 'ignore_zfs' in config_dict:
+    ignore_zfs = conf_parse_bool('ignore_zfs')
+else:
+    ignore_zfs = False
+
 debug_gui_notifications = conf_parse_bool('debug_gui_notifications')
 ignore_positive_oom_score_adj = conf_parse_bool(
     'ignore_positive_oom_score_adj')
@@ -3931,8 +3938,10 @@ fd['mi'] = open('/proc/meminfo', 'rb', buffering=0)
 arcstats_path = '/proc/spl/kstat/zfs/arcstats'
 # arcstats_path = './arcstats'
 
-ZFS = os.path.exists(arcstats_path)
-
+if ignore_zfs:
+    ZFS = False
+else:
+    ZFS = os.path.exists(arcstats_path)
 
 kmsg_path = '/dev/kmsg'
 
